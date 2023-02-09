@@ -1,21 +1,32 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "ESNext",
+    "lib": ["esnext", "dom", "dom.iterable"],
     "allowJs": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "noFallthroughCasesInSwitch": false,
-    "jsx": "react-jsx"
+    "jsx": "preserve",
+    "baseUrl": "./ui",
+    "incremental": true,
+    "types": ["cypress"]
   },
-  "include": ["src"],
-  "exclude": ["node_modules"]
+
+  "exclude": [
+    "**/docs/**",
+    "**/subgraphs/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/cache/**",
+    "**/dist/**"
+  ],
+
+  "include": ["src"]
 }
