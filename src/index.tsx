@@ -11,6 +11,7 @@ ReactDOM.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <GlobalStyle />
+      {/* <Cannon /> */}
       <SafeProvider
         loader={
           <>

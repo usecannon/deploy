@@ -143,12 +143,12 @@ module.exports = {
     //   ),
     // ])
 
-    .concat([
-      new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'],
-        process: 'process/browser.js',
-      }),
-    ])
+    // .concat([
+    //   new webpack.ProvidePlugin({
+    //     Buffer: ['buffer', 'Buffer'],
+    //     process: 'process/browser.js',
+    //   }),
+    // ])
     // remove
     .concat(isProd ? [] : isTest ? [] : [new ReactRefreshWebpackPlugin({ overlay: false })]),
   // .concat(
@@ -169,13 +169,14 @@ module.exports = {
     //   '@synthetixio/v3-contracts/build': '@synthetixio/v3-contracts/src',
     // },
     fallback: {
-      buffer: require.resolve('buffer'),
-      stream: require.resolve('stream-browserify'),
-      crypto: require.resolve('crypto-browserify'),
-      process: require.resolve('process/browser.js'),
-      http: false,
-      https: false,
-      os: false,
+      // buffer: require.resolve('buffer'),
+      // stream: require.resolve('stream-browserify'),
+      // crypto: require.resolve('crypto-browserify'),
+      // process: require.resolve('process/browser.js'),
+      // util: false,
+      // http: false,
+      // https: false,
+      // os: false,
     },
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
   },
