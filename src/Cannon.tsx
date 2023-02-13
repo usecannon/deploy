@@ -1,37 +1,21 @@
 import React, { useEffect } from 'react'
 
-import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
+// import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { IPFSLoader, OnChainRegistry } from '@usecannon/builder'
 
 // TODO: move to dynamic
 const IPFS_URL = 'https://usecannon.infura-ipfs.io'
-// const IPFS_URL = 'https://25JrnDgeR88vTvaEDhPEP2vDtOJ:0c838ff3c2d833f72dfc6c4e2ef6fda8@ipfs.infura.io:5001'
 const registryProviderUrl = 'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7'
 const registryAddress = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba'
 
 // has one text box and one button
 const Cannon = (): React.ReactElement => {
-  // useEffect(() => {
-  //   const getDeploy = async () => {
-  //     const registry = new OnChainRegistry({
-  //       signerOrProvider: registryProviderUrl,
-  //       address: registryAddress,
-  //     })
+  // const { safe } = useSafeAppsSDK()
+  // const { chainId } = safe
 
-  //     const loader = new IPFSLoader(IPFS_URL, registry)
-
-  //     try {
-  //       const deployInfo = await loader.readDeploy('@synthetix', '3.0.0-alpha.9', 1)
-  //       console.log('deployInfo: ', deployInfo)
-  //     } catch (e) {
-  //       console.error(e)
-  //     }
-  //   }
-
-  //   getDeploy()
-  // }, [])
-
-  const { safe } = useSafeAppsSDK()
+  const chainId = 13370
+  const preset = 'main'
+  const packageName = 'synthetix:latest'
 
   useEffect(() => {
     const getDeploy = async () => {
@@ -43,7 +27,12 @@ const Cannon = (): React.ReactElement => {
       const loader = new IPFSLoader(IPFS_URL, registry)
 
       try {
-        const deployInfo = await loader.readDeploy('@synthetix', '3.0.0-alpha.9', safe.chainId)
+        const deployInfo = await loader.readDeploy(packageName, preset, chainId)
+
+        if (!deployInfo) {
+          throw new Error(`Package not found: ${packageName} (${chainId}-${preset})`)
+        }
+
         console.log('deployInfo: ', deployInfo)
       } catch (e) {
         console.error(e)
@@ -51,7 +40,7 @@ const Cannon = (): React.ReactElement => {
     }
 
     getDeploy()
-  }, [safe.chainId])
+  }, [chainId])
 
   return <div>test</div>
 }
