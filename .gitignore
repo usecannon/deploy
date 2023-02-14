@@ -2,6 +2,7 @@
 /dist
 /certs
 /build
+/cache
 
 .DS_Store
 .env
