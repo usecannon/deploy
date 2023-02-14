@@ -64,6 +64,7 @@ const cssRule = {
 
 const devServer = {
   port: '3000',
+  https: true,
 
   hot: !isTest,
   liveReload: false,
@@ -108,80 +109,31 @@ module.exports = {
     assetModuleFilename: '[name].[contenthash:8][ext]',
     clean: true,
   },
+
   // possibly remove
-  optimization: {
-    runtimeChunk: false,
-    splitChunks: {
-      chunks: 'async',
-      maxAsyncRequests: 10,
-      maxInitialRequests: 10,
-      hidePathInfo: true,
-      automaticNameDelimiter: '--',
-      name: false,
-    },
-    moduleIds: isProd ? 'deterministic' : 'named',
-    chunkIds: isProd ? 'deterministic' : 'named',
-    minimize: isProd,
-    minimizer: [new TerserPlugin()],
-    innerGraph: true,
-    emitOnErrors: false,
-  },
+  // optimization: {
+  //   runtimeChunk: false,
+  //   splitChunks: {
+  //     chunks: 'async',
+  //     maxAsyncRequests: 10,
+  //     maxInitialRequests: 10,
+  //     hidePathInfo: true,
+  //     automaticNameDelimiter: '--',
+  //     name: false,
+  //   },
+  //   moduleIds: isProd ? 'deterministic' : 'named',
+  //   chunkIds: isProd ? 'deterministic' : 'named',
+  //   minimize: isProd,
+  //   minimizer: [new TerserPlugin()],
+  //   innerGraph: true,
+  //   emitOnErrors: false,
+  // },
 
   plugins: [htmlPlugin]
     .concat([new webpack.NormalModuleReplacementPlugin(/^bn.js$/, require.resolve('bn.js'))])
-
-    // .concat([
-    //   new webpack.NormalModuleReplacementPlugin(
-    //     new RegExp(`^@synthetixio/v3-contracts$`),
-    //     path.resolve(path.dirname(require.resolve(`@synthetixio/v3-contracts/package.json`)), 'src')
-    //   ),
-    //   new webpack.NormalModuleReplacementPlugin(
-    //     new RegExp(`^@synthetixio/v3-theme$`),
-    //     path.resolve(path.dirname(require.resolve(`@synthetixio/v3-theme/package.json`)), 'src')
-    //   ),
-    // ])
-    // .concat([
-    //   new webpack.NormalModuleReplacementPlugin(
-    //     new RegExp(`^@synthetixio/wei$`),
-    //     path.resolve(path.dirname(require.resolve(`@synthetixio/wei/package.json`)), 'src')
-    //   ),
-    // ])
-
-    // .concat([
-    //   new webpack.ProvidePlugin({
-    //     Buffer: ['buffer', 'Buffer'],
-    //     process: 'process/browser.js',
-    //   }),
-    // ])
-    // remove
     .concat(isProd ? [] : isTest ? [] : [new ReactRefreshWebpackPlugin({ overlay: false })]),
-  // .concat(
-  //   process.env.GENERATE_BUNDLE_REPORT === 'true'
-  //     ? [
-  //         new BundleAnalyzerPlugin({
-  //           analyzerMode: 'static',
-  //           reportFilename: path.resolve(__dirname, 'tmp', 'webpack.html'),
-  //           openAnalyzer: false,
-  //           generateStatsFile: false,
-  //         }),
-  //       ]
-  //     : []
-  // ),
 
   resolve: {
-    // alias: {
-    //   '@synthetixio/v3-contracts/build': '@synthetixio/v3-contracts/src',
-    // },
-    fallback: {
-      // buffer: require.resolve('buffer'),
-      // stream: require.resolve('stream-browserify'),
-      // crypto: require.resolve('crypto-browserify'),
-      // process: require.resolve('process/browser.js'),
-      // util: false,
-      // http: false,
-      // https: false,
-      // os: false,
-    },
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
   },
 

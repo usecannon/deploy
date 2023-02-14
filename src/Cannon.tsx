@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
-
-// import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
+import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { IPFSLoader, OnChainRegistry } from '@usecannon/builder'
 
 // TODO: move to dynamic
@@ -10,10 +9,10 @@ const registryAddress = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba'
 
 // has one text box and one button
 const Cannon = (): React.ReactElement => {
-  // const { safe } = useSafeAppsSDK()
-  // const { chainId } = safe
+  const { safe } = useSafeAppsSDK()
+  const { chainId } = safe
 
-  const chainId = 13370
+  // const chainId = 13370
   const preset = 'main'
   const packageName = 'synthetix:latest'
 
