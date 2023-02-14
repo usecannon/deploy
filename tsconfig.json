@@ -1,32 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["esnext", "dom", "dom.iterable"],
+    "target": "esnext",
+    "module": "commonjs",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "baseUrl": "./ui",
-    "incremental": true,
-    "types": ["cypress"]
+    "noEmit": true,
+    "jsx": "react"
   },
-
-  "exclude": [
-    "**/docs/**",
-    "**/subgraphs/**",
-    "**/node_modules/**",
-    "**/coverage/**",
-    "**/build/**",
-    "**/cache/**",
-    "**/dist/**"
-  ],
-
   "include": ["src"]
 }

@@ -1,14 +1,13 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import { ThemeProvider } from 'styled-components'
 import { theme, Loader, Title } from '@gnosis.pm/safe-react-components'
 import SafeProvider from '@safe-global/safe-apps-react-sdk'
 
 import GlobalStyle from './GlobalStyle'
-import Cannon from './Cannon'
+// import Cannon from './Cannon'
 
-ReactDOM.render(
-  <React.StrictMode>
+function App () {
+  return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <SafeProvider
@@ -19,9 +18,10 @@ ReactDOM.render(
           </>
         }
       >
-        <Cannon />
+        {/* <Cannon /> */}
       </SafeProvider>
     </ThemeProvider>
-  </React.StrictMode>,
-  document.getElementById('root'),
-)
+  )
+}
+
+export default App
