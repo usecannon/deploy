@@ -1,23 +1,16 @@
-import React from 'react'
-import { ThemeProvider } from 'styled-components'
-import { theme, Loader, Title } from '@gnosis.pm/safe-react-components'
+import { StrictMode } from 'react'
 import SafeProvider from '@safe-global/safe-apps-react-sdk'
 
-import GlobalStyle from './GlobalStyle'
-// import Cannon from './Cannon'
+import Cannon from './Cannon'
 
-function App () {
+export function App () {
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle />
+    <StrictMode>
       <SafeProvider
-        loader={<Loader size="sm" />}
+        loader={<span>Loading...</span>}
       >
-        <span>SafeProvider Loaded</span>
-        {/* <Cannon /> */}
+        <Cannon />
       </SafeProvider>
-    </ThemeProvider>
+    </StrictMode>
   )
 }
-
-export default App

@@ -1,37 +1,24 @@
 {
   "name": "@usecannon/cannon-safe-app",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "private": true,
   "license": "MIT",
   "scripts": {
-    "start:tsc": "tsc -b -w --preserveWatchOutput",
-    "start": "concurrently \"yarn start:tsc\" \"razzle start\"",
-    "build": "tsc -b && razzle build",
-    "typecheck": "tsc --noEmit"
+    "start": "parcel serve src/index.html --cert certs/localhost.pem --key certs/localhost-key.pem",
+    "build": "parcel build src/index.html"
   },
   "devDependencies": {
-    "@gnosis.pm/safe-react-components": "^1.2.0",
-    "@material-ui/core": "^4.12.4",
+    "@parcel/transformer-inline-string": "2.8.3",
     "@safe-global/safe-apps-react-sdk": "^4.6.4",
     "@types/react": "^18.0.28",
-    "@types/react-dom": "^18.0.10",
-    "@types/styled-components": "^5.1.26",
-    "@types/webpack-env": "^1.18.0",
+    "@types/react-dom": "^18.0.11",
     "@usecannon/builder": "^2.0.8",
-    "babel-preset-razzle": "^4.2.18",
-    "concurrently": "^7.6.0",
     "ethers": "^6.0.3",
-    "html-webpack-plugin": "5.2.0",
-    "mini-css-extract-plugin": "0.9.0",
-    "postcss": "8.2.4",
-    "razzle": "^4.2.18",
-    "razzle-dev-utils": "^4.2.18",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "styled-components": "^5.3.6",
-    "typescript": "^4.9.5",
-    "webpack": "5.65.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^3.11.3"
+    "parcel": "^2.8.3",
+    "parcel-reporter-static-files-copy": "^1.5.0",
+    "process": "^0.11.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^4.9.5"
   }
 }
