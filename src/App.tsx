@@ -11,14 +11,9 @@ function App () {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <SafeProvider
-        loader={
-          <>
-            <Title size="md">Waiting for Safe...</Title>
-            <Loader size="md" />
-          </>
-        }
+        loader={<Loader size="sm" />}
       >
-        SafeProvider Loaded
+        <span>SafeProvider Loaded</span>
         {/* <Cannon /> */}
       </SafeProvider>
     </ThemeProvider>
