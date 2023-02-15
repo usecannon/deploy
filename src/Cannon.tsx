@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
-import { IPFSLoader, OnChainRegistry } from '@usecannon/builder'
+import { IPFSLoader, OnChainRegistry } from '@usecannon/builder/dist/cannon.umd'
 
 // TODO: move to dynamic
 const IPFS_URL = 'https://usecannon.infura-ipfs.io'
