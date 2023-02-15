@@ -17,7 +17,8 @@ function App () {
             <Loader size="md" />
           </>
         }
-      > SafeProvider Loaded
+      >
+        SafeProvider Loaded
         {/* <Cannon /> */}
       </SafeProvider>
     </ThemeProvider>
