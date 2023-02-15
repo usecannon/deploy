@@ -26,6 +26,13 @@ module.exports = {
       }
     }
 
+    const _1MB = 1024 * 1000;
+
+    webpackConfig.performance = {
+      maxEntrypointSize: _1MB * 2,
+      maxAssetSize: _1MB * 2,
+    }
+
     return webpackConfig;
   },
 };
