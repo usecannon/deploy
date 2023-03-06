@@ -4,8 +4,17 @@ body {
   padding: 0px;
   height: 100vh;
   width: 100vw;
+  background-color: #00081a;
 }
 
-html {
+body {
   font-family: 'DM Sans', sans-serif;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Safe.global sidebar toggler */
+@media (min-width: 900px) {
+  body {
+    padding-left: 8px;
+  }
 }
