@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { ethers, providers } from 'ethers';
+import { ethers } from 'ethers';
 import {
   build,
   CannonWrapperGenericProvider,
@@ -20,10 +20,15 @@ const IPFS_URL = 'https://usecannon.infura-ipfs.io'
 
 class CannonSafeAppProvider extends SafeAppProvider {
   async request({ method, params }) {
-    console.log({ method, params }, 1)
+    console.log('request:', { method, params }, 1)
     const res = await super.request({ method, params })
-    console.log({ method, params }, res)
+    console.log('request:', { method, params }, res)
     return res
+  }
+
+  send(...args: any[]): Promise<any> {
+    console.log('send: ', args[0])
+    return super.send(args[0], args[1]) as unknown as Promise<any>
   }
 }
 
@@ -46,21 +51,11 @@ const Cannon = (): React.ReactElement => {
 
   const getDeploy = async () => {
     try {
-      /*
-      const runtime = new ChainBuilderRuntime({...}, new IPFSLoader(..., safe.provider));
-      await runtime.restoreMisc(unfinishedDeployData.miscUrl);
-      const def = new ChainDefinition(unfinishedDeployData.def);
-      // some config stuff
-      const newState = await cannonBuild(runtime, def, unfinishedDeployData.state : {}, initialCtx);
-      // ** magic **
-      // publish new state on ipfs
-      // done!
-      */
-
       const registry = new OnChainRegistry({
         signerOrProvider: registryProviderUrl,
         address: registryAddress,
       })
+
       const loader = new IPFSLoader(IPFS_URL, registry)
       const previousDeploy = await loader.readDeploy(upgradeFrom, preset, chainId)
       const incompleteDeploy = await loader.readDeploy(packageUrl, preset, chainId)
@@ -113,6 +108,10 @@ const Cannon = (): React.ReactElement => {
       const newState = await build(runtime, def, previousDeploy.state ?? {}, initialCtx);
 
       console.log({ newState })
+
+      // TODO:
+      //  1. publish newState on IPFS
+      //  2. publish new package in the registry
 
       console.log('previousDeploy: ', previousDeploy)
       console.log('incompleteDeploy: ', incompleteDeploy)
