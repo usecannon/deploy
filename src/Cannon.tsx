@@ -8,7 +8,7 @@ import {
   createInitialContext,
   IPFSLoader,
   OnChainRegistry
-} from '@usecannon/builder'
+} from '@usecannon/builder/dist/cannon.umd'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { SafeAppProvider } from '@safe-global/safe-apps-provider';
 
@@ -46,7 +46,7 @@ const Cannon = (): React.ReactElement => {
 
   // TODO: move to form inputs
   const preset = 'main'
-  const packageUrl = '@ipfs:QmPUNRGSuZVGvsuYycH62c1tYzswtNQS1dViYHZavTXmhH'
+  const packageUrl = '@ipfs:QmTWg3fZeNf42gaUW8CrnieLXZs2cG7qawSWf46bpt6dqr'
   const upgradeFrom = '@ipfs:QmPASEogqe59LaLv5Htd95tzqPyM4e5yuC9qJJ4iA9sjtq' // 'synthetix:latest'
 
   const getDeploy = async () => {
@@ -85,12 +85,16 @@ const Cannon = (): React.ReactElement => {
       // TODO: check that the remaining steps to be executed do not depend on other not-executed steps
       // as this would cause an error (or only execute until it can)
 
-      const provider = new CannonWrapperGenericProvider({}, web3Provider)
+      // const provider = new CannonWrapperGenericProvider({}, web3Provider)
+      const provider = web3Provider as unknown as CannonWrapperGenericProvider
 
       const runtime = new ChainBuilderRuntime({
         provider,
         chainId,
-        getSigner: async (addr: string) => provider.getSigner(addr),
+        getSigner: async (addr: string) => {
+          console.log('getSigner: ', addr)
+          return provider.getSigner(addr)
+        },
         baseDir: null,
         snapshots: false,
         allowPartialDeploy: false,
