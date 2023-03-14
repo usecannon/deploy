@@ -7,7 +7,7 @@ export function App () {
   return (
     <StrictMode>
       <SafeProvider
-        loader={<span>Loading...</span>}
+        loader={<span>Loading Safe Provider...</span>}
       >
         <Cannon />
       </SafeProvider>
