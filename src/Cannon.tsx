@@ -8,7 +8,7 @@ import {
   createInitialContext,
   IPFSLoader,
   OnChainRegistry
-} from '@usecannon/builder/dist/cannon.umd'
+} from '@usecannon/builder'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { SafeAppProvider } from '@safe-global/safe-apps-provider';
 
