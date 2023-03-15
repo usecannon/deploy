@@ -13,13 +13,17 @@ import {
 } from '@usecannon/builder'
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
-import { SafeAppProvider } from '@safe-global/safe-apps-provider'
 import { DebounceInput } from 'react-debounce-input'
 import { ReadOnlySafeAppProvider, SkippedTransaction } from './utils/providers'
+import { Settings } from './components/Settings'
+import { TenderlySettings } from './utils/tenderly'
 
 interface PendingStep {
   stepName: string
-  params: any
+  params: {
+    to: string
+    data: string
+  }
 }
 
 // TODO: move to dynamic env bars
@@ -32,7 +36,14 @@ const IPFS_URL = 'https://ipfs.io'
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
 
+const defaultSettings = {
+  tenderlyKey: '',
+  tenderlyProject: '',
+} satisfies TenderlySettings
+
 const Cannon = (): React.ReactElement => {
+  const [settings, setSettings] = useState<TenderlySettings>(defaultSettings)
+
   const [preset, setPreset] = useState('main')
   const [packageUrl, setPackageUrl] = useState('')
   const [pendingTxs, setPendingTxs] = useState<PendingStep[]>([])
@@ -61,6 +72,16 @@ const Cannon = (): React.ReactElement => {
       }),
     [registryProviderUrl, registryAddress]
   )
+
+  useEffect(() => {
+    resetStatus()
+    if (!chainId || !preset || !packageUrl) return
+    loadPendingTransactions()
+  }, [chainId, preset, packageUrl])
+
+  useEffect(() => {
+    console.log(settings)
+  }, [settings])
 
   const resetStatus = () => {
     setDeployStatus('')
@@ -115,33 +136,6 @@ const Cannon = (): React.ReactElement => {
 
       setPendingTxs(txs)
 
-      // TODO: Check if the downloaded deployment is from the same chainId.
-      // Cannon is not doing this for deployments loaded from @ipfs urls, but,
-      // we are currently not saving the chainId on the metadata, so I'm not sure how could we do it.
-
-      // TODO: check that the remaining steps to be executed do not depend on other not-executed steps
-      // as this would cause an error (or only execute until it can)
-
-      // const runtime = new ChainBuilderRuntime({
-      //   provider: readOnlyProvider as unknown as CannonWrapperGenericProvider,
-      //   chainId,
-      //   getSigner: async (addr: string) => readOnlyProvider.getSigner(addr),
-      //   baseDir: null,
-      //   snapshots: false,
-      //   allowPartialDeploy: true,
-      //   publicSourceCode: true,
-      // }, loader);
-
-      // await runtime.restoreMisc(incompleteDeploy.miscUrl);
-      // const def = new ChainDefinition(incompleteDeploy.def);
-
-      // const initialCtx = await createInitialContext(def, incompleteDeploy.meta, incompleteDeploy.options);
-
-      // setDeployStatus('building...')
-      // const newState = await build(runtime, def, incompleteDeploy.state ?? {}, initialCtx);
-
-      // console.log('newState: ', newState)
-
       // TODO:
       //  1. publish newState on IPFS
       //  2. publish new package in the registry
@@ -169,12 +163,6 @@ const Cannon = (): React.ReactElement => {
     }
   }
 
-  useEffect(() => {
-    resetStatus()
-    if (!chainId || !preset || !packageUrl) return
-    loadPendingTransactions()
-  }, [chainId, preset, packageUrl])
-
   if (!connected) return <p>Not connected to safe wallet</p>
 
   return (
@@ -182,6 +170,8 @@ const Cannon = (): React.ReactElement => {
       <h3>Current Safe</h3>
       <p>chainId: {chainId}</p>
       <p>Safe: {safe.safeAddress}</p>
+
+      <Settings defaultValue={defaultSettings} onChange={setSettings} />
 
       <h2>Deployment</h2>
       <div>

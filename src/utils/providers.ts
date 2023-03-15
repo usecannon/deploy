@@ -2,9 +2,9 @@ import { SafeAppProvider } from '@safe-global/safe-apps-provider'
 
 export class SkippedTransaction extends Error {
   method: string
-  params: any[]
+  params: unknown[]
 
-  constructor(method: string, params: any[]) {
+  constructor(method: string, params: unknown[]) {
     super('Skipped Transaction')
     this.method = method
     this.params = params
