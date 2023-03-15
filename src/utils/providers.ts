@@ -1,4 +1,4 @@
-import { SafeAppProvider } from '@safe-global/safe-apps-provider';
+import { SafeAppProvider } from '@safe-global/safe-apps-provider'
 
 export class SkippedTransaction extends Error {
   method: string

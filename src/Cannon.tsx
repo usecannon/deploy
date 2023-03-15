@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { ethers } from 'ethers';
+import { ethers } from 'ethers'
 import {
   build,
   CannonWrapperGenericProvider,
@@ -9,21 +9,22 @@ import {
   DeploymentInfo,
   Events,
   IPFSLoader,
-  OnChainRegistry
+  OnChainRegistry,
 } from '@usecannon/builder'
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
-import { SafeAppProvider } from '@safe-global/safe-apps-provider';
-import { DebounceInput } from 'react-debounce-input';
-import { ReadOnlySafeAppProvider, SkippedTransaction } from './utils/providers';
+import { SafeAppProvider } from '@safe-global/safe-apps-provider'
+import { DebounceInput } from 'react-debounce-input'
+import { ReadOnlySafeAppProvider, SkippedTransaction } from './utils/providers'
 
 interface PendingStep {
-  stepName; string;
+  stepName: string
   params: any
 }
 
 // TODO: move to dynamic env bars
-const registryProviderUrl = 'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7'
+const registryProviderUrl =
+  'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7'
 const registryAddress = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba'
 
 const IPFS_URL = 'https://ipfs.io'
@@ -50,17 +51,21 @@ const Cannon = (): React.ReactElement => {
   const readOnlyProvider = useMemo(() => {
     const cannonProvider = new ReadOnlySafeAppProvider(safe, sdk)
     return new ethers.providers.Web3Provider(cannonProvider)
-  }, [sdk, safe]);
+  }, [sdk, safe])
 
-  const registry = useMemo(() => new OnChainRegistry({
-    signerOrProvider: registryProviderUrl,
-    address: registryAddress,
-  }), [registryProviderUrl, registryAddress]);
+  const registry = useMemo(
+    () =>
+      new OnChainRegistry({
+        signerOrProvider: registryProviderUrl,
+        address: registryAddress,
+      }),
+    [registryProviderUrl, registryAddress]
+  )
 
   const resetStatus = () => {
     setDeployStatus('')
     setDeployErrorMessage('')
-    setPendingTxs([]);
+    setPendingTxs([])
   }
 
   const setError = (msg: string) => {
@@ -75,12 +80,18 @@ const Cannon = (): React.ReactElement => {
 
     try {
       const loader = new IPFSLoader(IPFS_URL, registry)
-      const incompleteDeploy = await loader.readDeploy(packageUrl, preset, chainId)
+      const incompleteDeploy = await loader.readDeploy(
+        packageUrl,
+        preset,
+        chainId
+      )
 
       console.log('Deploy: ', incompleteDeploy)
 
       if (!incompleteDeploy) {
-        return setError(`Package not found: ${packageUrl} (chainId: ${chainId} | preset: ${preset})`)
+        return setError(
+          `Package not found: ${packageUrl} (chainId: ${chainId} | preset: ${preset})`
+        )
       }
 
       if (incompleteDeploy.status === 'none') {
@@ -88,7 +99,9 @@ const Cannon = (): React.ReactElement => {
       }
 
       if (incompleteDeploy.status === 'complete') {
-        return setError('Selected deployment is already completed, there are no pending transactions')
+        return setError(
+          'Selected deployment is already completed, there are no pending transactions'
+        )
       }
 
       setDeployStatus(incompleteDeploy.status)
@@ -100,7 +113,7 @@ const Cannon = (): React.ReactElement => {
         loader,
       })
 
-      setPendingTxs(txs);
+      setPendingTxs(txs)
 
       // TODO: Check if the downloaded deployment is from the same chainId.
       // Cannon is not doing this for deployments loaded from @ipfs urls, but,
@@ -147,7 +160,7 @@ const Cannon = (): React.ReactElement => {
       const txs = pendingTxs.map(({ params }) => ({
         to: params.to as string,
         value: '0',
-        data: params.data as string
+        data: params.data as string,
       })) satisfies BaseTransaction[]
 
       await sdk.txs.send({ txs })
@@ -172,30 +185,34 @@ const Cannon = (): React.ReactElement => {
 
       <h2>Deployment</h2>
       <div>
-        <label htmlFor='preset'>Preset:</label>
+        <label htmlFor="preset">Preset:</label>
         <DebounceInput
-          name='preset'
+          name="preset"
           value={preset}
-          onChange={event => setPreset(event.target.value)}
+          onChange={(event) => setPreset(event.target.value)}
         />
       </div>
       <div>
-        <label htmlFor='packageUrl'>Package Url:</label>
+        <label htmlFor="packageUrl">Package Url:</label>
         <DebounceInput
-          name='packageUrl'
+          name="packageUrl"
           value={packageUrl}
-          onChange={event => setPackageUrl(event.target.value)}
+          onChange={(event) => setPackageUrl(event.target.value)}
         />
       </div>
 
-      {deployErrorMessage && <p style={{color: 'red'}}>{deployErrorMessage}</p>}
+      {deployErrorMessage && (
+        <p style={{ color: 'red' }}>{deployErrorMessage}</p>
+      )}
       {deployStatus && <p>Status: {deployStatus}</p>}
       {pendingTxs.length > 0 && (
         <div>
           <h3>Pending Transactions</h3>
           {pendingTxs.map((tx) => (
             <div key={tx.stepName}>
-              <p><strong>{tx.stepName}</strong></p>
+              <p>
+                <strong>{tx.stepName}</strong>
+              </p>
               <p>Data: {tx.params.data}</p>
             </div>
           ))}
@@ -214,27 +231,34 @@ async function _getPendingTransactions({
   incompleteDeploy,
   loader,
 }: {
-  chainId: number,
-  readOnlyProvider: ethers.providers.Web3Provider,
-  incompleteDeploy: DeploymentInfo,
+  chainId: number
+  readOnlyProvider: ethers.providers.Web3Provider
+  incompleteDeploy: DeploymentInfo
   loader: IPFSLoader
 }) {
   const provider = readOnlyProvider as unknown as CannonWrapperGenericProvider
 
-  const runtime = new ChainBuilderRuntime({
-    provider,
-    chainId,
-    getSigner: async (addr: string) => provider.getSigner(addr),
-    baseDir: null,
-    snapshots: false,
-    allowPartialDeploy: true,
-    publicSourceCode: true,
-  }, loader);
+  const runtime = new ChainBuilderRuntime(
+    {
+      provider,
+      chainId,
+      getSigner: async (addr: string) => provider.getSigner(addr),
+      baseDir: null,
+      snapshots: false,
+      allowPartialDeploy: true,
+      publicSourceCode: true,
+    },
+    loader
+  )
 
-  await runtime.restoreMisc(incompleteDeploy.miscUrl);
-  const def = new ChainDefinition(incompleteDeploy.def);
+  await runtime.restoreMisc(incompleteDeploy.miscUrl)
+  const def = new ChainDefinition(incompleteDeploy.def)
 
-  const initialCtx = await createInitialContext(def, incompleteDeploy.meta, incompleteDeploy.options);
+  const initialCtx = await createInitialContext(
+    def,
+    incompleteDeploy.meta,
+    incompleteDeploy.options
+  )
 
   const pendingTxs: PendingStep[] = []
 
@@ -243,13 +267,13 @@ async function _getPendingTransactions({
 
     pendingTxs.push({
       stepName,
-      params: err.params[0]
+      params: err.params[0],
     } as PendingStep)
   })
 
-  await build(runtime, def, incompleteDeploy.state ?? {}, initialCtx);
+  await build(runtime, def, incompleteDeploy.state ?? {}, initialCtx)
 
-  return pendingTxs;
+  return pendingTxs
 }
 
 export default Cannon
