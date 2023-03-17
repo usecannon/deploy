@@ -9,26 +9,28 @@ import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { DebounceInput } from 'react-debounce-input'
 import { Settings } from './components/Settings'
-import { createFork, deleteFork, TenderlySettings } from './utils/tenderly'
-import { CannonTransaction, getPendingStepsTransactions } from './utils/cannon'
+import { createFork, deleteFork } from './utils/tenderly'
+import { CannonTransaction, build } from './utils/cannon'
 
 // TODO: move to dynamic env bars
 const registryProviderUrl =
   'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7'
 const registryAddress = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba'
 
-const IPFS_URL = 'https://ipfs.io'
-
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
 
+// Strcuture of components settings, with its default values
 const defaultSettings = {
   tenderlyKey: '',
   tenderlyProject: '',
-} satisfies TenderlySettings
+  publishIpfsUrl: '',
+  ipfsUrl: 'https://ipfs.io',
+}
 
 const Cannon = (): React.ReactElement => {
-  const [settings, setSettings] = useState<TenderlySettings>(defaultSettings)
+  const [settings, setSettings] =
+    useState<typeof defaultSettings>(defaultSettings)
 
   const [preset, setPreset] = useState('main')
   const [packageUrl, setPackageUrl] = useState('')
@@ -79,7 +81,7 @@ const Cannon = (): React.ReactElement => {
     const fork = await createFork(settings, chainId)
 
     try {
-      const loader = new IPFSLoader(IPFS_URL, registry)
+      const loader = new IPFSLoader(settings.ipfsUrl, registry)
 
       const incompleteDeploy = await loader.readDeploy(
         packageUrl,
@@ -112,7 +114,7 @@ const Cannon = (): React.ReactElement => {
         new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
       )
 
-      const cannonTxs = await getPendingStepsTransactions({
+      const { newState, executedTxs } = await build({
         chainId,
         provider,
         incompleteDeploy,
@@ -120,10 +122,12 @@ const Cannon = (): React.ReactElement => {
       })
 
       const pendingTxs = await Promise.all(
-        cannonTxs.map((tx) => provider.getTransaction(tx.hash))
+        executedTxs.map((tx) => provider.getTransaction(tx.hash))
       )
 
-      setPendingCannonTxs(cannonTxs)
+      console.log({ newState, executedTxs })
+
+      setPendingCannonTxs(executedTxs)
       setPendingTxs(pendingTxs)
 
       // TODO:

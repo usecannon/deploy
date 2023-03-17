@@ -7,13 +7,13 @@ import {
   Events,
   IPFSLoader,
   TransactionMap,
-  build,
+  build as cannonBuild,
   createInitialContext,
 } from '@usecannon/builder'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
-export async function getPendingStepsTransactions({
+export async function build({
   chainId,
   provider,
   incompleteDeploy,
@@ -37,12 +37,12 @@ export async function getPendingStepsTransactions({
     loader
   )
 
-  const pendingSteps: ChainArtifacts[] = []
+  const executedSteps: ChainArtifacts[] = []
 
   runtime.on(
     Events.PostStepExecute,
     (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
-      pendingSteps.push(stepOutput)
+      executedSteps.push(stepOutput)
     }
   )
 
@@ -55,9 +55,14 @@ export async function getPendingStepsTransactions({
     incompleteDeploy.options
   )
 
-  await build(runtime, def, incompleteDeploy.state ?? {}, initialCtx)
+  const newState = await cannonBuild(
+    runtime,
+    def,
+    incompleteDeploy.state ?? {},
+    initialCtx
+  )
 
-  const pendingTxs = pendingSteps.map((s) => Object.values(s.txns)).flat()
+  const executedTxs = executedSteps.map((s) => Object.values(s.txns)).flat()
 
-  return pendingTxs
+  return { newState, executedTxs }
 }

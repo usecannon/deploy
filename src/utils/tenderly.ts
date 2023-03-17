@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export interface TenderlySettings {
+interface TenderlySettings {
   tenderlyKey: string
   tenderlyProject: string
 }
