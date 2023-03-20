@@ -138,18 +138,17 @@ const Cannon = (): React.ReactElement => {
           settings.publishIpfsUrl.replace(/\/$/, ''),
           registry
         )
-        const miscUrl = 'ipfs://aaa'
-        const deployUrl = 'ipfs://bbb'
-        // const miscUrl = await publishLoader.putMisc(runtime.misc)
 
-        // const deployUrl = await publishLoader.putDeploy({
-        //   def: def.toJson(),
-        //   state: newState,
-        //   options: incompleteDeploy.options,
-        //   status: 'complete',
-        //   meta: incompleteDeploy.meta,
-        //   miscUrl,
-        // })
+        const miscUrl = await publishLoader.putMisc(runtime.misc)
+
+        const deployUrl = await publishLoader.putDeploy({
+          def: def.toJson(),
+          state: newState,
+          options: incompleteDeploy.options,
+          status: 'complete',
+          meta: incompleteDeploy.meta,
+          miscUrl,
+        })
 
         const tags = (settings.publishTags || '')
           .split(',')
