@@ -1,3 +1,4 @@
+import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
 import {
   CannonWrapperGenericProvider,
   ChainArtifacts,
@@ -10,6 +11,7 @@ import {
   build as cannonBuild,
   createInitialContext,
 } from '@usecannon/builder'
+import { ethers } from 'ethers'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
@@ -49,7 +51,7 @@ export async function build({
   await runtime.restoreMisc(incompleteDeploy.miscUrl)
   const def = new ChainDefinition(incompleteDeploy.def)
 
-  const initialCtx = await createInitialContext(
+  const ctx = await createInitialContext(
     def,
     incompleteDeploy.meta,
     incompleteDeploy.options
@@ -59,10 +61,38 @@ export async function build({
     runtime,
     def,
     incompleteDeploy.state ?? {},
-    initialCtx
+    ctx
   )
 
   const executedTxs = executedSteps.map((s) => Object.values(s.txns)).flat()
 
-  return { runtime, def, newState, executedTxs }
+  const name = def.getName(ctx)
+  const version = def.getVersion(ctx)
+
+  return { name, version, runtime, def, newState, executedTxs }
+}
+
+interface PublishParams {
+  packageName: string
+  variant: string
+  packageTags: string[]
+  packageVersionUrl: string
+  packageMetaUrl: string
+}
+
+export function createPublishData({
+  packageName,
+  variant,
+  packageTags,
+  packageVersionUrl,
+  packageMetaUrl,
+}: PublishParams) {
+  const ICannonRegistry = new ethers.utils.Interface(CannonRegistryAbi)
+  return ICannonRegistry.encodeFunctionData('publish', [
+    ethers.utils.formatBytes32String(packageName),
+    ethers.utils.formatBytes32String(variant),
+    packageTags.map((p) => ethers.utils.formatBytes32String(p)),
+    packageVersionUrl,
+    packageMetaUrl,
+  ])
 }

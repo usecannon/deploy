@@ -10,7 +10,7 @@ import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { DebounceInput } from 'react-debounce-input'
 import { Settings, SettingsValues } from './components/Settings'
 import { createFork, deleteFork } from './utils/tenderly'
-import { CannonTransaction, build } from './utils/cannon'
+import { CannonTransaction, build, createPublishData } from './utils/cannon'
 
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
@@ -24,6 +24,7 @@ const defaultSettings = {
   registryAddress: '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba',
   registryProviderUrl:
     'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7',
+  publishTags: 'latest',
 } satisfies SettingsValues
 
 const Cannon = (): React.ReactElement => {
@@ -35,9 +36,7 @@ const Cannon = (): React.ReactElement => {
   const [pendingCannonTxs, setPendingCannonTxs] = useState<CannonTransaction[]>(
     []
   )
-  const [pendingTxs, setPendingTxs] = useState<
-    ethers.providers.TransactionResponse[]
-  >([])
+  const [pendingTxs, setPendingTxs] = useState<BaseTransaction[]>([])
 
   const [deployStatus, setDeployStatus] = useState('loading...')
   const [deployErrorMessage, setDeployErrorMessage] = useState('')
@@ -76,7 +75,10 @@ const Cannon = (): React.ReactElement => {
         address: settings.registryAddress,
       })
 
-      const loader = new IPFSLoader(settings.ipfsUrl, registry)
+      const loader = new IPFSLoader(
+        settings.ipfsUrl.replace(/\/$/, ''),
+        registry
+      )
 
       const incompleteDeploy = await loader.readDeploy(
         packageUrl,
@@ -109,43 +111,73 @@ const Cannon = (): React.ReactElement => {
         new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
       )
 
-      const { def, newState, executedTxs, runtime } = await build({
-        chainId,
-        provider,
-        incompleteDeploy,
-        loader,
-      })
+      const { name, version, def, newState, executedTxs, runtime } =
+        await build({
+          chainId,
+          provider,
+          incompleteDeploy,
+          loader,
+        })
 
-      const pendingTxs = await Promise.all(
+      const pendingTxs: BaseTransaction[] = await Promise.all(
         executedTxs.map((tx) => provider.getTransaction(tx.hash))
+      ).then((txs) =>
+        txs.map((tx) => ({
+          to: tx.to,
+          value: tx.value.toString(),
+          data: tx.data,
+        }))
       )
-
-      setPendingCannonTxs(executedTxs)
-      setPendingTxs(pendingTxs)
-
-      console.log({ def, newState, executedTxs })
 
       const registryChainId = (await registry.provider.getNetwork()).chainId
 
       if (registryChainId === chainId) {
         setDeployStatus('Preparing package for publication')
 
-        const publishLoader = new IPFSLoader(settings.publishIpfsUrl, registry)
-        const miscUrl = await publishLoader.putMisc(runtime.misc)
+        const publishLoader = new IPFSLoader(
+          settings.publishIpfsUrl.replace(/\/$/, ''),
+          registry
+        )
+        const miscUrl = 'ipfs://aaa'
+        const deployUrl = 'ipfs://bbb'
+        // const miscUrl = await publishLoader.putMisc(runtime.misc)
 
-        const deployUrl = await publishLoader.putDeploy({
-          def: def.toJson(),
-          state: newState,
-          options: incompleteDeploy.options,
-          status: 'complete',
-          meta: incompleteDeploy.meta,
-          miscUrl,
+        // const deployUrl = await publishLoader.putDeploy({
+        //   def: def.toJson(),
+        //   state: newState,
+        //   options: incompleteDeploy.options,
+        //   status: 'complete',
+        //   meta: incompleteDeploy.meta,
+        //   miscUrl,
+        // })
+
+        const tags = (settings.publishTags || '')
+          .split(',')
+          .map((t) => t.trim())
+          .filter((t) => !!t)
+
+        const publishData = createPublishData({
+          packageName: name,
+          variant: preset,
+          packageTags: [version, ...tags],
+          packageVersionUrl: deployUrl,
+          packageMetaUrl: miscUrl,
         })
 
-        console.log({ miscUrl, deployUrl })
+        setPendingTxs([
+          ...pendingTxs,
+          {
+            to: settings.registryAddress,
+            value: '0',
+            data: publishData,
+          },
+        ])
       } else {
         setDeployStatus('Done - Registry will not be updated')
+        setPendingTxs(pendingTxs)
       }
+
+      setPendingCannonTxs(executedTxs)
 
       // TODO:
       //  1. publish newState on IPFS
@@ -162,11 +194,7 @@ const Cannon = (): React.ReactElement => {
     if (pendingCannonTxs.length === 0) return
 
     try {
-      const txs = pendingTxs.map((tx) => ({
-        to: tx.to,
-        value: tx.value.toString(),
-        data: tx.data,
-      })) satisfies BaseTransaction[]
+      const txs = pendingTxs
       await sdk.txs.send({ txs })
     } catch (err) {
       console.error(err)
