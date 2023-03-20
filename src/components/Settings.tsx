@@ -4,27 +4,28 @@ import { useEffect } from 'react'
 
 import { useDebounceOnce } from '../utils/use-debounce-once'
 
+export type SettingsValues = { [k: string]: null | undefined | string }
+
 interface Props<T> {
   defaultValue: T
   onChange: (val: T) => void
 }
 
-export function Settings<T>({ defaultValue, onChange }: Props<T>) {
+export function Settings<T extends LocalStorageValues>({
+  defaultValue,
+  onChange,
+}: Props<T>) {
   const [settings, setSettings] = useLocalStorage(defaultValue)
 
-  // Set default settings
+  // Set default settings, with 300ms delay to make sure that values are loaded from localstorage
   useDebounceOnce(
     () => {
-      let edited = false
       const defaulted = { ...settings }
       for (const [key, val] of Object.entries(defaultValue)) {
         if (!val || settings[key]) continue
-        if (val !== settings[key]) {
-          edited = true
-          defaulted[key] = val
-        }
-        if (edited) setSettings(defaulted)
+        if (val !== settings[key]) defaulted[key] = val
       }
+      setSettings(defaulted)
     },
     [settings],
     300

@@ -64,5 +64,5 @@ export async function build({
 
   const executedTxs = executedSteps.map((s) => Object.values(s.txns)).flat()
 
-  return { newState, executedTxs }
+  return { runtime, def, newState, executedTxs }
 }

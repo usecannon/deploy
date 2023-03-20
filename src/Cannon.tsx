@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import {
   CannonWrapperGenericProvider,
@@ -8,14 +8,9 @@ import {
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { DebounceInput } from 'react-debounce-input'
-import { Settings } from './components/Settings'
+import { Settings, SettingsValues } from './components/Settings'
 import { createFork, deleteFork } from './utils/tenderly'
 import { CannonTransaction, build } from './utils/cannon'
-
-// TODO: move to dynamic env bars
-const registryProviderUrl =
-  'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7'
-const registryAddress = '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba'
 
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
@@ -26,7 +21,10 @@ const defaultSettings = {
   tenderlyProject: '',
   publishIpfsUrl: '',
   ipfsUrl: 'https://ipfs.io',
-}
+  registryAddress: '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba',
+  registryProviderUrl:
+    'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7',
+} satisfies SettingsValues
 
 const Cannon = (): React.ReactElement => {
   const [settings, setSettings] =
@@ -47,15 +45,6 @@ const Cannon = (): React.ReactElement => {
   const { safe, connected, sdk } = useSafeAppsSDK()
   const { chainId } = safe
 
-  const registry = useMemo(
-    () =>
-      new OnChainRegistry({
-        signerOrProvider: registryProviderUrl,
-        address: registryAddress,
-      }),
-    [registryProviderUrl, registryAddress]
-  )
-
   useEffect(() => {
     resetStatus()
     if (!chainId || !preset || !packageUrl) return
@@ -66,6 +55,7 @@ const Cannon = (): React.ReactElement => {
     setDeployStatus('')
     setDeployErrorMessage('')
     setPendingCannonTxs([])
+    setPendingTxs([])
   }
 
   const setError = (msg: string) => {
@@ -81,6 +71,11 @@ const Cannon = (): React.ReactElement => {
     const fork = await createFork(settings, chainId)
 
     try {
+      const registry = new OnChainRegistry({
+        signerOrProvider: settings.registryProviderUrl,
+        address: settings.registryAddress,
+      })
+
       const loader = new IPFSLoader(settings.ipfsUrl, registry)
 
       const incompleteDeploy = await loader.readDeploy(
@@ -107,14 +102,14 @@ const Cannon = (): React.ReactElement => {
         )
       }
 
-      setDeployStatus(incompleteDeploy.status)
+      setDeployStatus('Generating deploy transactions')
 
       const provider = new CannonWrapperGenericProvider(
         {},
         new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
       )
 
-      const { newState, executedTxs } = await build({
+      const { def, newState, executedTxs, runtime } = await build({
         chainId,
         provider,
         incompleteDeploy,
@@ -125,16 +120,36 @@ const Cannon = (): React.ReactElement => {
         executedTxs.map((tx) => provider.getTransaction(tx.hash))
       )
 
-      console.log({ newState, executedTxs })
-
       setPendingCannonTxs(executedTxs)
       setPendingTxs(pendingTxs)
+
+      console.log({ def, newState, executedTxs })
+
+      const registryChainId = (await registry.provider.getNetwork()).chainId
+
+      if (registryChainId === chainId) {
+        setDeployStatus('Preparing package for publication')
+
+        const publishLoader = new IPFSLoader(settings.publishIpfsUrl, registry)
+        const miscUrl = await publishLoader.putMisc(runtime.misc)
+
+        const deployUrl = await publishLoader.putDeploy({
+          def: def.toJson(),
+          state: newState,
+          options: incompleteDeploy.options,
+          status: 'complete',
+          meta: incompleteDeploy.meta,
+          miscUrl,
+        })
+
+        console.log({ miscUrl, deployUrl })
+      } else {
+        setDeployStatus('Done - Registry will not be updated')
+      }
 
       // TODO:
       //  1. publish newState on IPFS
       //  2. publish new package in the registry
-
-      setDeployStatus('valid')
     } catch (err) {
       console.error(err)
       return setError(err.message)
