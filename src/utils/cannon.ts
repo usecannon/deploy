@@ -33,7 +33,7 @@ export async function build({
       getSigner: async (addr: string) => provider.getSigner(addr),
       baseDir: null,
       snapshots: false,
-      allowPartialDeploy: false,
+      allowPartialDeploy: true,
       publicSourceCode: true,
     },
     loader

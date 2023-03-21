@@ -208,7 +208,12 @@ const Cannon = (): React.ReactElement => {
       <p>chainId: {chainId}</p>
       <p>Safe: {safe.safeAddress}</p>
 
-      <Settings defaultValue={defaultSettings} onChange={setSettings} />
+      <Settings
+        defaultValue={defaultSettings}
+        onChange={(v) => {
+          setSettings(v)
+        }}
+      />
 
       <h2>Deployment</h2>
       <div>
