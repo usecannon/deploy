@@ -64,7 +64,10 @@ export async function build({
     ctx
   )
 
-  const executedTxs = executedSteps.map((s) => Object.values(s.txns)).flat()
+  const executedTxs = executedSteps
+    .map((s) => !!s && Object.values(s.txns))
+    .filter((tx) => !!tx)
+    .flat()
 
   const name = def.getName(ctx)
   const version = def.getVersion(ctx)

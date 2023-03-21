@@ -145,7 +145,7 @@ const Cannon = (): React.ReactElement => {
           def: def.toJson(),
           state: newState,
           options: incompleteDeploy.options,
-          status: 'complete',
+          status: 'complete', // TODO: actually check if there are pending steps to be executed
           meta: incompleteDeploy.meta,
           miscUrl,
         })
