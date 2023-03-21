@@ -65,7 +65,7 @@ export async function build({
   )
 
   const executedTxs = executedSteps
-    .map((s) => !!s && Object.values(s.txns))
+    .map((s) => !!s?.txns && Object.values(s.txns))
     .filter((tx) => !!tx)
     .flat()
 
