@@ -11,7 +11,7 @@ interface Props<T> {
   onChange: (val: T) => void
 }
 
-export function Settings<T extends LocalStorageValues>({
+export function Settings<T extends SettingsValues>({
   defaultValue,
   onChange,
 }: Props<T>) {
