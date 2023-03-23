@@ -148,29 +148,33 @@ const Cannon = (): React.ReactElement => {
         }))
       )
 
+      if (safeTxs.length === 0) {
+        setSafeTxs(safeTxs)
+        throw new Error('There are no transactions that can be executed')
+      }
+
+      setDeployStatus('Uploading to IPFS')
+
+      const publishLoader = new IPFSLoader(
+        settings.publishIpfsUrl.replace(/\/$/, ''),
+        registry
+      )
+
+      const miscUrl = await publishLoader.putMisc(runtime.misc)
+
+      const deployUrl = await publishLoader.putDeploy({
+        def: def.toJson(),
+        state: newState,
+        options: incompleteDeploy.options,
+        status: skippedSteps.length > 0 ? 'partial' : 'complete',
+        meta: incompleteDeploy.meta,
+        miscUrl,
+      })
+
       const registryChainId = (await registry.provider.getNetwork()).chainId
 
-      if (safeTxs.length === 0) {
-        setDeployStatus('There are no transactions that can be executed')
-        setSafeTxs(safeTxs)
-      } else if (registryChainId === chainId) {
+      if (registryChainId === chainId) {
         setDeployStatus('Preparing package for publication')
-
-        const publishLoader = new IPFSLoader(
-          settings.publishIpfsUrl.replace(/\/$/, ''),
-          registry
-        )
-
-        const miscUrl = await publishLoader.putMisc(runtime.misc)
-
-        const deployUrl = await publishLoader.putDeploy({
-          def: def.toJson(),
-          state: newState,
-          options: incompleteDeploy.options,
-          status: 'complete', // TODO: actually check if there are pending steps to be executed
-          meta: incompleteDeploy.meta,
-          miscUrl,
-        })
 
         const tags = (settings.publishTags || '')
           .split(',')
@@ -193,9 +197,13 @@ const Cannon = (): React.ReactElement => {
             data: publishData,
           },
         ])
+
+        setDeployStatus(
+          'Ready to publish! Click the button below to execute the transactions'
+        )
       } else {
         setDeployStatus(
-          'Done - Cannon Registry will not be updated because is on a different network'
+          `Done - Cannon Registry will not be updated because it is on a different network - New package URL: ${deployUrl}`
         )
         setSafeTxs(safeTxs)
       }
