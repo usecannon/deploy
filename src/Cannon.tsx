@@ -63,6 +63,7 @@ const Cannon = (): React.ReactElement => {
     setDeployErrorMessage('')
     setSimulatedCannonTxs([])
     setSafeTxs([])
+    setSkippedSteps([])
   }
 
   const setError = (msg: string) => {
@@ -130,6 +131,7 @@ const Cannon = (): React.ReactElement => {
       } = await build({
         chainId,
         provider,
+        defaultSignerAddress: safe.safeAddress,
         incompleteDeploy,
         loader,
       })
@@ -147,7 +149,7 @@ const Cannon = (): React.ReactElement => {
       const registryChainId = (await registry.provider.getNetwork()).chainId
 
       if (safeTxs.length === 0) {
-        setDeployStatus('No transactions that can be executed')
+        setDeployStatus('There are no transactions that can be executed')
         setSafeTxs(safeTxs)
       } else if (registryChainId === chainId) {
         setDeployStatus('Preparing package for publication')

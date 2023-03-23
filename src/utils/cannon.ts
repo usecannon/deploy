@@ -23,11 +23,13 @@ export interface StepExecutionError {
 export async function build({
   chainId,
   provider,
+  defaultSignerAddress,
   incompleteDeploy,
   loader,
 }: {
   chainId: number
   provider: CannonWrapperGenericProvider
+  defaultSignerAddress: string
   incompleteDeploy: DeploymentInfo
   loader: IPFSLoader
 }) {
@@ -36,6 +38,7 @@ export async function build({
       provider,
       chainId,
       getSigner: async (addr: string) => provider.getSigner(addr),
+      getDefaultSigner: async () => provider.getSigner(defaultSignerAddress),
       baseDir: null,
       snapshots: false,
       allowPartialDeploy: true,

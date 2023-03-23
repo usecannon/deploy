@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
   "scripts": {
     "start": "parcel serve src/index.html --cert certs/localhost.pem --key certs/localhost-key.pem",
     "build": "parcel build src/index.html",
