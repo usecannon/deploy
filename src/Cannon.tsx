@@ -89,6 +89,8 @@ const Cannon = (): React.ReactElement => {
         registry
       )
 
+      setDeployStatus('Loading deployment data')
+
       const incompleteDeploy = await loader.readDeploy(
         packageUrl,
         preset,
