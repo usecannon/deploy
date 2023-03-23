@@ -1393,10 +1393,10 @@
     "@typescript-eslint/types" "5.55.0"
     eslint-visitor-keys "^3.3.0"
 
-"@usecannon/builder@2.1.11-alpha.0":
-  version "2.1.11-alpha.0"
-  resolved "https://registry.yarnpkg.com/@usecannon/builder/-/builder-2.1.11-alpha.0.tgz#d7c30a0854121acee9638a6c7256daa64b13fbe6"
-  integrity sha512-1BXOpV2GQzlcImaYbTNvS74B38Ff+UqTNh1Saf/4qlwmISCPqj60AoCtHyZI/yQS9nm8TOCeHkBxAA9kjVzsHA==
+"@usecannon/builder@^2.1.10":
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/@usecannon/builder/-/builder-2.1.10.tgz#d851d06e0461ef0edbe057d5f5e9d6cbc81ee093"
+  integrity sha512-w5JvN9jjsgqxfDNjelA7bITgJ1Lu2gS0P6VjDMNP8ajQ+TookKOnuESWVKQoPr02D2hJO5aXb3E3kqeSniYZvw==
   dependencies:
     ajv "^8.11.0"
     axios "^1.2.2"
