@@ -15,6 +15,11 @@ import { ethers } from 'ethers'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
+export interface StepExecutionError {
+  stepName: string
+  err: Error
+}
+
 export async function build({
   chainId,
   provider,
@@ -39,14 +44,20 @@ export async function build({
     loader
   )
 
-  const executedSteps: ChainArtifacts[] = []
+  const simulatedSteps: ChainArtifacts[] = []
+  const skippedSteps: StepExecutionError[] = []
 
   runtime.on(
     Events.PostStepExecute,
     (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
-      executedSteps.push(stepOutput)
+      simulatedSteps.push(stepOutput)
     }
   )
+
+  runtime.on(Events.SkipDeploy, (stepName: string, err: Error) => {
+    console.log(stepName, err)
+    skippedSteps.push({ stepName, err })
+  })
 
   await runtime.restoreMisc(incompleteDeploy.miscUrl)
   const def = new ChainDefinition(incompleteDeploy.def)
@@ -64,7 +75,7 @@ export async function build({
     ctx
   )
 
-  const executedTxs = executedSteps
+  const simulatedTxs = simulatedSteps
     .map((s) => !!s?.txns && Object.values(s.txns))
     .filter((tx) => !!tx)
     .flat()
@@ -72,7 +83,7 @@ export async function build({
   const name = def.getName(ctx)
   const version = def.getVersion(ctx)
 
-  return { name, version, runtime, def, newState, executedTxs }
+  return { name, version, runtime, def, newState, simulatedTxs, skippedSteps }
 }
 
 interface PublishParams {

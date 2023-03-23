@@ -10,7 +10,12 @@ import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { DebounceInput } from 'react-debounce-input'
 import { Settings, SettingsValues } from './components/Settings'
 import { createFork, deleteFork } from './utils/tenderly'
-import { CannonTransaction, build, createPublishData } from './utils/cannon'
+import {
+  CannonTransaction,
+  build,
+  createPublishData,
+  StepExecutionError,
+} from './utils/cannon'
 
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
@@ -33,10 +38,13 @@ const Cannon = (): React.ReactElement => {
 
   const [preset, setPreset] = useState('main')
   const [packageUrl, setPackageUrl] = useState('')
-  const [pendingCannonTxs, setPendingCannonTxs] = useState<CannonTransaction[]>(
+  const [simulatedCannonTxs, setSimulatedCannonTxs] = useState<
+    CannonTransaction[]
+  >([])
+  const [safeTxs, setSafeTxs] = useState<BaseTransaction[]>([])
+  const [skippedCannonSteps, setSkippedSteps] = useState<StepExecutionError[]>(
     []
   )
-  const [pendingTxs, setPendingTxs] = useState<BaseTransaction[]>([])
 
   const [deployStatus, setDeployStatus] = useState('loading...')
   const [deployErrorMessage, setDeployErrorMessage] = useState('')
@@ -53,8 +61,8 @@ const Cannon = (): React.ReactElement => {
   const resetStatus = () => {
     setDeployStatus('')
     setDeployErrorMessage('')
-    setPendingCannonTxs([])
-    setPendingTxs([])
+    setSimulatedCannonTxs([])
+    setSafeTxs([])
   }
 
   const setError = (msg: string) => {
@@ -111,16 +119,23 @@ const Cannon = (): React.ReactElement => {
         new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
       )
 
-      const { name, version, def, newState, executedTxs, runtime } =
-        await build({
-          chainId,
-          provider,
-          incompleteDeploy,
-          loader,
-        })
+      const {
+        name,
+        version,
+        def,
+        newState,
+        simulatedTxs,
+        runtime,
+        skippedSteps,
+      } = await build({
+        chainId,
+        provider,
+        incompleteDeploy,
+        loader,
+      })
 
-      const pendingTxs: BaseTransaction[] = await Promise.all(
-        executedTxs.map((tx) => provider.getTransaction(tx.hash))
+      const safeTxs: BaseTransaction[] = await Promise.all(
+        simulatedTxs.map((tx) => provider.getTransaction(tx.hash))
       ).then((txs) =>
         txs.map((tx) => ({
           to: tx.to,
@@ -131,7 +146,10 @@ const Cannon = (): React.ReactElement => {
 
       const registryChainId = (await registry.provider.getNetwork()).chainId
 
-      if (registryChainId === chainId) {
+      if (safeTxs.length === 0) {
+        setDeployStatus('No transactions that can be executed')
+        setSafeTxs(safeTxs)
+      } else if (registryChainId === chainId) {
         setDeployStatus('Preparing package for publication')
 
         const publishLoader = new IPFSLoader(
@@ -163,8 +181,8 @@ const Cannon = (): React.ReactElement => {
           packageMetaUrl: miscUrl,
         })
 
-        setPendingTxs([
-          ...pendingTxs,
+        setSafeTxs([
+          ...safeTxs,
           {
             to: settings.registryAddress,
             value: '0',
@@ -172,15 +190,14 @@ const Cannon = (): React.ReactElement => {
           },
         ])
       } else {
-        setDeployStatus('Done - Registry will not be updated')
-        setPendingTxs(pendingTxs)
+        setDeployStatus(
+          'Done - Cannon Registry will not be updated because is on a different network'
+        )
+        setSafeTxs(safeTxs)
       }
 
-      setPendingCannonTxs(executedTxs)
-
-      // TODO:
-      //  1. publish newState on IPFS
-      //  2. publish new package in the registry
+      setSimulatedCannonTxs(simulatedTxs)
+      setSkippedSteps(skippedSteps)
     } catch (err) {
       console.error(err)
       return setError(err.message)
@@ -189,11 +206,11 @@ const Cannon = (): React.ReactElement => {
     }
   }
 
-  const submitPendingTxs = async () => {
-    if (pendingCannonTxs.length === 0) return
+  const submitSafeTx = async () => {
+    if (simulatedCannonTxs.length === 0) return
 
     try {
-      const txs = pendingTxs
+      const txs = safeTxs
       await sdk.txs.send({ txs })
     } catch (err) {
       console.error(err)
@@ -237,20 +254,33 @@ const Cannon = (): React.ReactElement => {
         <p style={{ color: 'red' }}>{deployErrorMessage}</p>
       )}
       {deployStatus && <p>Status: {deployStatus}</p>}
-      {pendingCannonTxs.length > 0 && (
+      {simulatedCannonTxs.length > 0 && (
         <div>
-          <h3>Pending Transactions</h3>
-          {pendingCannonTxs.map((tx, i) => (
+          <h3>Transactions to Execute</h3>
+          {simulatedCannonTxs.map((tx, i) => (
             <div key={tx.hash}>
               <p>
                 <strong>{tx.deployedOn}</strong>
               </p>
-              <p>Data: {pendingTxs[i].data}</p>
+              <p>Data: {safeTxs[i].data}</p>
             </div>
           ))}
           <p>
-            <button onClick={submitPendingTxs}>Submit Transactions</button>
+            <button onClick={submitSafeTx}>Submit Transactions</button>
           </p>
+        </div>
+      )}
+      {skippedCannonSteps.length > 0 && (
+        <div>
+          <h3>Skipped Steps</h3>
+          {skippedCannonSteps.map(({ stepName, err }) => (
+            <div key={stepName}>
+              <p>
+                <strong>{stepName}</strong>
+              </p>
+              <p>Error: {err.message}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
