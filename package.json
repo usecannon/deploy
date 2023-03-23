@@ -26,6 +26,7 @@
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.7.0",
     "ethers": "^5.7.2",
+    "ipfs-http-client": "56.0.3",
     "parcel": "^2.8.3",
     "parcel-reporter-static-files-copy": "^1.5.0",
     "prettier": "^2.8.4",

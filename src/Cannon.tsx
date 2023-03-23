@@ -16,6 +16,7 @@ import {
   createPublishData,
   StepExecutionError,
 } from './utils/cannon'
+import { IPFSBrowserLoader } from './utils/browser-ipfs-loader'
 
 // Partial deployment example
 // const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
@@ -155,7 +156,7 @@ const Cannon = (): React.ReactElement => {
 
       setDeployStatus('Uploading to IPFS')
 
-      const publishLoader = new IPFSLoader(
+      const publishLoader = new IPFSBrowserLoader(
         settings.publishIpfsUrl.replace(/\/$/, ''),
         registry
       )
