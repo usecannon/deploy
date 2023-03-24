@@ -1,42 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import { ethers } from 'ethers'
+import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
   CannonWrapperGenericProvider,
   IPFSLoader,
   OnChainRegistry,
 } from '@usecannon/builder'
-import { BaseTransaction } from '@safe-global/safe-apps-sdk'
-import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 import { DebounceInput } from 'react-debounce-input'
-import { Settings, SettingsValues } from './components/Settings'
-import { createFork, deleteFork } from './utils/tenderly'
+import { ethers } from 'ethers'
+import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
+
 import {
   CannonTransaction,
+  StepExecutionError,
   build,
   createPublishData,
-  StepExecutionError,
 } from './utils/cannon'
 import { IPFSBrowserLoader } from './utils/browser-ipfs-loader'
+import { TSettings } from './types'
+import { createFork, deleteFork } from './utils/tenderly'
 
-// Partial deployment example
-// const packageUrl = '@ipfs:QmWwRaryQk4AtFPTPFyFv9qTNEZTFzR5MZJHQZqgMc2KvU'
+interface Props {
+  settings: TSettings
+}
 
-// Strcuture of components settings, with its default values
-const defaultSettings = {
-  tenderlyKey: '',
-  tenderlyProject: '',
-  publishIpfsUrl: '',
-  ipfsUrl: 'https://ipfs.io',
-  registryAddress: '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba',
-  registryProviderUrl:
-    'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7',
-  publishTags: 'latest',
-} satisfies SettingsValues
-
-const Cannon = (): React.ReactElement => {
-  const [settings, setSettings] =
-    useState<typeof defaultSettings>(defaultSettings)
-
+const Cannon = ({ settings }: Props): React.ReactElement => {
   const [preset, setPreset] = useState('main')
   const [packageUrl, setPackageUrl] = useState('')
   const [simulatedCannonTxs, setSimulatedCannonTxs] = useState<
@@ -233,17 +220,10 @@ const Cannon = (): React.ReactElement => {
   if (!connected) return <p>Not connected to safe wallet</p>
 
   return (
-    <div>
+    <>
       <h3>Current Safe</h3>
       <p>chainId: {chainId}</p>
       <p>Safe: {safe.safeAddress}</p>
-
-      <Settings
-        defaultValue={defaultSettings}
-        onChange={(v) => {
-          setSettings(v)
-        }}
-      />
 
       <h2>Deployment</h2>
       <div>
@@ -296,7 +276,7 @@ const Cannon = (): React.ReactElement => {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }
 

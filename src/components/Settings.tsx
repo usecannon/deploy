@@ -6,7 +6,7 @@ import { useDebounceOnce } from '../utils/use-debounce-once'
 
 export type SettingsValues = { [k: string]: null | undefined | string }
 
-interface Props<T> {
+interface Props<T extends SettingsValues> {
   defaultValue: T
   onChange: (val: T) => void
 }
