@@ -68,8 +68,8 @@ export async function build({
   const ctx = await createInitialContext(
     def,
     incompleteDeploy.meta,
-    incompleteDeploy.options,
-    {}
+    chainId,
+    incompleteDeploy.options
   )
 
   const newState = await cannonBuild(

@@ -17,6 +17,7 @@ export function Menu({ items, value, onChange }: Props) {
       <Navbar.Content enableCursorHighlight variant={'underline'}>
         {items.map(({ title }, index) => (
           <Navbar.Item
+            key={index}
             isActive={index === value}
             onClick={() => onChange(index)}
             css={{ cursor: 'pointer' }}

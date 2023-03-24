@@ -20,6 +20,8 @@ const DEFAULT_SETTINGS = {
 export function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
 
+  localStorage.setItem('debug', 'cannon*')
+
   return (
     <Providers loader={<span>Loading Safe Provider...</span>}>
       <Layout>
