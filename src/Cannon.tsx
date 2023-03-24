@@ -40,8 +40,6 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
   const { safe, connected, sdk } = useSafeAppsSDK()
   const { chainId } = safe
 
-  console.log({ settings })
-
   useEffect(() => {
     resetStatus()
     if (!chainId || !preset || !packageUrl) return

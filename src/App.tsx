@@ -6,7 +6,7 @@ import Cannon from './Cannon'
 import { Settings, SettingsValues } from './components/Settings'
 import { View, Layout } from './components/Layout'
 
-const DEFAULT_SETTINGS = {
+const INITIAL_SETTINGS = {
   tenderlyKey: '',
   tenderlyProject: '',
   publishIpfsUrl: '',
@@ -17,8 +17,13 @@ const DEFAULT_SETTINGS = {
   publishTags: 'latest',
 } satisfies SettingsValues
 
+for (const key of Object.keys(INITIAL_SETTINGS)) {
+  const saved = localStorage.getItem(key)
+  if (saved) INITIAL_SETTINGS[key] = saved
+}
+
 export function App() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState(INITIAL_SETTINGS)
 
   localStorage.setItem('debug', 'cannon*')
 
@@ -30,7 +35,7 @@ export function App() {
         </View>
         <View title="Settings">
           <Settings
-            defaultValue={DEFAULT_SETTINGS}
+            defaultValue={INITIAL_SETTINGS}
             onChange={(v) => setSettings(v)}
           />
         </View>
