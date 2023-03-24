@@ -1,15 +1,10 @@
 import SafeProvider from '@safe-global/safe-apps-react-sdk'
-import { Container, NextUIProvider } from '@nextui-org/react'
+import { NextUIProvider } from '@nextui-org/react'
 import { StrictMode, useState } from 'react'
 
 import Cannon from './Cannon'
-import { Menu } from './components/Menu'
 import { Settings, SettingsValues } from './components/Settings'
-
-const VIEWS = [
-  { id: 'deploy', title: 'Deploy' },
-  { id: 'settings', title: 'Settings' },
-]
+import { View, Layout } from './components/Layout'
 
 const DEFAULT_SETTINGS = {
   tenderlyKey: '',
@@ -23,25 +18,21 @@ const DEFAULT_SETTINGS = {
 } satisfies SettingsValues
 
 export function App() {
-  const [view, setCurrentView] = useState(VIEWS[0])
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
 
   return (
     <Providers loader={<span>Loading Safe Provider...</span>}>
-      <Menu
-        items={VIEWS}
-        value={view}
-        onChange={(view) => setCurrentView(view)}
-      />
-      <Container xs>
-        {view.id === 'deploy' && <Cannon settings={settings} />}
-        {view.id === 'settings' && (
+      <Layout>
+        <View title="Deploy">
+          <Cannon settings={settings} />
+        </View>
+        <View title="Settings">
           <Settings
             defaultValue={DEFAULT_SETTINGS}
             onChange={(v) => setSettings(v)}
           />
-        )}
-      </Container>
+        </View>
+      </Layout>
     </Providers>
   )
 }

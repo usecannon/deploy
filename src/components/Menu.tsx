@@ -1,28 +1,27 @@
 import { Navbar } from '@nextui-org/react'
 
 interface ItemBase {
-  id: string
   title: string
 }
 
-interface Props<T extends ItemBase> {
-  items: T[]
-  value: T
-  onChange: (item: T) => void
+interface Props {
+  items: ItemBase[]
+  value: number
+  onChange: (item: number) => void
 }
 
-export function Menu<T extends ItemBase>({ items, value, onChange }: Props<T>) {
+export function Menu({ items, value, onChange }: Props) {
   return (
     <Navbar isCompact maxWidth="xs">
       <Navbar.Content />
       <Navbar.Content enableCursorHighlight variant={'underline'}>
-        {items.map((item) => (
+        {items.map(({ title }, index) => (
           <Navbar.Item
-            isActive={item.id === value.id}
-            onClick={() => onChange(item)}
+            isActive={index === value}
+            onClick={() => onChange(index)}
             css={{ cursor: 'pointer' }}
           >
-            {item.title}
+            {title}
           </Navbar.Item>
         ))}
       </Navbar.Content>
