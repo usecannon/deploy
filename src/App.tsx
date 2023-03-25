@@ -17,15 +17,19 @@ const INITIAL_SETTINGS = {
   publishTags: 'latest',
 } satisfies SettingsValues
 
+// Load existant values in localstotage
 for (const key of Object.keys(INITIAL_SETTINGS)) {
   const saved = localStorage.getItem(key)
   if (saved) INITIAL_SETTINGS[key] = saved
 }
 
+// Enable debugging of cannon build
+if (typeof window !== 'undefined') {
+  localStorage.setItem('debug', 'cannon*')
+}
+
 export function App() {
   const [settings, setSettings] = useState(INITIAL_SETTINGS)
-
-  localStorage.setItem('debug', 'cannon*')
 
   return (
     <Providers loader={<span>Loading Safe Provider...</span>}>
