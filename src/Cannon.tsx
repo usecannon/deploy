@@ -72,10 +72,7 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
         address: settings.registryAddress,
       })
 
-      const loader = new IPFSLoader(
-        settings.ipfsUrl.replace(/\/$/, ''),
-        registry
-      )
+      const loader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
 
       setDeployStatus('Loading deployment data')
 
@@ -144,7 +141,7 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
       setDeployStatus('Uploading to IPFS')
 
       const publishLoader = new IPFSBrowserLoader(
-        settings.publishIpfsUrl.replace(/\/$/, ''),
+        settings.publishIpfsUrl,
         registry
       )
 

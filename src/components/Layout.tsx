@@ -15,6 +15,8 @@ interface Props {
 export function Layout({ children }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
+  // TODO: check that all children are instances of View
+
   const menuItems = Children.map(children, (child) => ({
     title: child.props.title,
   }))

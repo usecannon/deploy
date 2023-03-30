@@ -1,31 +1,45 @@
-import { IPFSLoader } from '@usecannon/builder'
+import { CannonRegistry, IPFSLoader } from '@usecannon/builder'
+import type { Headers } from '@usecannon/builder/dist/ipfs'
+import { create as createUrl, parse as parseUrl } from 'simple-url'
 
-export class IPFSBrowserLoader extends IPFSLoader {}
+export class IPFSBrowserLoader extends IPFSLoader {
+  constructor(
+    ipfsUrl: string,
+    resolver: CannonRegistry,
+    customHeaders: Headers = {}
+  ) {
+    const { url, headers } = createIpfsUrl(ipfsUrl, '')
+    super(url.replace(/\/$/, ''), resolver, { ...headers, ...customHeaders })
+  }
+}
 
-// import { CannonRegistry, IPFSLoader } from '@usecannon/builder'
-// import type { Headers } from '@usecannon/builder/dist/ipfs'
+// Create an ipfs url with compatibility for custom auth and https+ipfs:// protocol
+function createIpfsUrl(base: string, pathname: string) {
+  const parsedUrl = parseUrl(base)
+  const headers: { [k: string]: string } = {}
 
-// export class IPFSBrowserLoader extends IPFSLoader {
-//   constructor(
-//     ipfsUrl: string,
-//     resolver: CannonRegistry,
-//     customHeaders: Headers = {}
-//   ) {
-//     super(ipfsUrl, resolver, customHeaders)
+  const customProtocol = parsedUrl.protocol.endsWith('+ipfs')
 
-//     const url = new URL(ipfsUrl)
-//     if (url.username || url.password) {
-//       this.customHeaders['Authorization'] = `Basic ${btoa(
-//         `${url.username}:${url.password}`
-//       )}`
+  const uri = {
+    protocol: customProtocol
+      ? parsedUrl.protocol.split('+')[0]
+      : parsedUrl.protocol,
+    host:
+      customProtocol && !parsedUrl.host.includes(':')
+        ? `${parsedUrl.host}:5001`
+        : parsedUrl.host,
+    pathname,
+    query: parsedUrl.query,
+    hash: parsedUrl.hash,
+  }
 
-//       url.username = ''
-//       url.password = ''
+  if (parsedUrl.auth) {
+    const [username, password] = parsedUrl.auth.split(':')
+    headers['Authorization'] = `Basic ${btoa(`${username}:${password}`)}`
+  }
 
-//       this.ipfsUrl = url.toString()
-//     }
-//   }
-// }
+  return { url: createUrl(uri), headers }
+}
 
 // import { CannonRegistry, DeploymentInfo, IPFSLoader } from '@usecannon/builder'
 // import type { Headers } from '@usecannon/builder/dist/ipfs'
