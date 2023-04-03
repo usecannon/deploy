@@ -1,5 +1,5 @@
 import SafeProvider from '@safe-global/safe-apps-react-sdk'
-import { NextUIProvider } from '@nextui-org/react'
+import { NextUIProvider, createTheme } from '@nextui-org/react'
 import { StrictMode, useState } from 'react'
 
 import Cannon from './Cannon'
@@ -48,11 +48,15 @@ export function App() {
   )
 }
 
+const theme = createTheme({
+  type: 'dark',
+})
+
 function Providers({ loader, children }) {
   return (
     <StrictMode>
       <SafeProvider loader={loader}>
-        <NextUIProvider>{children}</NextUIProvider>
+        <NextUIProvider theme={theme}>{children}</NextUIProvider>
       </SafeProvider>
     </StrictMode>
   )

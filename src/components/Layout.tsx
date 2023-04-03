@@ -1,5 +1,5 @@
 import { Children, useState } from 'react'
-import { Container } from '@nextui-org/react'
+import { Container, Spacer } from '@nextui-org/react'
 
 import { Menu } from './Menu'
 
@@ -29,6 +29,7 @@ export function Layout({ children }: Props) {
         onChange={(index) => setCurrentIndex(index)}
       />
       <Container xs>
+        <Spacer y={2} />
         {Children.count(children) > 0 &&
           Children.toArray(children)[currentIndex]}
       </Container>

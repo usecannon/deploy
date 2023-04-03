@@ -1,5 +1,5 @@
 {
-  "name": "Synthetix Cannon",
-  "description": "Cannon deployments using Safe for Synthetix",
+  "name": "Cannon",
+  "description": "Queue pending transactions from Cannon partial deployments",
   "iconPath": "logo.svg"
 }

@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
+  Button,
+  Card,
+  Collapse,
+  Dropdown,
+  Grid,
+  Input,
+  Spacer,
+  Text,
+} from '@nextui-org/react'
+import {
   CannonWrapperGenericProvider,
-  IPFSLoader,
   OnChainRegistry,
 } from '@usecannon/builder'
 import { DebounceInput } from 'react-debounce-input'
@@ -184,7 +193,7 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
         ])
 
         setDeployStatus(
-          'Ready to publish! Click the button below to execute the transactions'
+          'Ready to stage! Click the button below to queue the transactions.'
         )
       } else {
         setDeployStatus(
@@ -218,60 +227,122 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
 
   return (
     <>
-      <h3>Current Safe</h3>
-      <p>chainId: {chainId}</p>
-      <p>Safe: {safe.safeAddress}</p>
+      <Card css={{ paddingLeft: '0.8em', paddingRight: '0.8em' }}>
+        <Card.Body>
+          <Grid.Container>
+            <Grid xs={9} direction="column">
+              <Text h5 css={{ margin: 0 }}>
+                Connected Safe Address
+              </Text>
+              <Text>{safe.safeAddress}</Text>
+            </Grid>
+            <Grid xs direction="column">
+              <Text h5 css={{ margin: 0 }}>
+                Chain ID
+              </Text>
+              <Text>{chainId}</Text>
+            </Grid>
+          </Grid.Container>
+        </Card.Body>
+      </Card>
 
-      <h2>Deployment</h2>
-      <div>
-        <label htmlFor="preset">Preset:&nbsp;</label>
-        <DebounceInput
-          name="preset"
-          value={preset}
-          onChange={(event) => setPreset(event.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="packageUrl">Package Url:&nbsp;</label>
-        <DebounceInput
-          name="packageUrl"
-          value={packageUrl}
-          onChange={(event) => setPackageUrl(event.target.value)}
-        />
-      </div>
+      <Spacer y={1.5} />
+
+      <Text h3>Stage Cannon Deployment</Text>
+      <Text>
+        Enter the IPFS URL for a partial Cannon deployment. You can preview the
+        incomplete transactions and queue them to the connected safe.
+      </Text>
+
+      <Spacer y={1.5} />
+
+      <Grid.Container>
+        <Grid xs={9} direction="column">
+          <Input
+            bordered
+            label="Partial Cannon Deployment IPFS URL"
+            placeholder='e.g. "@ipfs:Qm..."'
+            name="packageUrl"
+            value={packageUrl}
+            onChange={(event) => setPackageUrl(event.target.value)}
+          />
+        </Grid>
+        <Grid xs direction="column" css={{ marginLeft: '1em' }}>
+          <Input
+            bordered
+            label="Preset"
+            name="preset"
+            value={preset}
+            onChange={(event) => setPreset(event.target.value)}
+          />
+        </Grid>
+      </Grid.Container>
 
       {deployErrorMessage && (
         <p style={{ color: 'red' }}>{deployErrorMessage}</p>
       )}
-      {deployStatus && <p>Status: {deployStatus}</p>}
-      {simulatedCannonTxs.length > 0 && (
-        <div>
-          <h3>Transactions to Execute</h3>
-          {simulatedCannonTxs.map((tx, i) => (
-            <div key={tx.hash}>
-              <p>
-                <strong>{tx.deployedOn}</strong>
-              </p>
-              <p>Data: {safeTxs[i].data}</p>
-            </div>
-          ))}
-          <p>
-            <button onClick={submitSafeTx}>Submit Transactions</button>
-          </p>
-        </div>
+
+      <Spacer />
+
+      {deployStatus && (
+        <Card>
+          <Card.Body css={{ padding: '.6em' }}>
+            <Grid.Container>
+              <Grid
+                css={{ marginRight: '.4em', transform: 'translateY(2.5px)' }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="rgba(255, 255, 255, 0.5)"
+                >
+                  <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path>
+                  <path d="M11 11h2v6h-2zm0-4h2v2h-2z"></path>
+                </svg>
+              </Grid>
+              <Grid xs={10}>
+                <Text>{deployStatus}</Text>
+              </Grid>
+            </Grid.Container>
+          </Card.Body>
+        </Card>
       )}
+      <Spacer />
+
+      {simulatedCannonTxs.length > 0 && (
+        <>
+          <Collapse.Group css={{ padding: 0 }}>
+            {simulatedCannonTxs.map((tx, i) => (
+              <Collapse key={tx.hash} title={tx.deployedOn}>
+                <Text>Data: {safeTxs[i].data}</Text>
+              </Collapse>
+            ))}
+          </Collapse.Group>
+          <Spacer />
+          <Button css={{ minWidth: '100%' }} onClick={submitSafeTx} size="lg">
+            Queue Transactions
+          </Button>
+        </>
+      )}
+      <Spacer />
+
       {skippedCannonSteps.length > 0 && (
-        <div>
-          <h3>Skipped Steps</h3>
-          {skippedCannonSteps.map(({ stepName, err }) => (
-            <div key={stepName}>
-              <p>
-                <strong>{stepName}</strong>
-              </p>
-              <p>Error: {err.message}</p>
-            </div>
-          ))}
-        </div>
+        <>
+          <Text h3>Skipped Transactions</Text>
+          <Text>
+            Enter the IPFS URL for a partial Cannon deployment. You can preview
+            the incomplete transactions and queue them to the connected safe.
+          </Text>
+          <Collapse.Group css={{ padding: 0 }}>
+            {skippedCannonSteps.map(({ stepName, err }) => (
+              <Collapse key={stepName} title={stepName}>
+                <Text>{err.message}</Text>
+              </Collapse>
+            ))}
+          </Collapse.Group>
+        </>
       )}
     </>
   )
