@@ -1,5 +1,6 @@
 import axios from 'axios'
 import pako from 'pako'
+import { Buffer } from 'buffer'
 import { CannonRegistry, DeploymentInfo, IPFSLoader } from '@usecannon/builder'
 import type { Headers } from '@usecannon/builder/dist/ipfs'
 import { create as createUrl, parse as parseUrl } from 'simple-url'
@@ -101,7 +102,7 @@ async function _writeIpfs(
 
   const buff = pako.deflate(content)
 
-  formData.append('data', buff)
+  formData.append('data', Buffer.from(buff))
 
   const res = await axios.post(url, formData, {
     headers: { ...headers, ...customHeaders },
