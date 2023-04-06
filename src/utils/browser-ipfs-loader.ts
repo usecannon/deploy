@@ -1,8 +1,73 @@
 import axios from 'axios'
 import pako from 'pako'
-import { DeploymentInfo, IPFSLoader } from '@usecannon/builder'
+import { CannonRegistry, DeploymentInfo, IPFSLoader } from '@usecannon/builder'
 import type { Headers } from '@usecannon/builder/dist/ipfs'
 import { create as createUrl, parse as parseUrl } from 'simple-url'
+
+export class InMemoryRegistry extends CannonRegistry {
+  readonly pkgs: { [name: string]: { [variant: string]: string } } = {}
+
+  count = 0
+
+  async publish(
+    packagesNames: string[],
+    variant: string,
+    url: string
+  ): Promise<string[]> {
+    const receipts: string[] = []
+    for (const name of packagesNames) {
+      if (!this.pkgs[name]) {
+        this.pkgs[name] = {}
+      }
+
+      this.pkgs[name][variant] = url
+      receipts.push((++this.count).toString())
+    }
+
+    return receipts
+  }
+
+  async getUrl(packageRef: string, variant: string): Promise<string | null> {
+    const baseResolved = await super.getUrl(packageRef, variant)
+    if (baseResolved) {
+      return baseResolved
+    }
+
+    return this.pkgs[packageRef][variant]
+  }
+}
+
+export class FallbackRegistry implements CannonRegistry {
+  readonly registries: CannonRegistry[]
+
+  constructor(registries: CannonRegistry[]) {
+    this.registries = registries
+  }
+
+  async getUrl(packageRef: string, variant: string): Promise<string | null> {
+    for (const registry of this.registries) {
+      try {
+        const result = await registry.getUrl(packageRef, variant)
+        if (result) return result
+      } catch (err) {
+        if (registry === this.registries[this.registries.length - 1]) throw err
+        console.warn('WARNING: error caught in registry:', err)
+      }
+    }
+
+    return null
+  }
+
+  async publish(
+    packagesNames: string[],
+    variant: string,
+    url: string
+  ): Promise<string[]> {
+    console.log('publish to fallback database: ', packagesNames)
+    // the fallback registry is usually something easy to write to or get to later
+    return this.registries[0].publish(packagesNames, variant, url)
+  }
+}
 
 export class IPFSBrowserLoader extends IPFSLoader {
   async putDeploy(deployInfo: DeploymentInfo) {

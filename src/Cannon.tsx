@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
-import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
+  Badge,
   Button,
   Card,
   Collapse,
-  Dropdown,
   Grid,
   Input,
   Spacer,
   Text,
 } from '@nextui-org/react'
+import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
   CannonWrapperGenericProvider,
   OnChainRegistry,
@@ -24,7 +24,11 @@ import {
   build,
   createPublishData,
 } from './utils/cannon'
-import { IPFSBrowserLoader } from './utils/browser-ipfs-loader'
+import {
+  FallbackRegistry,
+  IPFSBrowserLoader,
+  InMemoryRegistry,
+} from './utils/browser-ipfs-loader'
 import { TSettings } from './types'
 import { createFork, deleteFork } from './utils/tenderly'
 
@@ -116,6 +120,15 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
         new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
       )
 
+      const fallbackRegistry = new FallbackRegistry([
+        new InMemoryRegistry(),
+        registry,
+      ])
+      const inMemoryLoader = new IPFSBrowserLoader(
+        settings.ipfsUrl,
+        fallbackRegistry
+      )
+
       const {
         name,
         version,
@@ -129,7 +142,7 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
         provider,
         defaultSignerAddress: safe.safeAddress,
         incompleteDeploy,
-        loader,
+        loader: inMemoryLoader,
       })
 
       const safeTxs: BaseTransaction[] = await Promise.all(
@@ -322,7 +335,7 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
           </Collapse.Group>
           <Spacer />
           <Button css={{ minWidth: '100%' }} onClick={submitSafeTx} size="lg">
-            Queue Transactions
+            Queue Transactions ({simulatedCannonTxs.length})
           </Button>
         </>
       )}
@@ -330,10 +343,13 @@ const Cannon = ({ settings }: Props): React.ReactElement => {
 
       {skippedCannonSteps.length > 0 && (
         <>
-          <Text h3>Skipped Transactions</Text>
+          <Text h3>
+            Skipped Transactions&nbsp;
+            <Badge color="error">{skippedCannonSteps.length}</Badge>
+          </Text>
           <Text>
-            Enter the IPFS URL for a partial Cannon deployment. You can preview
-            the incomplete transactions and queue them to the connected safe.
+            The following steps will not be queued skipped because they could
+            not be executed by the Safe when simulating the deployment.
           </Text>
           <Collapse.Group css={{ padding: 0 }}>
             {skippedCannonSteps.map(({ stepName, err }) => (
