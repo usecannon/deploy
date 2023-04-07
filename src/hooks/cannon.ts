@@ -57,6 +57,13 @@ export function useCannonBuild() {
 
     if (!props.url) return setState(INITIAL_STATE)
 
+    if (history.db.status !== 'open') {
+      return setState({
+        status: 'error',
+        message: 'Could not connect to local database',
+      })
+    }
+
     setState({
       status: 'loading',
       message: 'Loading build...',
