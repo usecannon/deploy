@@ -1,4 +1,4 @@
-import { Input, Spacer } from '@nextui-org/react'
+import { Container, Input, Spacer } from '@nextui-org/react'
 
 export type SettingsValues = { [k: string]: string }
 export type SettingsLabels = {
@@ -17,7 +17,7 @@ export function Settings<T extends SettingsValues>({
   labels,
 }: Props<T>) {
   return (
-    <>
+    <Container xs>
       {Object.keys(value).map((key) => (
         <div key={key}>
           <Input
@@ -33,6 +33,6 @@ export function Settings<T extends SettingsValues>({
           <Spacer y={2} />
         </div>
       ))}
-    </>
+    </Container>
   )
 }

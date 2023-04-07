@@ -3,6 +3,7 @@ import { NextUIProvider, createTheme } from '@nextui-org/react'
 import { StrictMode, useEffect } from 'react'
 
 import { Cannon } from './views/Cannon'
+import { History } from './views/History'
 import { Layout, View } from './components/Layout'
 import { Settings } from './views/Settings'
 import { useSettings } from './hooks/settings'
@@ -27,6 +28,9 @@ export function App() {
             onValueChange={setSettingValue}
             labels={SETTINGS}
           />
+        </View>
+        <View title="History">
+          <History settings={settings} />
         </View>
       </Layout>
     </Providers>

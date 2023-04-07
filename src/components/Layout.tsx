@@ -28,11 +28,8 @@ export function Layout({ children }: Props) {
         value={currentIndex}
         onChange={(index) => setCurrentIndex(index)}
       />
-      <Container xs>
-        <Spacer y={2} />
-        {Children.count(children) > 0 &&
-          Children.toArray(children)[currentIndex]}
-      </Container>
+      <Spacer y={2} />
+      {Children.count(children) > 0 && Children.toArray(children)[currentIndex]}
     </>
   )
 }

@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Collapse,
+  Container,
   Grid,
   Spacer,
   Text,
@@ -54,7 +55,7 @@ export function Cannon({ settings }: Props) {
   if (!connected) return <p>Not connected to safe wallet</p>
 
   return (
-    <>
+    <Container xs>
       <Card css={{ paddingLeft: '0.8em', paddingRight: '0.8em' }}>
         <Card.Body>
           <Grid.Container>
@@ -174,6 +175,6 @@ export function Cannon({ settings }: Props) {
           </Collapse.Group>
         </>
       )}
-    </>
+    </Container>
   )
 }

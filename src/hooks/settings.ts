@@ -10,7 +10,7 @@ const SETTINGS = {
   tenderlyProject: {
     title: 'Tenderly Project Id',
     description:
-      'Prove a Tenderly Project ID that is owned by the API key above.',
+      'Provide a Tenderly Project ID that is owned by the API key above.',
     defaultValue: '',
   },
   publishIpfsUrl: {

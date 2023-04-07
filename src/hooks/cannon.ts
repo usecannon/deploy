@@ -15,6 +15,7 @@ import {
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { TSettings } from './settings'
 import { createFork, deleteFork } from '../utils/tenderly'
+import { useHistory } from './history'
 
 type BuildState =
   | {
@@ -46,6 +47,7 @@ const INITIAL_STATE = {
 } as BuildState
 
 export function useCannonBuild() {
+  const history = useHistory()
   const [buildState, setState] = useState(INITIAL_STATE)
 
   const startBuild = async (props: BuildProps) => {
@@ -54,6 +56,11 @@ export function useCannonBuild() {
     }
 
     if (!props.url) return setState(INITIAL_STATE)
+
+    setState({
+      status: 'loading',
+      message: 'Loading build...',
+    })
 
     const cid = parseIpfsHash(props.url)
 
@@ -66,7 +73,16 @@ export function useCannonBuild() {
 
     const packageUrl = `@ipfs:${cid}`
 
-    const fork = await createFork(props.settings, props.chainId)
+    let fork
+    try {
+      fork = await createFork(props.settings, props.chainId)
+    } catch (err) {
+      console.error(err)
+      return setState({
+        status: 'error',
+        message: `Could not create a fork using Tenderly: ${err.message}`,
+      })
+    }
 
     try {
       const registry = new OnChainRegistry({
@@ -192,6 +208,13 @@ export function useCannonBuild() {
       })
 
       const registryChainId = (await registry.provider.getNetwork()).chainId
+
+      await history.add({
+        id: parseIpfsHash(deployUrl),
+        preset: props.preset,
+        chainId: props.chainId,
+        safeAddress: props.safeAddress,
+      })
 
       if (registryChainId === props.chainId) {
         setState({
