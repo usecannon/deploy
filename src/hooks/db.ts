@@ -8,26 +8,29 @@ export interface ItemBase {
   updatedAt: number
 }
 
+const conns = new Map<string, BrowserLevel<string, ItemBase>>()
+
 export function useDb<T extends ItemBase>(listName: string) {
   const [db, setDb] = useState<BrowserLevel<string, T> | null>(null)
 
   useEffect(() => {
+    if (!listName) return
+
+    if (conns.has(listName)) {
+      return setDb(conns.get(listName) as BrowserLevel<string, T>)
+    }
+
     const client = new BrowserLevel<string, T>(listName, {
       valueEncoding: 'json',
     })
-    const open = async () => {
-      await client.open()
-      setDb(client)
-    }
-    open()
-    return () => {
-      if (client.status === 'open') client.close()
-    }
+
+    conns.set(listName, client)
+    setDb(client)
+    client.open()
   }, [listName])
 
   const add = async (val: Omit<T, 'createdAt' | 'updatedAt'>) => {
     if (!db) return
-
     await db.open()
 
     const existing = await db.get(val.id).catch(() => null)
@@ -54,11 +57,11 @@ export function useDb<T extends ItemBase>(listName: string) {
     return await db.del(id)
   }
 
-  return { add, del, db }
+  return { db, add, del }
 }
 
 export function useItemsList<T extends ItemBase>(listName: string) {
-  const { add, del, db } = useDb<T>(listName)
+  const { db, add, del } = useDb<T>(listName)
   const itemsRef = useRef<T[]>([])
   const [items, setItems] = useState<T[]>([])
 
