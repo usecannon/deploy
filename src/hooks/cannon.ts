@@ -4,7 +4,7 @@ import {
   OnChainRegistry,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   FallbackRegistry,
@@ -49,6 +49,15 @@ const INITIAL_STATE = {
 export function useCannonBuild() {
   const history = useHistory()
   const [buildState, setState] = useState(INITIAL_STATE)
+
+  useEffect(() => {
+    if (history.status === 'closed' || history.status === 'error') {
+      setState({
+        status: 'error',
+        message: 'Could not connect to local database',
+      })
+    }
+  }, [history.status])
 
   const startBuild = async (props: BuildProps) => {
     if (buildState.status === 'loading') {

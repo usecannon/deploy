@@ -10,23 +10,52 @@ export interface ItemBase {
 
 const conns = new Map<string, BrowserLevel<string, ItemBase>>()
 
+type Status = 'opening' | 'open' | 'closing' | 'closed' | 'error'
+
 export function useDb<T extends ItemBase>(listName: string) {
-  const [db, setDb] = useState<BrowserLevel<string, T> | null>(null)
+  const [db, setDb] = useState<BrowserLevel<string, T> | null>()
+  const [status, setStatus] = useState<Status>()
+
+  useEffect(() => {
+    if (!status) return
+    console.log(`db(${listName}):`, status)
+  }, [listName, status])
 
   useEffect(() => {
     if (!listName) return
 
     if (conns.has(listName)) {
-      return setDb(conns.get(listName) as BrowserLevel<string, T>)
+      setDb(conns.get(listName) as BrowserLevel<string, T>)
+    } else {
+      const client = new BrowserLevel<string, T>(listName, {
+        valueEncoding: 'json',
+      })
+      conns.set(listName, client)
+      setDb(client)
     }
 
-    const client = new BrowserLevel<string, T>(listName, {
-      valueEncoding: 'json',
+    const client = conns.get(listName) as BrowserLevel<string, T>
+    const updateStatus = () => setStatus(client.status)
+    client.on('opening', updateStatus)
+    client.on('open', updateStatus)
+    client.on('closing', updateStatus)
+    client.on('closed', updateStatus)
+
+    client.open((err) => {
+      if (err) {
+        console.error(err)
+        setStatus('error')
+      }
     })
 
-    conns.set(listName, client)
-    setDb(client)
-    client.open()
+    updateStatus()
+
+    return () => {
+      client.off('opening', updateStatus)
+      client.off('open', updateStatus)
+      client.off('closing', updateStatus)
+      client.off('closed', updateStatus)
+    }
   }, [listName])
 
   const add = async (val: Omit<T, 'createdAt' | 'updatedAt'>) => {
@@ -57,7 +86,7 @@ export function useDb<T extends ItemBase>(listName: string) {
     return await db.del(id)
   }
 
-  return { db, add, del }
+  return { db, status, add, del }
 }
 
 export function useItemsList<T extends ItemBase>(listName: string) {
