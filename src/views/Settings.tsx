@@ -1,8 +1,10 @@
-import { Container, Input, Spacer } from '@nextui-org/react'
+import { Container, Spacer } from '@nextui-org/react'
+
+import { Input } from '../components/Input'
 
 export type SettingsValues = { [k: string]: string }
 export type SettingsLabels = {
-  [k: string]: { title: string; description: string }
+  [k: string]: { title: string; description: string; isPassword?: boolean }
 }
 
 interface Props<T extends SettingsValues> {
@@ -25,10 +27,9 @@ export function Settings<T extends SettingsValues>({
             name={key}
             label={labels[key].title}
             helperText={labels[key].description}
-            initialValue={value[key]}
-            onChange={(evt) => onValueChange(key, evt.target.value)}
-            bordered
-            fullWidth
+            value={value[key]}
+            onChange={(val) => onValueChange(key, val)}
+            password={labels[key].isPassword}
           />
           <Spacer y={2} />
         </div>
