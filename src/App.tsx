@@ -2,9 +2,9 @@ import SafeProvider from '@safe-global/safe-apps-react-sdk'
 import { NextUIProvider, createTheme } from '@nextui-org/react'
 import { StrictMode, useEffect } from 'react'
 
-import Cannon from './Cannon'
+import { Cannon } from './views/Cannon'
 import { Layout, View } from './components/Layout'
-import { Settings } from './components/Settings'
+import { Settings } from './views/Settings'
 import { useSettings } from './hooks/settings'
 
 export function App() {

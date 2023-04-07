@@ -16,7 +16,7 @@ import { ethers } from 'ethers'
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
 export interface StepExecutionError {
-  stepName: string
+  name: string
   err: Error
 }
 
@@ -59,7 +59,7 @@ export async function build({
 
   runtime.on(Events.SkipDeploy, (stepName: string, err: Error) => {
     console.log(stepName, err)
-    skippedSteps.push({ stepName, err })
+    skippedSteps.push({ name: stepName, err })
   })
 
   await runtime.restoreMisc(incompleteDeploy.miscUrl)
@@ -113,4 +113,8 @@ export function createPublishData({
     packageVersionUrl,
     packageMetaUrl,
   ])
+}
+
+export function validatePreset(preset: string) {
+  return /^[a-z]+$/.test(preset)
 }

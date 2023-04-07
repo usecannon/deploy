@@ -46,6 +46,8 @@ const DEFAULT_STATE = Object.fromEntries(
   Object.entries(SETTINGS).map(([k, v]) => [k, v.defaultValue])
 ) as { [k in keyof typeof SETTINGS]: string }
 
+export type TSettings = typeof DEFAULT_STATE
+
 export function useSettings() {
   const [settings, setSettings] = useState(DEFAULT_STATE)
 

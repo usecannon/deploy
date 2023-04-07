@@ -5,6 +5,14 @@ import { CannonRegistry, DeploymentInfo, IPFSLoader } from '@usecannon/builder'
 import type { Headers } from '@usecannon/builder/dist/ipfs'
 import { create as createUrl, parse as parseUrl } from 'simple-url'
 
+const FILE_URL_REGEX = /^(?:ipfs:\/\/|@ipfs:)?(?<cid>[a-zA-Z0-9]{46})$/
+
+export function parseIpfsHash(url: string) {
+  if (typeof url !== 'string') throw new Error('Invalid url')
+  if (!url) return ''
+  return url.trim().match(FILE_URL_REGEX)?.groups?.cid || ''
+}
+
 export class InMemoryRegistry extends CannonRegistry {
   readonly pkgs: { [name: string]: { [variant: string]: string } } = {}
 
