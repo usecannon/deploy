@@ -85,6 +85,11 @@ export function useCannonBuild() {
 
     let fork
     try {
+      if (!props.settings.tenderlyProject || !props.settings.tenderlyKey) {
+        throw new Error(
+          'Missing project or key configuration values in Settings'
+        )
+      }
       fork = await createFork(props.settings, props.chainId)
     } catch (err) {
       console.error(err)
