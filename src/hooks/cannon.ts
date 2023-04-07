@@ -54,7 +54,8 @@ export function useCannonBuild() {
     if (history.status === 'closed' || history.status === 'error') {
       setState({
         status: 'error',
-        message: 'Could not connect to local database',
+        message:
+          'Could not connect to local database, you can execute builds but they will not be saved in the history. This is probably caused by third party cookies being blocked by your browser.',
       })
     }
   }, [history.status])
@@ -65,13 +66,6 @@ export function useCannonBuild() {
     }
 
     if (!props.url) return setState(INITIAL_STATE)
-
-    if (!history.db || history.db.status !== 'open') {
-      return setState({
-        status: 'error',
-        message: 'Could not connect to local database',
-      })
-    }
 
     setState({
       status: 'loading',
