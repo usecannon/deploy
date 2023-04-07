@@ -27,6 +27,9 @@ export function useDb<T extends ItemBase>(listName: string) {
 
   const add = async (val: Omit<T, 'createdAt' | 'updatedAt'>) => {
     if (!db) return
+
+    await db.open()
+
     const existing = await db.get(val.id).catch(() => null)
     const now = Date.now()
 
@@ -47,6 +50,7 @@ export function useDb<T extends ItemBase>(listName: string) {
 
   const del = async (id: string) => {
     if (!db) return
+    await db.open()
     return await db.del(id)
   }
 

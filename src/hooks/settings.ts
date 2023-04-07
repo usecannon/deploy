@@ -12,7 +12,6 @@ const SETTINGS = {
     description:
       'Provide a Tenderly API key to simulate the build and generate all of the appropriate transactions.',
     defaultValue: '',
-    isPassword: true,
   },
   publishIpfsUrl: {
     title: 'IPFS URL for Publishing',
