@@ -1,17 +1,14 @@
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
   CannonWrapperGenericProvider,
+  FallbackRegistry,
+  InMemoryRegistry,
   OnChainRegistry,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 
-import {
-  FallbackRegistry,
-  IPFSBrowserLoader,
-  InMemoryRegistry,
-  parseIpfsHash,
-} from '../utils/ipfs'
+import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { TSettings } from './settings'
 import { createFork, deleteFork } from '../utils/tenderly'
