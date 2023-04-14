@@ -9,6 +9,7 @@ import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
+import { ReadOnlyProvider } from '../utils/providers'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { TSettings } from './settings'
 import { createFork, deleteFork } from '../utils/tenderly'
@@ -145,10 +146,7 @@ export function useCannonBuild() {
         message: 'Generating pending transactions',
       })
 
-      const provider = new CannonWrapperGenericProvider(
-        {},
-        new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
-      )
+      const provider = new ReadOnlyProvider(fork.json_rpc_url)
 
       // Create a regsitry that loads data first from Memory to be able to utilize
       // the locally built data

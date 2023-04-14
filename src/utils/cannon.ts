@@ -39,7 +39,6 @@ export async function build({
       chainId,
       getSigner: async (addr: string) => provider.getSigner(addr),
       getDefaultSigner: async () => provider.getSigner(defaultSignerAddress),
-      baseDir: null,
       snapshots: false,
       allowPartialDeploy: true,
       publicSourceCode: true,
