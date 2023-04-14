@@ -12,8 +12,8 @@
   "devDependencies": {
     "@nextui-org/react": "^1.0.0-beta.12",
     "@parcel/transformer-inline-string": "2.8.3",
-    "@safe-global/safe-apps-provider": "^0.16.0",
     "@safe-global/safe-apps-react-sdk": "^4.6.4",
+    "@safe-global/safe-apps-sdk": "^7.10.1",
     "@types/pako": "^2.0.0",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
@@ -28,7 +28,6 @@
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
     "ethers": "^5.7.2",
-    "ipfs-http-client": "56.0.3",
     "parcel": "^2.8.3",
     "parcel-reporter-static-files-copy": "^1.5.0",
     "prettier": "^2.8.7",
