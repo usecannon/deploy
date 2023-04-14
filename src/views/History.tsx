@@ -2,12 +2,7 @@ import { Badge, Container, Spacer, Table, Text } from '@nextui-org/react'
 
 import { DeleteIcon } from '../components/DeleteIcon'
 import { IconButton } from '../components/IconButton'
-import { TSettings } from '../hooks/settings'
 import { useHistoryList } from '../hooks/history'
-
-interface Props {
-  settings: TSettings
-}
 
 const addressStyles = {
   fontFamily: 'monospace',
@@ -16,7 +11,7 @@ const addressStyles = {
   textOverflow: 'ellipsis',
 }
 
-export function History({ settings }: Props) {
+export function History() {
   const { del, items } = useHistoryList()
 
   return (

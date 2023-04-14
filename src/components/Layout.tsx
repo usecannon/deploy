@@ -1,5 +1,5 @@
 import { Children, useState } from 'react'
-import { Container, Spacer } from '@nextui-org/react'
+import { Spacer } from '@nextui-org/react'
 
 import { Menu } from './Menu'
 
