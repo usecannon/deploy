@@ -1,18 +1,6 @@
 import { useEffect, useState } from 'react'
 
 const SETTINGS = {
-  tenderlyProject: {
-    title: 'Tenderly Project Id',
-    description:
-      'Provide a Tenderly Project ID that is owned by the API key above.',
-    defaultValue: '',
-  },
-  tenderlyKey: {
-    title: 'Tenderly API Key',
-    description:
-      'Provide a Tenderly API key to simulate the build and generate all of the appropriate transactions.',
-    defaultValue: '',
-  },
   publishIpfsUrl: {
     title: 'IPFS URL for Publishing',
     description:
