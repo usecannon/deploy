@@ -28,6 +28,12 @@ const SETTINGS = {
     description: 'Custom tags to add to the published Cannon package.',
     defaultValue: 'latest',
   },
+  forkProviderUrl: {
+    title: 'RPC URL for Local Fork',
+    description:
+      '(Optional) JSON RPC url to create the local fork from. If not provided, the default RPC url for the selected chain will be used.',
+    defaultValue: '',
+  },
 } as const
 
 const DEFAULT_STATE = Object.fromEntries(

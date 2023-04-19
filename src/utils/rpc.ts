@@ -17,19 +17,38 @@ function findChainUrl(chainId: number) {
 }
 
 export async function createFork({
+  url,
   chainId,
   impersonate = [],
 }: {
+  url?: string
   chainId: number
   impersonate: string[]
 }) {
-  const chainUrl = findChainUrl(chainId)
+  const chainUrl = url || findChainUrl(chainId)
 
   const node = Ganache.provider({
     wallet: { unlockedAccounts: impersonate },
     chain: { chainId: chainId },
     fork: { url: chainUrl },
   })
+
+  if (url) {
+    const provider = url.startsWith('wss:')
+      ? new ethers.providers.WebSocketProvider(url)
+      : new ethers.providers.JsonRpcProvider(url)
+
+    const urlChainId = await provider.getNetwork().then((n) => n.chainId)
+    if (urlChainId !== chainId) {
+      throw new Error(
+        'Invalid Fork Provider Url configured in settings, it should have the same chainId as the Safe Wallet'
+      )
+    }
+
+    if (provider instanceof ethers.providers.WebSocketProvider) {
+      await provider.destroy()
+    }
+  }
 
   const bunchOfEth = ethers.utils.hexValue(
     ethers.utils.parseUnits('10000', 'ether').toHexString()

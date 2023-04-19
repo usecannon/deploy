@@ -84,6 +84,7 @@ export function useCannonBuild() {
     let fork: EthereumProvider
     try {
       fork = await createFork({
+        url: props.settings.forkProviderUrl,
         chainId: props.chainId,
         impersonate: [props.safeAddress],
       }).catch((err) => {
