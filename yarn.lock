@@ -2608,10 +2608,10 @@
     "@typescript-eslint/types" "5.58.0"
     eslint-visitor-keys "^3.3.0"
 
-"@usecannon/builder@^2.4.3":
-  version "2.4.3"
-  resolved "https://registry.yarnpkg.com/@usecannon/builder/-/builder-2.4.3.tgz#298745ece0419e3804bc2d0f237645d72aedb294"
-  integrity sha512-Iq5nzLmJ3pbZKICsekZgIGSbKuXcOryGEkX5em5I9YXxI0mgMEOBj/V5Jt9o5XkOKCpuGxgzU4bPb6wlmBl7uw==
+"@usecannon/builder@^2.4.6":
+  version "2.4.6"
+  resolved "https://registry.yarnpkg.com/@usecannon/builder/-/builder-2.4.6.tgz#ad366f732ffef620787c4140321aeb79c61c303a"
+  integrity sha512-l2jQL2vo6sZ4efOaVWjxW0pISqPrzp6Kfl25vlscOSNz4i20URTUF7qnIJVpWGswisgG9R9QQlWt9ITM58lQ3Q==
   dependencies:
     ajv "^8.11.0"
     axios "^1.2.2"
