@@ -5,13 +5,14 @@ import {
   InMemoryRegistry,
   OnChainRegistry,
 } from '@usecannon/builder'
+import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { TSettings } from './settings'
-import { createFork, deleteFork } from '../utils/tenderly'
+import { createFork } from '../utils/rpc'
 import { useHistory } from './history'
 
 type BuildState =
@@ -80,23 +81,17 @@ export function useCannonBuild() {
 
     const packageUrl = `@ipfs:${cid}`
 
-    let fork
+    let fork: EthereumProvider
     try {
-      if (!props.settings.tenderlyProject || !props.settings.tenderlyKey) {
-        throw new Error(
-          'Missing project or key configuration values in Settings'
-        )
-      }
-      fork = await createFork(props.settings, props.chainId)
-    } catch (err) {
-      console.error(err)
-      return setState({
-        status: 'error',
-        message: `Could not create a fork using Tenderly: ${err.message}`,
+      fork = await createFork({
+        url: props.settings.forkProviderUrl,
+        chainId: props.chainId,
+        impersonate: [props.safeAddress],
+      }).catch((err) => {
+        err.message = `Could not create local fork for build: ${err.message}`
+        throw err
       })
-    }
 
-    try {
       const registry = new OnChainRegistry({
         signerOrProvider: props.settings.registryProviderUrl,
         address: props.settings.registryAddress,
@@ -119,25 +114,19 @@ export function useCannonBuild() {
       console.log('Deploy: ', incompleteDeploy)
 
       if (!incompleteDeploy) {
-        return setState({
-          status: 'error',
-          message: `Package not found: ${packageUrl} (chainId: ${props.chainId} | preset: ${props.preset})`,
-        })
+        throw new Error(
+          `Package not found: ${packageUrl} (chainId: ${props.chainId} | preset: ${props.preset})`
+        )
       }
 
       if (incompleteDeploy.status === 'none') {
-        return setState({
-          status: 'error',
-          message: 'Selected deployment is not initialized',
-        })
+        throw new Error('Selected deployment is not initialized')
       }
 
       if (incompleteDeploy.status === 'complete') {
-        return setState({
-          status: 'error',
-          message:
-            'Selected deployment is already completed, there are no pending transactions',
-        })
+        throw new Error(
+          'Selected deployment is already completed, there are no pending transactions'
+        )
       }
 
       setState({
@@ -147,7 +136,8 @@ export function useCannonBuild() {
 
       const provider = new CannonWrapperGenericProvider(
         {},
-        new ethers.providers.JsonRpcProvider(fork.json_rpc_url)
+        new ethers.providers.Web3Provider(fork),
+        false
       )
 
       // Create a regsitry that loads data first from Memory to be able to utilize
@@ -178,10 +168,9 @@ export function useCannonBuild() {
       })
 
       if (simulatedTxs.length === 0) {
-        return setState({
-          status: 'error',
-          message: 'There are no transactions that can be executed on Safe',
-        })
+        throw new Error(
+          'There are no transactions that can be executed on Safe'
+        )
       }
 
       const steps = await Promise.all(
@@ -278,7 +267,7 @@ export function useCannonBuild() {
       console.error(err)
       return setState({ status: 'error', message: err.message })
     } finally {
-      await deleteFork(props.settings, fork.id)
+      if (fork) await fork.disconnect()
     }
   }
 

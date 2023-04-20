@@ -1,18 +1,6 @@
 import { useEffect, useState } from 'react'
 
 const SETTINGS = {
-  tenderlyProject: {
-    title: 'Tenderly Project Id',
-    description:
-      'Provide a Tenderly Project ID that is owned by the API key above.',
-    defaultValue: '',
-  },
-  tenderlyKey: {
-    title: 'Tenderly API Key',
-    description:
-      'Provide a Tenderly API key to simulate the build and generate all of the appropriate transactions.',
-    defaultValue: '',
-  },
   publishIpfsUrl: {
     title: 'IPFS URL for Publishing',
     description:
@@ -39,6 +27,12 @@ const SETTINGS = {
     title: 'Package Tags',
     description: 'Custom tags to add to the published Cannon package.',
     defaultValue: 'latest',
+  },
+  forkProviderUrl: {
+    title: 'RPC URL for Local Fork',
+    description:
+      '(Optional) JSON RPC url to create the local fork from. If not provided, the default RPC url for the selected chain will be used.',
+    defaultValue: '',
   },
 } as const
 
