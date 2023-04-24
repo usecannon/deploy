@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react'
+import { SettingsLabels } from '../views/Settings'
+import { isIpfsUploadEndpoint } from '../utils/ipfs'
 
 const SETTINGS = {
-  publishIpfsUrl: {
-    title: 'IPFS URL for Publishing',
-    description:
-      'Provide an IPFS URL for publishing the updated Cannon package.',
-    defaultValue: '',
-  },
   ipfsUrl: {
-    title: 'IPFS URL for Reading',
-    description: 'Provide an IPFS URL to fetch Cannon packages.',
-    defaultValue: 'https://ipfs.io',
+    title: 'IPFS node URL',
+    description:
+      'Provide an IPFS URL to fetch Cannon packages and upload new builds.',
+    defaultValue: '',
+    validate: (val: string) => {
+      if (!isIpfsUploadEndpoint(val)) {
+        return 'Looks like you configured an IPFS URL that is not running on port 5001 nor  is using the protocol https+ipfs://, which means that the gateway is not compatible with uploading new files. Are you sure you are using the correct ipfs node url?'
+      }
+    },
+  },
+  forkProviderUrl: {
+    title: 'RPC URL for Local Fork',
+    description:
+      '(Optional) JSON RPC url to create the local fork from. If not provided, the default RPC url for the selected chain will be used.',
+    defaultValue: '',
+    optional: true,
   },
   registryAddress: {
     title: 'Registry Address',
@@ -28,13 +37,7 @@ const SETTINGS = {
     description: 'Custom tags to add to the published Cannon package.',
     defaultValue: 'latest',
   },
-  forkProviderUrl: {
-    title: 'RPC URL for Local Fork',
-    description:
-      '(Optional) JSON RPC url to create the local fork from. If not provided, the default RPC url for the selected chain will be used.',
-    defaultValue: '',
-  },
-} as const
+} as const satisfies SettingsLabels
 
 const DEFAULT_STATE = Object.fromEntries(
   Object.entries(SETTINGS).map(([k, v]) => [k, v.defaultValue])

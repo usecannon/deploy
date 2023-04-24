@@ -4,9 +4,22 @@ import { create as createUrl, parse as parseUrl } from 'simple-url'
 const FILE_URL_REGEX = /^(?:ipfs:\/\/|@ipfs:)?(?<cid>[a-zA-Z0-9]{46})$/
 
 export function parseIpfsHash(url: string) {
-  if (typeof url !== 'string') throw new Error('Invalid url')
+  if (typeof url !== 'string') throw new Error(`Invalid url "${url}"`)
   if (!url) return ''
   return url.trim().match(FILE_URL_REGEX)?.groups?.cid || ''
+}
+
+export function isIpfsUploadEndpoint(ipfsUrl: string) {
+  try {
+    const url = new URL(ipfsUrl)
+    return (
+      url.port === '5001' ||
+      url.protocol === 'http+ipfs:' ||
+      url.protocol === 'https+ipfs:'
+    )
+  } catch (_) {
+    return false
+  }
 }
 
 export class IPFSBrowserLoader extends IPFSLoader {

@@ -193,7 +193,7 @@ export function useCannonBuild() {
       })
 
       const publishLoader = new IPFSBrowserLoader(
-        props.settings.publishIpfsUrl,
+        props.settings.ipfsUrl,
         registry
       )
 
@@ -207,6 +207,12 @@ export function useCannonBuild() {
         meta: incompleteDeploy.meta,
         miscUrl,
       })
+
+      if (!deployUrl) {
+        throw new Error(
+          `Could not upload build to IPFS node "${props.settings.ipfsUrl}"`
+        )
+      }
 
       const registryChainId = (await registry.provider.getNetwork()).chainId
 

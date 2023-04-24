@@ -11,10 +11,11 @@ import {
 } from '@nextui-org/react'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 
+import { Alert } from '../components/Alert'
 import { ExclamationIcon } from '../components/ExclamationIcon'
 import { Input } from '../components/Input'
 import { TSettings } from '../hooks/settings'
-import { parseIpfsHash } from '../utils/ipfs'
+import { isIpfsUploadEndpoint, parseIpfsHash } from '../utils/ipfs'
 import { useCannonBuild } from '../hooks/cannon'
 import { validatePreset } from '../utils/cannon'
 
@@ -113,30 +114,12 @@ export function Cannon({ settings }: Props) {
 
       <Spacer />
 
-      {buildState.status === 'error' && (
-        <Card variant="bordered" css={{ bg: '$error' }}>
-          <Card.Body css={{ padding: '.6em' }}>
-            <Text>{buildState.message}</Text>
-          </Card.Body>
-        </Card>
+      {['error', 'loading'].includes(buildState.status) && (
+        <Alert variant={buildState.status === 'error' ? 'error' : 'default'}>
+          <Text>{buildState.message}</Text>
+        </Alert>
       )}
 
-      {buildState.status === 'loading' && (
-        <Card>
-          <Card.Body css={{ padding: '.6em' }}>
-            <Grid.Container>
-              <Grid
-                css={{ marginRight: '.4em', transform: 'translateY(2.5px)' }}
-              >
-                <ExclamationIcon />
-              </Grid>
-              <Grid xs={10}>
-                <Text>{buildState.message}</Text>
-              </Grid>
-            </Grid.Container>
-          </Card.Body>
-        </Card>
-      )}
       <Spacer />
 
       {buildState.status === 'success' && buildState.steps.length > 0 && (
@@ -148,13 +131,30 @@ export function Cannon({ settings }: Props) {
               </Collapse>
             ))}
           </Collapse.Group>
+
           <Spacer />
+
+          {!isIpfsUploadEndpoint(settings.ipfsUrl) && (
+            <>
+              <Alert variant="warning">
+                <Text>
+                  Looks like you configured an IPFS URL that is not running on
+                  port 5001 nor is using the protocol https+ipfs://, which means
+                  that the gateway is not compatible with uploading new files.
+                  Are you sure you are using the correct ipfs node url?
+                </Text>
+              </Alert>
+              <Spacer />
+            </>
+          )}
+
           <Button css={{ minWidth: '100%' }} onClick={submitSafeTx} size="lg">
             Queue Transactions ({buildState.steps.length})
           </Button>
+
+          <Spacer />
         </>
       )}
-      <Spacer />
 
       {buildState.status === 'success' && buildState.skipped.length > 0 && (
         <>
@@ -173,6 +173,8 @@ export function Cannon({ settings }: Props) {
               </Collapse>
             ))}
           </Collapse.Group>
+
+          <Spacer />
         </>
       )}
     </Container>
