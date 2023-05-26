@@ -1,25 +1,27 @@
 import { Navbar } from '@nextui-org/react'
+import entries from 'just-entries'
 
-interface ItemBase {
-  title: string
-}
+import { Store, useStore } from '../store'
 
-interface Props {
-  items: ItemBase[]
-  value: number
-  onChange: (item: number) => void
-}
+const items = {
+  build: 'Build',
+  settings: 'Settings',
+  history: 'History',
+} satisfies Record<Store['page'], string>
 
-export function Menu({ items, value, onChange }: Props) {
+export function Menu() {
+  const currentPage = useStore((s) => s.page)
+  const setState = useStore((s) => s.setState)
+
   return (
     <Navbar isCompact maxWidth="xs">
       <Navbar.Content />
       <Navbar.Content enableCursorHighlight variant={'underline'}>
-        {items.map(({ title }, index) => (
+        {entries(items).map(([page, title]) => (
           <Navbar.Item
-            key={index}
-            isActive={index === value}
-            onClick={() => onChange(index)}
+            key={page}
+            isActive={page === currentPage}
+            onClick={() => setState({ page })}
             css={{ cursor: 'pointer' }}
           >
             {title}

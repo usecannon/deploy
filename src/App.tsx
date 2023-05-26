@@ -1,15 +1,15 @@
 import SafeProvider from '@safe-global/safe-apps-react-sdk'
-import { NextUIProvider, createTheme } from '@nextui-org/react'
+import { NextUIProvider, Spacer, createTheme } from '@nextui-org/react'
 import { StrictMode, useEffect } from 'react'
 
-import { Cannon } from './views/Cannon'
-import { History } from './views/History'
-import { Layout, View } from './components/Layout'
-import { Settings } from './views/Settings'
-import { useSettings } from './hooks/settings'
+import { Build } from './pages/Build'
+import { History } from './pages/History'
+import { Menu } from './components/Menu'
+import { Settings } from './pages/Settings'
+import { useStore } from './store'
 
 export function App() {
-  const [settings, setSettingValue, SETTINGS] = useSettings()
+  const page = useStore((s) => s.page)
 
   // Enable debugging of cannon
   useEffect(() => {
@@ -18,21 +18,11 @@ export function App() {
 
   return (
     <Providers loader={<span>Loading Safe Provider...</span>}>
-      <Layout>
-        <View title="Deploy">
-          <Cannon settings={settings} />
-        </View>
-        <View title="Settings">
-          <Settings
-            value={settings}
-            onValueChange={setSettingValue}
-            labels={SETTINGS}
-          />
-        </View>
-        <View title="History">
-          <History settings={settings} />
-        </View>
-      </Layout>
+      <Menu />
+      <Spacer y={2} />
+      {page === 'build' && <Build />}
+      {page === 'settings' && <Settings />}
+      {page === 'history' && <History />}
     </Providers>
   )
 }

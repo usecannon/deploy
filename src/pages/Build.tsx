@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react'
 import {
   Badge,
   Button,
@@ -9,37 +8,37 @@ import {
   Spacer,
   Text,
 } from '@nextui-org/react'
+import { useEffect, useState } from 'react'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
 
 import { Alert } from '../components/Alert'
-import { ExclamationIcon } from '../components/ExclamationIcon'
 import { Input } from '../components/Input'
-import { TSettings } from '../hooks/settings'
 import { isIpfsUploadEndpoint, parseIpfsHash } from '../utils/ipfs'
 import { useCannonBuild } from '../hooks/cannon'
+import { useStore } from '../store'
 import { validatePreset } from '../utils/cannon'
 
-interface Props {
-  settings: TSettings
-}
+export function Build() {
+  const setState = useStore((s) => s.setState)
 
-export function Cannon({ settings }: Props) {
-  const [buildState, startBuild] = useCannonBuild()
-  const [preset, setPreset] = useState('main')
-  const [packageUrl, setPackageUrl] = useState('')
+  const settings = useStore((s) => s.settings)
+  const packageRef = useStore((s) => s.packageRef)
+  const preset = useStore((s) => s.preset)
+  const buildState = useStore((s) => s.buildState)
+  const startBuild = useCannonBuild()
 
   const { safe, connected, sdk } = useSafeAppsSDK()
   const { chainId } = safe
 
   useEffect(() => {
     startBuild({
-      url: packageUrl,
+      url: packageRef,
       preset,
       chainId,
       safeAddress: safe.safeAddress,
       settings,
     })
-  }, [chainId, preset, packageUrl, settings])
+  }, [chainId, preset, packageRef, settings])
 
   const submitSafeTx = async () => {
     if (buildState.status !== 'success') return
@@ -90,11 +89,11 @@ export function Cannon({ settings }: Props) {
         <Grid xs={9} direction="column">
           <Input
             label="Partial Cannon Deployment IPFS URL"
-            placeholder='e.g. "@ipfs:Qm..."'
+            placeholder="@ipfs:Qm..."
             name="packageUrl"
-            value={packageUrl}
-            valid={!packageUrl || !!parseIpfsHash(packageUrl)}
-            onChange={setPackageUrl}
+            value={packageRef}
+            valid={!packageRef || !!parseIpfsHash(packageRef)}
+            onChange={(packageRef) => setState({ packageRef })}
             readOnly={buildState.status === 'loading'}
             required
           />
@@ -105,7 +104,7 @@ export function Cannon({ settings }: Props) {
             name="preset"
             value={preset}
             valid={validatePreset(preset)}
-            onChange={setPreset}
+            onChange={(preset) => setState({ preset })}
             readOnly={buildState.status === 'loading'}
             required
           />
