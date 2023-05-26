@@ -7,15 +7,15 @@ import {
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
-import { TSettings } from './settings'
+import { Store, useStore } from '../store'
 import { createFork } from '../utils/rpc'
 import { useHistory } from './history'
 
-type BuildState =
+export type BuildState =
   | {
       status: 'idle' | 'loading' | 'error'
       message: string
@@ -36,21 +36,17 @@ interface BuildProps {
   preset: string
   chainId: number
   safeAddress: string
-  settings: TSettings
+  settings: Store['settings']
 }
-
-const INITIAL_STATE = {
-  status: 'idle',
-  message: '',
-} as BuildState
 
 export function useCannonBuild() {
   const history = useHistory()
-  const [buildState, setState] = useState(INITIAL_STATE)
+  const buildState = useStore((s) => s.buildState)
+  const setBuildState = useStore((s) => s.setBuildState)
 
   useEffect(() => {
     if (history.status === 'closed' || history.status === 'error') {
-      setState({
+      setBuildState({
         status: 'error',
         message:
           'Could not connect to local database, you can execute builds but they will not be saved in the history. This is probably caused by third party cookies being blocked by your browser.',
@@ -63,9 +59,9 @@ export function useCannonBuild() {
       throw new Error('Cannot change url while another build is in progress')
     }
 
-    if (!props.url) return setState(INITIAL_STATE)
+    if (!props.url) return setBuildState({ status: 'idle', message: '' })
 
-    setState({
+    setBuildState({
       status: 'loading',
       message: 'Loading build...',
     })
@@ -73,7 +69,7 @@ export function useCannonBuild() {
     const cid = parseIpfsHash(props.url)
 
     if (!cid) {
-      return setState({
+      return setBuildState({
         status: 'error',
         message: 'Package url must have the format "@ipfs:Qm..."',
       })
@@ -99,7 +95,7 @@ export function useCannonBuild() {
 
       const loader = new IPFSBrowserLoader(props.settings.ipfsUrl, registry)
 
-      setState({
+      setBuildState({
         status: 'loading',
         message: 'Loading deployment data',
       })
@@ -129,7 +125,7 @@ export function useCannonBuild() {
         )
       }
 
-      setState({
+      setBuildState({
         status: 'loading',
         message: 'Generating pending transactions',
       })
@@ -187,7 +183,7 @@ export function useCannonBuild() {
         })
       )
 
-      setState({
+      setBuildState({
         status: 'loading',
         message: 'Uploading new build to IPFS',
       })
@@ -224,7 +220,7 @@ export function useCannonBuild() {
       })
 
       if (registryChainId === props.chainId) {
-        setState({
+        setBuildState({
           status: 'loading',
           message: 'Preparing package for publication',
         })
@@ -251,7 +247,7 @@ export function useCannonBuild() {
           },
         })
 
-        setState({
+        setBuildState({
           status: 'success',
           message:
             'Ready to stage! Click the button below to queue the transactions',
@@ -260,7 +256,7 @@ export function useCannonBuild() {
           skipped: skippedSteps,
         })
       } else {
-        setState({
+        setBuildState({
           status: 'success',
           message:
             'Done - Cannon Registry will not be updated because it is on a different network than the current Safe',
@@ -271,11 +267,11 @@ export function useCannonBuild() {
       }
     } catch (err) {
       console.error(err)
-      return setState({ status: 'error', message: err.message })
+      return setBuildState({ status: 'error', message: err.message })
     } finally {
       if (fork) await fork.disconnect()
     }
   }
 
-  return [buildState, startBuild] as const
+  return startBuild
 }
