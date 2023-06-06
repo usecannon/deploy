@@ -1,34 +1,62 @@
-import { Navbar } from '@nextui-org/react'
-import entries from 'just-entries'
+import {
+  Text,
+  Flex,
+  Tab,
+  TabIndicator,
+  TabList,
+  Tabs,
+  Spacer,
+  Container,
+  IconButton,
+  useColorMode,
+} from '@chakra-ui/react'
 
-import { Store, useStore } from '../store'
+import { State, useStore } from '../store'
+import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 
-const items = {
-  build: 'Build',
-  settings: 'Settings',
-  history: 'History',
-} satisfies Record<Store['page'], string>
+const pages = [
+  'transactions',
+  'deploy',
+] as const satisfies readonly State['page'][]
+const titles = ['Transactions', 'Deploy'] as const
 
 export function Menu() {
   const currentPage = useStore((s) => s.page)
   const setState = useStore((s) => s.setState)
+  const { colorMode, toggleColorMode } = useColorMode()
 
   return (
-    <Navbar isCompact maxWidth="xs">
-      <Navbar.Content />
-      <Navbar.Content enableCursorHighlight variant={'underline'}>
-        {entries(items).map(([page, title]) => (
-          <Navbar.Item
-            key={page}
-            isActive={page === currentPage}
-            onClick={() => setState({ page })}
-            css={{ cursor: 'pointer' }}
-          >
-            {title}
-          </Navbar.Item>
-        ))}
-      </Navbar.Content>
-      <Navbar.Content />
-    </Navbar>
+    <Container maxW="100%" w="container.sm" pr="0.4" paddingY={4}>
+      <Flex>
+        <Text fontSize="2xl">Synthetix Deploy</Text>
+        <Spacer />
+        <Tabs
+          position="relative"
+          variant="unstyled"
+          index={pages.findIndex((page) => page === currentPage)}
+          onChange={(index) => setState({ page: pages[index] })}
+        >
+          <TabList>
+            {pages.map((page, index) => (
+              <Tab key={page} css={{ cursor: 'pointer' }}>
+                {titles[index]}
+              </Tab>
+            ))}
+          </TabList>
+          <TabIndicator
+            mt="-1.5px"
+            height="2px"
+            bg="blue.500"
+            borderRadius="1px"
+          />
+        </Tabs>
+        <IconButton
+          variant={'ghost'}
+          aria-label="color mode"
+          icon={colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          onClick={toggleColorMode}
+        />
+      </Flex>
+    </Container>
   )
 }
