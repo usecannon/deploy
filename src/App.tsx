@@ -1,4 +1,5 @@
-import { StrictMode, useEffect } from 'react'
+import { ChakraProvider } from '@chakra-ui/react'
+import { useEffect } from 'react'
 
 import { Deploy } from './pages/Deploy'
 
@@ -9,8 +10,8 @@ export function App() {
   }, [])
 
   return (
-    <StrictMode>
+    <ChakraProvider>
       <Deploy />
-    </StrictMode>
+    </ChakraProvider>
   )
 }
