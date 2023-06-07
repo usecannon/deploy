@@ -41,8 +41,9 @@ export function Deploy() {
               <FormLabel>GitHub URL</FormLabel>
               <Input type="text" />
               <FormHelperText>
-                Optionally, enter the GitHub URL to display and verify the
-                changes this partial deployment will create transactions for.
+                Enter the GitHub URL for branch of the GitOps repository to
+                deploy. You will able to execute the transactions you are
+                permitted to and queue the rest.
               </FormHelperText>
             </FormControl>
 
