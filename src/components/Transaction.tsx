@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 
-export function Transaction({ modalDisplay = false }) {
+export function Transaction({ modalDisplay = false, isExecutable = false }) {
   const { isOpen, onOpen, onClose } = useDisclosure()
   return (
     <Flex
@@ -32,7 +32,7 @@ export function Transaction({ modalDisplay = false }) {
       {modalDisplay ? (
         <>
           <Button onClick={onOpen} ml="auto">
-            Details
+            Review & {isExecutable ? 'Execute' : 'Queue'}
           </Button>
 
           <Modal isOpen={isOpen} onClose={onClose}>
@@ -48,7 +48,7 @@ export function Transaction({ modalDisplay = false }) {
         </>
       ) : (
         <Button ml="auto">
-          Review & Sign
+          Review & {isExecutable ? 'Execute' : 'Queue'}
           {/* Should link to pages/Transaction at /txn/chainId/txId */}
         </Button>
       )}

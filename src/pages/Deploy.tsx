@@ -18,8 +18,33 @@ import { Transaction } from '../components/Transaction'
 import GitReadFileInput from '../components/GitReadFileInput'
 import { parseDiff, Diff, Hunk } from 'react-diff-view'
 import 'react-diff-view/style/index.css'
+import { useEffect, useState } from 'react'
 
 export function Deploy() {
+  const [diffText, setDiffText] = useState('')
+
+  useEffect(() => {
+    // Replace this with the diff you want to display.
+    // For example, it could be fetched from an API.
+    const diff = `
+          diff --git a/file1 b/file2
+          index 1111111..2222222 100644
+          --- a/file1
+          +++ b/file2
+          @@ -1,3 +1,9 @@
+          -test
+          +another test
+          +lines
+          +in
+          +the
+          +diff
+      `
+
+    setDiffText(diff)
+  }, [])
+
+  const files = parseDiff(diffText)
+
   return (
     <Container maxW="100%" w="container.sm">
       {/*
@@ -29,7 +54,7 @@ export function Deploy() {
       filepath="omnibus-mainnet.toml"
     />
     */}
-      <Tabs>
+      <Tabs isFitted>
         <TabList>
           <Tab>Deploy from GitHub</Tab>
           <Tab>Complete Partial Deployment</Tab>
@@ -47,9 +72,8 @@ export function Deploy() {
               </FormHelperText>
             </FormControl>
 
-            <Text mb="4">
-              See https://github.com/otakustay/react-diff-view#render-diff-hunks
-            </Text>
+            <Box mb="6">git diff here</Box>
+
             <Box mb="6">
               <Heading size="sm">Transactions to Queue</Heading>
               <Transaction modalDisplay />
@@ -70,6 +94,7 @@ export function Deploy() {
 
             <Box mb="6">
               <Heading size="sm">Transactions to Queue</Heading>
+              <Transaction modalDisplay isExecutable />
               <Transaction modalDisplay />
               <Button w="100%">Add to Queue</Button>
             </Box>

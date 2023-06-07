@@ -28,7 +28,7 @@ export function Menu() {
   return (
     <Container maxW="100%" w="container.sm" pr="0.4" paddingY={4}>
       <Flex>
-        <Text fontSize="2xl">Synthetix Deploy</Text>
+        <Text fontSize="2xl">Synthetix Deployer</Text>
         <Spacer />
         <Tabs
           position="relative"
