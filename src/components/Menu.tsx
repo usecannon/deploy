@@ -10,9 +10,10 @@ import {
   IconButton,
   useColorMode,
 } from '@chakra-ui/react'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 
 import { State, useStore } from '../store'
-import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 
 const pages = [
   'transactions',
@@ -26,30 +27,39 @@ export function Menu() {
   const { colorMode, toggleColorMode } = useColorMode()
 
   return (
-    <Container maxW="100%" w="container.sm" pr="0.4" paddingY={4}>
+    <Container maxW="100%" w="container.lg" pt={3} pb={4}>
       <Flex>
-        <Text fontSize="2xl">Synthetix Deployer</Text>
-        <Spacer />
+        <Text pr={4} fontSize="2xl">
+          Deployer
+        </Text>
         <Tabs
           position="relative"
           variant="unstyled"
+          isManual
           index={pages.findIndex((page) => page === currentPage)}
           onChange={(index) => setState({ page: pages[index] })}
         >
           <TabList>
             {pages.map((page, index) => (
-              <Tab key={page} css={{ cursor: 'pointer' }}>
+              <Tab
+                key={page}
+                css={{ cursor: 'pointer' }}
+                _hover={{
+                  color: 'whiteAlpha.800',
+                  _dark: { color: 'whiteAlpha.700' },
+                }}
+                _selected={{
+                  color: 'blue.600',
+                  _dark: { color: 'blue.300' },
+                }}
+              >
                 {titles[index]}
               </Tab>
             ))}
           </TabList>
-          <TabIndicator
-            mt="-1.5px"
-            height="2px"
-            bg="blue.500"
-            borderRadius="1px"
-          />
         </Tabs>
+        <Spacer />
+        <ConnectButton />
         <IconButton
           variant={'ghost'}
           aria-label="color mode"

@@ -28,6 +28,7 @@
     "@isomorphic-git/lightning-fs": "^4.6.0",
     "@nextui-org/react": "^1.0.0-beta.12",
     "@parcel/transformer-inline-string": "2.8.3",
+    "@rainbow-me/rainbowkit": "^1.0.1",
     "@safe-global/safe-apps-react-sdk": "^4.6.4",
     "@safe-global/safe-apps-sdk": "^7.10.1",
     "@types/crypto-js": "^4.1.1",
@@ -56,6 +57,8 @@
     "sort-by-property": "^1.2.4",
     "stream-browserify": "^3.0.0",
     "typescript": "^4.9.5",
+    "viem": "^1.0.2",
+    "wagmi": "^1.1.1",
     "zustand": "^4.3.8"
   }
 }
