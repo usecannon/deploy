@@ -1,3 +1,5 @@
+import 'npm:@rainbow-me/rainbowkit/styles.css'
+
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
 import {
   RainbowKitProvider,
