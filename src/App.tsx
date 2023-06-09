@@ -1,4 +1,4 @@
-import 'npm:@rainbow-me/rainbowkit/styles.css'
+import '@rainbow-me/rainbowkit/dist/index.css'
 
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
 import {
