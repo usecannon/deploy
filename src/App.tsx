@@ -1,5 +1,3 @@
-// import '@rainbow-me/rainbowkit/dist/index.css'
-
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
 import {
   RainbowKitProvider,
@@ -11,6 +9,7 @@ import { useEffect } from 'react'
 
 import { Deploy } from './pages/Deploy'
 import { Menu } from './components/Menu'
+import { SafeAddressInput } from './components/SafeAddressInput'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
 import { useStore } from './store'
@@ -27,8 +26,9 @@ export function App() {
     <ChakraProvider>
       <WalletProvider>
         <Menu />
-        {page === 'deploy' && <Deploy />}
+        <SafeAddressInput />
         {page === 'transactions' && <Transactions />}
+        {page === 'deploy' && <Deploy />}
       </WalletProvider>
     </ChakraProvider>
   )
