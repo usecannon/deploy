@@ -1,4 +1,5 @@
 import SafeApiKit from '@safe-global/api-kit'
+import { getAddress, isAddress } from 'viem'
 import { useMemo } from 'react'
 import { useNetwork } from 'wagmi'
 
@@ -49,21 +50,35 @@ const chains = {
   },
 }
 
+export function isShortName(shortName: string): boolean {
+  if (typeof shortName !== 'string') return false
+  shortName = shortName.toLowerCase()
+  return Object.values(chains).some((chain) => chain.shortName === shortName)
+}
+
+export function isSafeAddress(safeAddress: string): boolean {
+  if (typeof safeAddress !== 'string') return false
+  const splitted = safeAddress.trim().split(':')
+  if (splitted.length !== 2) return false
+  const [shortName, address] = splitted
+  return isShortName(shortName) && isAddress(address)
+}
+
+export function getSafeAddress(safeAddress: string) {
+  if (!isSafeAddress(safeAddress)) return null
+  const [shortName, address] = safeAddress.trim().split(':')
+  return `${shortName.toLowerCase()}:${getAddress(address)}`
+}
+
+export function getSafeUrl(safeAddress: string) {
+  if (!isSafeAddress(safeAddress)) return null
+  return `https://app.safe.global/home?safe=${getSafeAddress(safeAddress)}`
+}
+
 export function useSafeApi(): SafeApiKit | null {
   const { chain } = useNetwork()
   return useMemo<SafeApiKit>(() => {
     if (!chains[chain.id]) return null
     new SafeApiKit(chains[chain.id].serviceUrl)
   }, [chain])
-}
-
-export function useSafeAddressUrl() {
-  const { chain } = useNetwork()
-  const safeAddress = useStore((s) => s.safeAddress)
-
-  if (!chain || !safeAddress || !chains[chain.id]) return null
-
-  return `https://app.safe.global/home?safe=${
-    chains[chain.id].shortName
-  }:${safeAddress}`
 }

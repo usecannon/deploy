@@ -19,7 +19,7 @@ export function set(key: string, value: string) {
     delete values[key]
   }
 
-  const query = qs.stringify(values)
+  const query = qs.stringify(values, { encode: false })
   const pathname = `${window.location.pathname}${query ? `?${query}` : ''}`
   window.history.replaceState({}, '', pathname)
 }

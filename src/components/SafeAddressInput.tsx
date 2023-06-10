@@ -1,7 +1,6 @@
 import {
   Container,
   FormControl,
-  FormHelperText,
   FormLabel,
   IconButton,
   Input,
@@ -11,31 +10,28 @@ import {
   LinkOverlay,
 } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
-import { getAddress, isAddress } from 'viem'
 import { useEffect, useState } from 'react'
 
 import * as localStorage from '../utils/localStorage'
 import * as query from '../utils/query'
-import { useSafeAddressUrl } from '../hooks/safe'
+import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
   const setState = useStore((s) => s.setState)
-  const safeAddressUrl = useSafeAddressUrl()
+  const safeAddress = useStore((s) => s.safeAddress)
   const [safeAddressValue, setSafeAddressValue] = useState('')
 
   // Load the safe address from url or local storage
   useEffect(() => {
     const param = query.get('safe') || localStorage.getItem('safe')
-    const safeAddress = isAddress(param) ? getAddress(param) : ''
+    const safeAddress = getSafeAddress(param) || ''
     setSafeAddressValue(safeAddress)
   }, [])
 
   // If the user puts a correct address in the input, update the url and local storage
   useEffect(() => {
-    const safeAddress = isAddress(safeAddressValue)
-      ? getAddress(safeAddressValue)
-      : ''
+    const safeAddress = getSafeAddress(safeAddressValue) || ''
     query.set('safe', safeAddress)
     localStorage.setItem('safe', safeAddress)
     setState({ safeAddress })
@@ -52,10 +48,10 @@ export function SafeAddressInput() {
             value={safeAddressValue}
             onChange={(evt) => setSafeAddressValue(evt.target.value)}
           />
-          {safeAddressUrl && (
+          {safeAddress && (
             <InputRightElement>
               <LinkBox>
-                <LinkOverlay href={safeAddressUrl} isExternal>
+                <LinkOverlay href={getSafeUrl(safeAddress)} isExternal>
                   <IconButton
                     borderLeftRadius="0"
                     variant={'ghost'}
