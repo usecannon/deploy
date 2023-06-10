@@ -6,9 +6,7 @@ import {
   IconButton,
   Input,
   InputGroup,
-  InputRightAddon,
   InputRightElement,
-  Link,
   LinkBox,
   LinkOverlay,
 } from '@chakra-ui/react'
@@ -69,9 +67,6 @@ export function SafeAddressInput() {
             </InputRightElement>
           )}
         </InputGroup>
-        <FormHelperText>
-          Select the Safe you want to manage transactions from.
-        </FormHelperText>
       </FormControl>
     </Container>
   )
