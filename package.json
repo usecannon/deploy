@@ -5,7 +5,7 @@
   "license": "MIT",
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "scripts": {
-    "start": "parcel serve src/index.html --cert certs/localhost.pem --key certs/localhost-key.pem",
+    "start": "parcel serve src/index.html",
     "build": "parcel build src/index.html",
     "lint": "prettier --check 'src/**/*.{ts,tsx}' && eslint 'src/**/*.{ts,tsx}'"
   },
@@ -32,9 +32,9 @@
     "@safe-global/api-kit": "^1.1.0",
     "@safe-global/safe-apps-react-sdk": "^4.6.4",
     "@safe-global/safe-apps-sdk": "^7.10.1",
+    "@tanstack/react-query": "^4.29.12",
     "@types/crypto-js": "^4.1.1",
     "@usecannon/builder": "^2.4.6",
-    "@wagmi/core": "^0.10.9",
     "axios": "^1.3.5",
     "browser-level": "^1.0.1",
     "buffer": "^5.5.0",
@@ -55,12 +55,13 @@
     "react": "^18.2.0",
     "react-diff-view": "^3.0.3",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.12.1",
     "simple-url": "^1.1.8",
     "sort-by-property": "^1.2.4",
     "stream-browserify": "^3.0.0",
     "typescript": "^4.9.5",
     "viem": "^1.0.2",
-    "wagmi": "^1.1.1",
+    "wagmi": "^1.0.9",
     "zustand": "^4.3.8"
   }
 }

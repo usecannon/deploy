@@ -4,6 +4,9 @@ import {
   darkTheme,
   lightTheme,
 } from '@rainbow-me/rainbowkit'
+
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
+
 import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
 
@@ -14,9 +17,31 @@ import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
 import { useStore } from './store'
 
-export function App() {
-  const page = useStore((s) => s.page)
+const router = createBrowserRouter([
+  {
+    element: <AppLayout />,
+    children: [
+      {
+        path: "/",
+        element: <Transactions />,
+      },
+      {
+        path: '/deploy',
+        element: <Deploy />
+      }
+    ]
+  }
+])
 
+function AppLayout() {
+  return <div>
+    <Menu />
+    <SafeAddressInput />
+    <Outlet />
+  </div>
+}
+
+export function App() {
   // Enable debugging of cannon
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.setItem('debug', 'cannon*')
@@ -25,10 +50,7 @@ export function App() {
   return (
     <ChakraProvider>
       <WalletProvider>
-        <Menu />
-        <SafeAddressInput />
-        {page === 'transactions' && <Transactions />}
-        {page === 'deploy' && <Deploy />}
+        <RouterProvider router={router} />
       </WalletProvider>
     </ChakraProvider>
   )

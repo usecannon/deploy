@@ -9,21 +9,38 @@ import {
   Container,
   IconButton,
   useColorMode,
+  HStack,
 } from '@chakra-ui/react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 
 import { State, useStore } from '../store'
+import { NavLink } from 'react-router-dom'
 
 const pages = [
-  'transactions',
-  'deploy',
+  { to: '/', title: 'Transactions' },
+  { to: '/deploy', title: 'Deploy' },
 ] as const satisfies readonly State['page'][]
-const titles = ['Transactions', 'Deploy'] as const
+
+function NavItem(props: { to: string, title: string }) {
+  return <NavLink
+      to={props.to}
+    >
+      {({ isActive }) => (
+        <Text
+        css={isActive ? {
+          color: 'blue.600',
+          _dark: { color: 'blue.300' }
+        } : {}}
+        _hover={{
+          color: 'whiteAlpha.800',
+          _dark: { color: 'whiteAlpha.700' },
+        }}>{props.title}</Text>
+      )}
+    </NavLink>
+}
 
 export function Menu() {
-  const currentPage = useStore((s) => s.page)
-  const setState = useStore((s) => s.setState)
   const { colorMode, toggleColorMode } = useColorMode()
 
   return (
@@ -32,32 +49,13 @@ export function Menu() {
         <Text pr={4} fontSize="2xl">
           Deployer
         </Text>
-        <Tabs
+        <HStack
           position="relative"
-          variant="unstyled"
-          isManual
-          index={pages.findIndex((page) => page === currentPage)}
-          onChange={(index) => setState({ page: pages[index] })}
         >
-          <TabList>
-            {pages.map((page, index) => (
-              <Tab
-                key={page}
-                css={{ cursor: 'pointer' }}
-                _hover={{
-                  color: 'whiteAlpha.800',
-                  _dark: { color: 'whiteAlpha.700' },
-                }}
-                _selected={{
-                  color: 'blue.600',
-                  _dark: { color: 'blue.300' },
-                }}
-              >
-                {titles[index]}
-              </Tab>
-            ))}
-          </TabList>
-        </Tabs>
+          {pages.map((info) => (
+            <NavItem to={info.to} title={info.title} />
+          ))}
+        </HStack>
         <Spacer />
         <ConnectButton />
         <IconButton
