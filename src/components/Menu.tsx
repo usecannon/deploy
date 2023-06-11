@@ -20,6 +20,7 @@ import { NavLink } from 'react-router-dom'
 const pages = [
   { to: '/', title: 'Transactions' },
   { to: '/deploy', title: 'Deploy' },
+  { to: '/run', title: 'Invoke' },
 ] as const satisfies readonly State['page'][]
 
 function NavItem(props: { to: string, title: string }) {

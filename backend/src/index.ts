@@ -14,10 +14,10 @@ type SafeTransaction = {
     gasPrice: string;
     gasToken: string;
     refundReceiver: string;
+    _nonce: number;
 };
 
 type StagedTransaction = {
-    nonce: number;
     txn: SafeTransaction;
     sigs: string[];
 }
@@ -68,13 +68,13 @@ async function start() {
             // verify the new txn will work on what we know about the safe right now
             const currentNonce: bigint = await safe.nonce();
     
-            if (signedTransactionInfo.nonce < currentNonce) {
+            if (signedTransactionInfo.txn._nonce < currentNonce) {
                 return res.status(400).send('proposed nonce is lower than current safe nonce');
             }
     
             if (
-                signedTransactionInfo.nonce > currentNonce && 
-                !txs.find(tx => tx.nonce === signedTransactionInfo.nonce - 1)
+                signedTransactionInfo.txn._nonce > currentNonce && 
+                !txs.find(tx => tx.txn._nonce === signedTransactionInfo.txn._nonce - 1)
             ) {
                 return res.status(400).send('proposed nonce is higher than current safe nonce with missing staged');
             }

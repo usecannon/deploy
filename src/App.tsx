@@ -10,10 +10,13 @@ import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
 
-import { Deploy } from './pages/Deploy'
 import { Menu } from './components/Menu'
 import { SafeAddressInput } from './components/SafeAddressInput'
+
+import { Deploy } from './pages/Deploy'
 import { Transactions } from './pages/Transactions'
+import { RunCustom } from './pages/RunCustom'
+
 import { chains, wagmiConfig } from './wallet'
 import { useStore } from './store'
 
@@ -28,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: '/deploy',
         element: <Deploy />
+      },
+      {
+        path: '/run',
+        element: <RunCustom />
       }
     ]
   }
