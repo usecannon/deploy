@@ -17,7 +17,7 @@ import { usePrepareSendTransaction, useSendTransaction } from 'wagmi'
 import { Transaction } from '../components/Transaction'
 import { useTxnStager } from '../hooks/backend'
 
-export function Deploy() {
+export function RunCustom() {
   const [target, setTarget] = useState('')
   const [txnData, setTxnData] = useState('')
   const [value, setValue] = useState(0n)
@@ -74,7 +74,7 @@ export function Deploy() {
 
       <Box mb="6">
         <Heading size="sm">Transactions to Queue</Heading>
-        <Transaction modalDisplay />
+        {/* <Transaction modalDisplay /> */}
         <Button
           w="100%"
           disabled={!stager.canSign}

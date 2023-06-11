@@ -1,44 +1,45 @@
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import {
-  Text,
+  Container,
   Flex,
+  HStack,
+  IconButton,
+  Spacer,
   Tab,
   TabIndicator,
   TabList,
   Tabs,
-  Spacer,
-  Container,
-  IconButton,
+  Text,
   useColorMode,
-  HStack,
+  useColorModeValue,
 } from '@chakra-ui/react'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { MoonIcon, SunIcon } from '@chakra-ui/icons'
+import { NavLink } from 'react-router-dom'
 
 import { State, useStore } from '../store'
-import { NavLink } from 'react-router-dom'
 
 const pages = [
   { to: '/', title: 'Transactions' },
   { to: '/deploy', title: 'Deploy' },
   { to: '/run', title: 'Invoke' },
-] as const satisfies readonly State['page'][]
+] as const
 
-function NavItem(props: { to: string, title: string }) {
-  return <NavLink
-      to={props.to}
-    >
+function NavItem(props: { to: string; title: string }) {
+  const activeColor = useColorModeValue('gray.600', 'blue.300')
+  const hoverColor = useColorModeValue('whiteAlpha.800', 'whiteAlpha.700')
+
+  return (
+    <NavLink to={props.to}>
       {({ isActive }) => (
         <Text
-        css={isActive ? {
-          color: 'blue.600',
-          _dark: { color: 'blue.300' }
-        } : {}}
-        _hover={{
-          color: 'whiteAlpha.800',
-          _dark: { color: 'whiteAlpha.700' },
-        }}>{props.title}</Text>
+          css={isActive ? { color: activeColor } : {}}
+          _hover={{ color: hoverColor }}
+        >
+          {props.title}
+        </Text>
       )}
     </NavLink>
+  )
 }
 
 export function Menu() {
@@ -50,11 +51,9 @@ export function Menu() {
         <Text pr={4} fontSize="2xl">
           Deployer
         </Text>
-        <HStack
-          position="relative"
-        >
+        <HStack position="relative">
           {pages.map((info) => (
-            <NavItem to={info.to} title={info.title} />
+            <NavItem key={info.title} to={info.to} title={info.title} />
           ))}
         </HStack>
         <Spacer />

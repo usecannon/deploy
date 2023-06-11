@@ -1,24 +1,26 @@
+import 'react-diff-view/style/index.css'
+
 import {
+  Box,
+  Button,
   Container,
   FormControl,
   FormHelperText,
   FormLabel,
-  Input,
-  Box,
   Heading,
-  Button,
-  Text,
-  Tabs,
-  TabList,
+  Input,
   Tab,
-  TabPanels,
+  TabList,
   TabPanel,
+  TabPanels,
+  Tabs,
+  Text,
 } from '@chakra-ui/react'
-import { Transaction } from '../components/Transaction'
-import GitReadFileInput from '../components/GitReadFileInput'
-import { parseDiff, Diff, Hunk } from 'react-diff-view'
-import 'react-diff-view/style/index.css'
+import { Diff, Hunk, parseDiff } from 'react-diff-view'
 import { useEffect, useState } from 'react'
+
+import GitReadFileInput from '../components/GitReadFileInput'
+import { Transaction } from '../components/Transaction'
 
 export function Deploy() {
   const [diffText, setDiffText] = useState('')
@@ -76,7 +78,7 @@ export function Deploy() {
 
             <Box mb="6">
               <Heading size="sm">Transactions to Queue</Heading>
-              <Transaction modalDisplay />
+              {/* <Transaction modalDisplay /> */}
               <Button w="100%">Add to Queue</Button>
             </Box>
           </TabPanel>
@@ -94,8 +96,8 @@ export function Deploy() {
 
             <Box mb="6">
               <Heading size="sm">Transactions to Queue</Heading>
-              <Transaction modalDisplay isExecutable />
-              <Transaction modalDisplay />
+              {/* <Transaction modalDisplay isExecutable />
+              <Transaction modalDisplay /> */}
               <Button w="100%">Add to Queue</Button>
             </Box>
           </TabPanel>
