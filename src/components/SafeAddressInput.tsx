@@ -43,7 +43,7 @@ export function SafeAddressInput() {
         <FormLabel>Safe Address</FormLabel>
         <InputGroup>
           <Input
-            placeholder="0x000..."
+            placeholder="eth:0x000..."
             variant="filled"
             value={safeAddressValue}
             onChange={(evt) => setSafeAddressValue(evt.target.value)}

@@ -12,10 +12,29 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react'
-import { TransactionDisplay } from '../components/TransactionDisplay'
+import { SafeMultisigTransactionListResponse } from '@safe-global/api-kit'
 
-export function Transaction({ modalDisplay = false, isExecutable = false }) {
+import { TransactionDisplay } from '../components/TransactionDisplay'
+import { getSafeChain } from '../hooks/safe'
+
+interface Params {
+  safeAddress: string
+  tx: SafeMultisigTransactionListResponse['results'][0]
+  modalDisplay?: boolean
+  isExecutable?: boolean
+}
+
+export function Transaction({
+  safeAddress,
+  tx,
+  modalDisplay = false,
+  isExecutable = false,
+}: Params) {
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const chain = getSafeChain(safeAddress)
+
+  console.log({ chain })
+
   return (
     <Flex
       my="3"
@@ -26,8 +45,8 @@ export function Transaction({ modalDisplay = false, isExecutable = false }) {
       alignItems="center"
     >
       <Box>
-        <Text>Network Name</Text>
-        <Heading size="md">Transaction #XXX</Heading>
+        <Text>{chain.name}</Text>
+        <Heading size="md">Transaction #{tx.nonce}</Heading>
       </Box>
       {modalDisplay ? (
         <>
