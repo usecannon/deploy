@@ -33,8 +33,6 @@ export function Transaction({
   const { isOpen, onOpen, onClose } = useDisclosure()
   const chain = getSafeChain(safeAddress)
 
-  console.log({ chain })
-
   return (
     <Flex
       my="3"
