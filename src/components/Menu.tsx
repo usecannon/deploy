@@ -5,10 +5,6 @@ import {
   HStack,
   IconButton,
   Spacer,
-  Tab,
-  TabIndicator,
-  TabList,
-  Tabs,
   Text,
   useColorMode,
   useColorModeValue,
@@ -16,26 +12,24 @@ import {
 import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 import { NavLink } from 'react-router-dom'
 
-import { State, useStore } from '../store'
-
 const pages = [
   { to: '/', title: 'Transactions' },
   { to: '/deploy', title: 'Deploy' },
   { to: '/run', title: 'Invoke' },
 ] as const
 
-function NavItem(props: { to: string; title: string }) {
-  const activeColor = useColorModeValue('gray.600', 'blue.300')
-  const hoverColor = useColorModeValue('whiteAlpha.800', 'whiteAlpha.700')
+function NavItem({ to, title }: { to: string; title: string }) {
+  const activeColor = useColorModeValue('blue.600', 'blue.300')
+  const hoverColor = useColorModeValue('gray.400', 'whiteAlpha.700')
 
   return (
-    <NavLink to={props.to}>
+    <NavLink to={to}>
       {({ isActive }) => (
         <Text
-          css={isActive ? { color: activeColor } : {}}
-          _hover={{ color: hoverColor }}
+          color={isActive && activeColor}
+          _hover={!isActive && { color: hoverColor }}
         >
-          {props.title}
+          {title}
         </Text>
       )}
     </NavLink>
