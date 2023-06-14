@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import * as query from '../utils/query'
 import { getSafeAddress, getSafeUrl } from '../hooks/safe'
@@ -20,12 +21,12 @@ export function SafeAddressInput() {
   const setState = useStore((s) => s.setState)
   const safeAddress = useStore((s) => s.safeAddress)
   const [safeAddressValue, setSafeAddressValue] = useState('')
+  const location = useLocation()
 
   // Load the safe address from url
   useEffect(() => {
-    const param = query.get('safe')
-    const safeAddress = getSafeAddress(param) || ''
-    setSafeAddressValue(safeAddress)
+    const loadedSafeAddress = getSafeAddress(query.get('safe')) || safeAddress
+    setSafeAddressValue(loadedSafeAddress)
   }, [])
 
   // If the user puts a correct address in the input, update the url
@@ -33,7 +34,7 @@ export function SafeAddressInput() {
     const safeAddress = getSafeAddress(safeAddressValue) || ''
     query.set('safe', safeAddress)
     setState({ safeAddress })
-  }, [safeAddressValue])
+  }, [safeAddressValue, location.pathname])
 
   return (
     <Container maxW="100%" w="container.sm" pt="4" pb="8">
