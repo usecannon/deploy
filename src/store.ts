@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 
 export interface State {
-  page: 'transactions' | 'deploy'
   safeAddress: string
 }
 
@@ -12,7 +11,6 @@ export interface Actions {
 export type Store = State & Actions
 
 const initialState = {
-  page: 'transactions',
   safeAddress: '',
 } satisfies State
 

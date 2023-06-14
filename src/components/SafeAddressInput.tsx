@@ -11,29 +11,29 @@ import {
 } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-import * as localStorage from '../utils/localStorage'
 import * as query from '../utils/query'
 import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const setState = useStore((s) => s.setState)
   const safeAddress = useStore((s) => s.safeAddress)
   const [safeAddressValue, setSafeAddressValue] = useState('')
 
-  // Load the safe address from url or local storage
+  // Load the safe address from url
   useEffect(() => {
-    const param = query.get('safe') || localStorage.getItem('safe')
+    const param = query.get('safe')
     const safeAddress = getSafeAddress(param) || ''
     setSafeAddressValue(safeAddress)
   }, [])
 
-  // If the user puts a correct address in the input, update the url and local storage
+  // If the user puts a correct address in the input, update the url
   useEffect(() => {
     const safeAddress = getSafeAddress(safeAddressValue) || ''
     query.set('safe', safeAddress)
-    localStorage.setItem('safe', safeAddress)
     setState({ safeAddress })
   }, [safeAddressValue])
 

@@ -1,51 +1,53 @@
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
+import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom'
 import {
   RainbowKitProvider,
   darkTheme,
   lightTheme,
 } from '@rainbow-me/rainbowkit'
-
-import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
-
 import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
 
-import { Menu } from './components/Menu'
-import { SafeAddressInput } from './components/SafeAddressInput'
-
+import { Build } from './pages/Build'
 import { Deploy } from './pages/Deploy'
-import { Transactions } from './pages/Transactions'
+import { Menu } from './components/Menu'
 import { RunCustom } from './pages/RunCustom'
-
+import { SafeAddressInput } from './components/SafeAddressInput'
+import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
-import { useStore } from './store'
 
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
       {
-        path: "/",
+        path: '/',
         element: <Transactions />,
       },
       {
+        path: '/build',
+        element: <Build />,
+      },
+      {
         path: '/deploy',
-        element: <Deploy />
+        element: <Deploy />,
       },
       {
         path: '/run',
-        element: <RunCustom />
-      }
-    ]
-  }
+        element: <RunCustom />,
+      },
+    ],
+  },
 ])
 
 function AppLayout() {
-  return <div>
-    <Menu />
-    <SafeAddressInput />
-    <Outlet />
-  </div>
+  return (
+    <>
+      <Menu />
+      <SafeAddressInput />
+      <Outlet />
+    </>
+  )
 }
 
 export function App() {

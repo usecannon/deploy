@@ -14,6 +14,7 @@ import { NavLink } from 'react-router-dom'
 
 const pages = [
   { to: '/', title: 'Transactions' },
+  { to: '/build', title: 'Build' },
   { to: '/deploy', title: 'Deploy' },
   { to: '/run', title: 'Invoke' },
 ] as const

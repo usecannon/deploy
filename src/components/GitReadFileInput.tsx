@@ -28,7 +28,7 @@ export default function GitReadFileInput({ repo, branch, filepath }: Props) {
     <Container maxW="100%" w="container.lg">
       <UnorderedList>
         <ListItem>repo: {repo}</ListItem>
-        <ListItem>brach: {branch}</ListItem>
+        <ListItem>branch: {branch}</ListItem>
         <ListItem>file: {filepath}</ListItem>
       </UnorderedList>
       {content && (
