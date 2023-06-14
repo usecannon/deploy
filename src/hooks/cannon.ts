@@ -12,13 +12,13 @@ import {
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { Store, useStore } from '../store'
 import { createFork } from '../utils/rpc'
 import { useHistory } from './history'
-import { useQuery } from '@tanstack/react-query'
 
 export type BuildState =
   | {
@@ -47,7 +47,7 @@ interface BuildProps {
 export function useCannonBuild() {
   const history = useHistory()
   const buildState = useStore((s) => s.buildState)
-  const setBuildState = useStore((s) => s.setBuildState)
+  const setBuildState = useStore((s) => s.setBuild)
 
   useEffect(() => {
     if (history.status === 'closed' || history.status === 'error') {
@@ -106,9 +106,7 @@ export function useCannonBuild() {
       })
 
       // Load partial deployment from IPFS
-      const incompleteDeploy = await loader.read(
-        packageUrl
-      )
+      const incompleteDeploy = await loader.read(packageUrl)
 
       console.log('Deploy: ', incompleteDeploy)
 
@@ -280,7 +278,6 @@ export function useCannonBuild() {
 }
 
 export function useCannonPackage(packageRef: string, variant = 'main') {
-
   return useQuery(['cannon', 'pkg', packageRef, variant], {
     queryFn: async () => {
       const registry = new OnChainRegistry({
@@ -288,44 +285,48 @@ export function useCannonPackage(packageRef: string, variant = 'main') {
         address: 'settings.registryAddress',
       })
       const loader = new IPFSBrowserLoader('settings.ipfsUrl', registry)
-      
-      const pkgUrl = await registry.getUrl(packageRef, variant);
 
-      const deployInfo: DeploymentInfo = await loader.read(pkgUrl);
+      const pkgUrl = await registry.getUrl(packageRef, variant)
+
+      const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
       if (deployInfo) {
-        return deployInfo;
+        return deployInfo
       } else {
-        throw new Error('package not found');
+        throw new Error('package not found')
       }
-    }
+    },
   })
 }
 
 export function useCannonContracts(packageRef: string, variant = 'main') {
-  const deployInfoQuery = useCannonPackage(packageRef, variant);
-
+  const deployInfoQuery = useCannonPackage(packageRef, variant)
 
   useEffect(() => {
-    (async () => {
+    ;async () => {
       if (deployInfoQuery.data) {
-        const info = deployInfoQuery.data;
+        const info = deployInfoQuery.data
 
         const readRuntime = new ChainBuilderRuntime(
           {
             provider: p.provider,
             chainId: info.chainId || 1,
-            getSigner: () => { return new Promise(() => {}) },
+            getSigner: () => {
+              return new Promise(() => {})
+            },
             snapshots: false,
             allowPartialDeploy: false,
           },
           null,
           null
-        );
-    
-        const outputs = await getOutputs(readRuntime, new ChainDefinition(info.def), info.state);
-      }
-    })
-  }, [deployInfoQuery.data])
+        )
 
+        const outputs = await getOutputs(
+          readRuntime,
+          new ChainDefinition(info.def),
+          info.state
+        )
+      }
+    }
+  }, [deployInfoQuery.data])
 }

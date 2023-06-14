@@ -29,7 +29,7 @@ export function CIDInput({ initialValue = '', onChange, isLoading }: Props) {
   }, [value])
 
   return (
-    <FormControl>
+    <FormControl isRequired>
       <FormLabel>Partial Cannon Deployment IPFS Hash</FormLabel>
       <InputGroup>
         <InputLeftAddon children="@ipfs:" />
@@ -39,7 +39,6 @@ export function CIDInput({ initialValue = '', onChange, isLoading }: Props) {
           placeholder="Qm..."
           onChange={(evt) => setValue(evt.target.value)}
           isInvalid={!!value && !parseIpfsHash(value)}
-          required
         />
         {isLoading && (
           <InputRightAddon children={<Button isLoading variant="ghost" />} />
