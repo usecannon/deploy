@@ -39,6 +39,7 @@ export function CIDInput({ initialValue = '', onChange, isLoading }: Props) {
           placeholder="Qm..."
           onChange={(evt) => setValue(evt.target.value)}
           isInvalid={!!value && !parseIpfsHash(value)}
+          isDisabled={isLoading}
         />
         {isLoading && (
           <InputRightAddon children={<Button isLoading variant="ghost" />} />

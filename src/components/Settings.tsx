@@ -9,6 +9,7 @@ import {
 
 import { Store, useStore } from '../store'
 import { isIpfsUploadEndpoint } from '../utils/ipfs'
+import { validatePreset } from '../utils/cannon'
 
 type Setting = {
   title: string
@@ -41,6 +42,11 @@ const SETTINGS: Record<keyof Store['settings'], Setting> = {
     title: 'Package Preset',
     placeholder: 'main',
     description: 'Select the preset that will be used to build the package.',
+    validate: (val: string) => {
+      if (val && !validatePreset(val)) {
+        return 'Invalid preset. Should only include lowercase letters.'
+      }
+    },
   },
   registryAddress: {
     title: 'Registry Address',

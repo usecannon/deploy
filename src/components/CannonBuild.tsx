@@ -11,10 +11,9 @@ import { useNetwork } from 'wagmi'
 
 import { Alert } from '../components/Alert'
 import { CIDInput } from '../components/CIDInput'
-import { isIpfsUploadEndpoint, parseIpfsHash } from '../utils/ipfs'
+import { getSafeChain } from '../hooks/safe'
 import { useCannonBuild } from '../hooks/cannon'
 import { useStore } from '../store'
-import { validatePreset } from '../utils/cannon'
 
 export function CannonBuild() {
   const network = useNetwork()
@@ -22,13 +21,20 @@ export function CannonBuild() {
 
   const safeAddress = useStore((s) => s.safeAddress)
   const cid = useStore((s) => s.build.cid)
+  const settings = useStore((s) => s.settings)
   const buildState = useStore((s) => s.build.buildState)
 
   const setBuild = useStore((s) => s.setBuild)
 
-  const settings = useStore((s) => s.settings)
-
   const startBuild = useCannonBuild()
+
+  useEffect(() => {
+    if (buildState.status === 'loading') {
+      throw new Error('Cannot change url while another build is in progress')
+    }
+
+    startBuild({ cid })
+  }, [chainId, cid, settings, safeAddress])
 
   const submitSafeTx = async () => {
     if (buildState.status !== 'success') return
@@ -44,13 +50,29 @@ export function CannonBuild() {
     }
   }
 
+  if (!chainId) {
+    return <Alert status="error">Invalid Network</Alert>
+  }
+
+  if (getSafeChain(safeAddress).id !== chainId) {
+    return (
+      <Alert status="error">
+        Your wallet must be connected to the same network as the Safe
+      </Alert>
+    )
+  }
+
   return (
     <>
-      <CIDInput initialValue={cid} onChange={(cid) => setBuild({ cid })} />
+      <CIDInput
+        initialValue={cid}
+        onChange={(cid) => setBuild({ cid })}
+        isLoading={buildState.status === 'loading'}
+      />
 
       {['error', 'loading'].includes(buildState.status) && (
         <Alert status={buildState.status === 'error' ? 'error' : 'info'}>
-          <Text>{buildState.message}</Text>
+          {buildState.message}
         </Alert>
       )}
 

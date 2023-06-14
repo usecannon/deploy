@@ -34,8 +34,6 @@ export function Build() {
     )
   }
 
-  console.log({ validSettings })
-
   return (
     <Container maxW="100%" w="container.md">
       <Stepper size="lg" index={activeStep} mb="6">

@@ -12,13 +12,14 @@ import {
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect } from 'react'
+import { useNetwork } from 'wagmi'
 import { useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { Store, useStore } from '../store'
 import { createFork } from '../utils/rpc'
-import { useHistory } from './history'
+import { getSafeChain } from './safe'
 
 export type BuildState =
   | {
@@ -37,46 +38,33 @@ export type BuildState =
     }
 
 interface BuildProps {
-  url: string
-  preset: string
-  chainId: number
-  safeAddress: string
-  settings: Store['settings']
+  cid: string
 }
 
 export function useCannonBuild() {
-  const history = useHistory()
-  const buildState = useStore((s) => s.buildState)
-  const setBuildState = useStore((s) => s.setBuild)
-
-  useEffect(() => {
-    if (history.status === 'closed' || history.status === 'error') {
-      setBuildState({
-        status: 'error',
-        message:
-          'Could not connect to local database, you can execute builds but they will not be saved in the history. This is probably caused by third party cookies being blocked by your browser.',
-      })
-    }
-  }, [history.status])
+  const chainId = useNetwork().chain?.id
+  const safeAddress = useStore((s) =>
+    safeAddress ? s.safeAddress.split(':')[1] : ''
+  )
+  const settings = useStore((s) => s.settings)
+  const setBuildState = useStore(
+    (s) => (buildState: BuildState) => s.setBuild({ buildState })
+  )
 
   const startBuild = async (props: BuildProps) => {
-    if (buildState.status === 'loading') {
-      throw new Error('Cannot change url while another build is in progress')
-    }
-
-    if (!props.url) return setBuildState({ status: 'idle', message: '' })
+    if (!props.cid) return setBuildState({ status: 'idle', message: '' })
 
     setBuildState({
       status: 'loading',
       message: 'Loading build...',
     })
 
-    const cid = parseIpfsHash(props.url)
+    const cid = parseIpfsHash(props.cid)
 
     if (!cid) {
       return setBuildState({
         status: 'error',
-        message: 'Package url must have the format "@ipfs:Qm..."',
+        message: 'Package url on IPFS must have the format "@ipfs:Qm..."',
       })
     }
 
@@ -85,20 +73,20 @@ export function useCannonBuild() {
     let fork: EthereumProvider
     try {
       fork = await createFork({
-        url: props.settings.forkProviderUrl,
-        chainId: props.chainId,
-        impersonate: [props.safeAddress],
+        url: settings.forkProviderUrl,
+        chainId,
+        impersonate: [safeAddress],
       }).catch((err) => {
         err.message = `Could not create local fork for build: ${err.message}`
         throw err
       })
 
       const registry = new OnChainRegistry({
-        signerOrProvider: props.settings.registryProviderUrl,
-        address: props.settings.registryAddress,
+        signerOrProvider: settings.registryProviderUrl,
+        address: settings.registryAddress,
       })
 
-      const loader = new IPFSBrowserLoader(props.settings.ipfsUrl, registry)
+      const loader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
 
       setBuildState({
         status: 'loading',
@@ -112,7 +100,7 @@ export function useCannonBuild() {
 
       if (!incompleteDeploy) {
         throw new Error(
-          `Package not found: ${packageUrl} (chainId: ${props.chainId} | preset: ${props.preset})`
+          `Package not found: ${packageUrl} (chainId: ${chainId} | preset: ${settings.preset})`
         )
       }
 
@@ -144,7 +132,7 @@ export function useCannonBuild() {
         registry,
       ])
       const inMemoryLoader = new IPFSBrowserLoader(
-        props.settings.ipfsUrl,
+        settings.ipfsUrl,
         fallbackRegistry
       )
 
@@ -157,9 +145,9 @@ export function useCannonBuild() {
         runtime,
         skippedSteps,
       } = await build({
-        chainId: props.chainId,
+        chainId: chainId,
         provider,
-        defaultSignerAddress: props.safeAddress,
+        defaultSignerAddress: safeAddress,
         incompleteDeploy,
         loader: inMemoryLoader,
       })
@@ -189,10 +177,7 @@ export function useCannonBuild() {
         message: 'Uploading new build to IPFS',
       })
 
-      const publishLoader = new IPFSBrowserLoader(
-        props.settings.ipfsUrl,
-        registry
-      )
+      const publishLoader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
 
       const miscUrl = await publishLoader.putMisc(runtime.misc)
 
@@ -207,33 +192,26 @@ export function useCannonBuild() {
 
       if (!deployUrl) {
         throw new Error(
-          `Could not upload build to IPFS node "${props.settings.ipfsUrl}"`
+          `Could not upload build to IPFS node "${settings.ipfsUrl}"`
         )
       }
 
       const registryChainId = (await registry.provider.getNetwork()).chainId
 
-      await history.add({
-        id: parseIpfsHash(deployUrl),
-        preset: props.preset,
-        chainId: props.chainId,
-        safeAddress: props.safeAddress,
-      })
-
-      if (registryChainId === props.chainId) {
+      if (registryChainId === chainId) {
         setBuildState({
           status: 'loading',
           message: 'Preparing package for publication',
         })
 
-        const tags = (props.settings.publishTags || '')
+        const tags = (settings.publishTags || '')
           .split(',')
           .map((t) => t.trim())
           .filter((t) => !!t)
 
         const publishData = createPublishData({
           packageName: name,
-          variant: props.preset,
+          variant: settings.preset,
           packageTags: [version, ...tags],
           packageVersionUrl: deployUrl,
           packageMetaUrl: miscUrl,
@@ -242,7 +220,7 @@ export function useCannonBuild() {
         steps.push({
           name: 'Publish to registry',
           tx: {
-            to: props.settings.registryAddress,
+            to: settings.registryAddress,
             value: '0',
             data: publishData,
           },
