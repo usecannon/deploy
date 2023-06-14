@@ -53,7 +53,7 @@ const SETTINGS: Record<keyof Store['settings'], Setting> = {
   forkProviderUrl: {
     title: 'RPC URL for Local Fork',
     description:
-      'JSON RPC url to create the local fork from were the build will be executed. If not provided, the default RPC url from your wallet will be used.',
+      'JSON RPC url to create the local fork where the build will be executed. If not provided, the default RPC url from your wallet will be used.',
     optional: true,
   },
 }
