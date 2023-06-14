@@ -44,7 +44,7 @@ interface BuildProps {
 export function useCannonBuild() {
   const chainId = useNetwork().chain?.id
   const safeAddress = useStore((s) =>
-    safeAddress ? s.safeAddress.split(':')[1] : ''
+    s.safeAddress ? s.safeAddress.split(':')[1] : ''
   )
   const settings = useStore((s) => s.settings)
   const setBuildState = useStore(
