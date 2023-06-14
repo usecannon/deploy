@@ -40,14 +40,21 @@ async function start() {
     const app = express();
 
     app.use(morgan('tiny'));
+    app.use(express.json())
+
+    app.use((_req, res, next) => {
+        res.appendHeader('Access-Control-Allow-Origin', '*');
+        res.appendHeader('Access-Control-Allow-Methods', '*');
+        res.appendHeader('Access-Control-Allow-Headers', '*');
+        next();
+    });
     
     app.get('/:chainId/:safeAddress', async (req, res) => {
         res.send(txdb.get(getSafeKey(parseInt(req.params.chainId), req.params.safeAddress)) || []);
     });
     
     app.post('/:chainId/:safeAddress', async (req, res) => {
-    
-        const signedTransactionInfo: StagedTransaction = JSON.parse(req.body);
+        const signedTransactionInfo: StagedTransaction = req.body;
         
         const chainId = parseInt(req.params.chainId);
     
@@ -63,10 +70,11 @@ async function start() {
     
         const existingTx = 
             txs.find(tx => JSON.stringify(tx.txn) == JSON.stringify(signedTransactionInfo));
+        
+        const currentNonce: bigint = await safe.nonce();
     
         if (!existingTx) {
             // verify the new txn will work on what we know about the safe right now
-            const currentNonce: bigint = await safe.nonce();
     
             if (signedTransactionInfo.txn._nonce < currentNonce) {
                 return res.status(400).send('proposed nonce is lower than current safe nonce');
@@ -87,16 +95,33 @@ async function start() {
         }
     
         // verify all sigs are valid
-        const hashData = await safe.encodeTransactionData(signedTransactionInfo.txn);
+        const hashData = await safe.encodeTransactionData(
+            signedTransactionInfo.txn.to, 
+            signedTransactionInfo.txn.value, 
+            signedTransactionInfo.txn.data, 
+            signedTransactionInfo.txn.operation, 
+            signedTransactionInfo.txn.safeTxGas, 
+            signedTransactionInfo.txn.baseGas, 
+            signedTransactionInfo.txn.gasPrice, 
+            signedTransactionInfo.txn.gasToken, 
+            signedTransactionInfo.txn.refundReceiver, 
+            signedTransactionInfo.txn._nonce
+        );
     
         try {
             await safe.checkNSignatures(ethers.keccak256(hashData), hashData, ethers.concat(signedTransactionInfo.sigs), signedTransactionInfo.sigs.length);
         } catch (err) {
+            console.log('failed checking n signatures', err);
             return res.status(400).send('invalid signature');
         }
     
         txs.push(signedTransactionInfo);
-        txdb.set(getSafeKey(chainId, req.params.safeAddress), txs);
+
+        txdb.set(
+            getSafeKey(chainId, req.params.safeAddress), 
+            // briefly clean up any txns that are less than current nonce
+            txs.filter(t => t.txn._nonce >= currentNonce)
+        );
     
         res.send(txs);
     });

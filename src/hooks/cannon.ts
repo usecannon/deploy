@@ -1,9 +1,13 @@
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
   CannonWrapperGenericProvider,
+  ChainBuilderRuntime,
+  ChainDefinition,
+  DeploymentInfo,
   FallbackRegistry,
   InMemoryRegistry,
   OnChainRegistry,
+  getOutputs,
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
@@ -14,6 +18,7 @@ import { StepExecutionError, build, createPublishData } from '../utils/cannon'
 import { Store, useStore } from '../store'
 import { createFork } from '../utils/rpc'
 import { useHistory } from './history'
+import { useQuery } from '@tanstack/react-query'
 
 export type BuildState =
   | {
@@ -101,10 +106,8 @@ export function useCannonBuild() {
       })
 
       // Load partial deployment from IPFS
-      const incompleteDeploy = await loader.readDeploy(
-        packageUrl,
-        props.preset,
-        props.chainId
+      const incompleteDeploy = await loader.read(
+        packageUrl
       )
 
       console.log('Deploy: ', incompleteDeploy)
@@ -274,4 +277,55 @@ export function useCannonBuild() {
   }
 
   return startBuild
+}
+
+export function useCannonPackage(packageRef: string, variant = 'main') {
+
+  return useQuery(['cannon', 'pkg', packageRef, variant], {
+    queryFn: async () => {
+      const registry = new OnChainRegistry({
+        signerOrProvider: 'settings.registryProviderUrl',
+        address: 'settings.registryAddress',
+      })
+      const loader = new IPFSBrowserLoader('settings.ipfsUrl', registry)
+      
+      const pkgUrl = await registry.getUrl(packageRef, variant);
+
+      const deployInfo: DeploymentInfo = await loader.read(pkgUrl);
+
+      if (deployInfo) {
+        return deployInfo;
+      } else {
+        throw new Error('package not found');
+      }
+    }
+  })
+}
+
+export function useCannonContracts(packageRef: string, variant = 'main') {
+  const deployInfoQuery = useCannonPackage(packageRef, variant);
+
+
+  useEffect(() => {
+    (async () => {
+      if (deployInfoQuery.data) {
+        const info = deployInfoQuery.data;
+
+        const readRuntime = new ChainBuilderRuntime(
+          {
+            provider: p.provider,
+            chainId: info.chainId || 1,
+            getSigner: () => { return new Promise(() => {}) },
+            snapshots: false,
+            allowPartialDeploy: false,
+          },
+          null,
+          null
+        );
+    
+        const outputs = await getOutputs(readRuntime, new ChainDefinition(info.def), info.state);
+      }
+    })
+  }, [deployInfoQuery.data])
+
 }
