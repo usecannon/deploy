@@ -11,14 +11,12 @@ import {
 } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 
 import * as query from '../utils/query'
 import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
-  const [searchParams, setSearchParams] = useSearchParams()
   const setState = useStore((s) => s.setState)
   const safeAddress = useStore((s) => s.safeAddress)
   const [safeAddressValue, setSafeAddressValue] = useState('')
