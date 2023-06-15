@@ -342,24 +342,28 @@ export function getContractsRecursive(
 export function useCannonPackageContracts(packageRef: string, variant = '') {
   const pkg = useCannonPackage(packageRef, variant)
   const [contracts, setContracts] = useState<ContractInfo|null>(null);
+  const settings = useStore((s) => s.settings)
 
   useEffect(() => {
     const getContracts = async () => {
+      console.log('CONTRACTS', 'chk');
       if (pkg.pkg) {
+        console.log('CONTRACTS', 'be setting');
         const info = pkg.pkg
 
+        const loader = new IPFSBrowserLoader(settings.ipfsUrl, null)
         const readRuntime = new ChainBuilderRuntime(
           {
             provider: null,
             chainId: 1,
             getSigner: () => {
-              return new Promise(() => {})
+              return Promise.reject(new Error('unnecessary'))
             },
             snapshots: false,
             allowPartialDeploy: false,
           },
           null,
-          null
+          { ipfs: loader }
         )
 
         const outputs = await getOutputs(
@@ -367,6 +371,8 @@ export function useCannonPackageContracts(packageRef: string, variant = '') {
           new ChainDefinition(info.def),
           info.state
         );
+
+        console.log('CONTRACTS', 'done');
 
         setContracts(getContractsRecursive(outputs, null));
       }

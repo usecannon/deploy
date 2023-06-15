@@ -95,7 +95,6 @@ export function RunCustom() {
 
       {cannonInfo.contracts && <FormControl mb="4">
         <HStack textStyle='monospace'>
-          <FormLabel>Contract</FormLabel>
           <EditableAutocompleteInput placeholder='Contract' items={Object.entries(cannonInfo.contracts).map(([k,v]) => ({ label: k, secondary: v.address }))} onChange={(item) => setExecContract(item)} />
           <Text>.</Text>
           <EditableAutocompleteInput placeholder='func' items={execContract ? extractFunctionNames(cannonInfo.contracts[execContract].abi) : []} onChange={(item) => setExecFunc(item)} />

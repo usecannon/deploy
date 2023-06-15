@@ -1,6 +1,7 @@
 import {
     Box,
-    EditableInput, HStack, Popover, PopoverContent, PopoverTrigger, Text, VStack
+    Editable,
+    EditableInput, EditablePreview, HStack, Popover, PopoverContent, PopoverTrigger, Text, VStack
 } from '@chakra-ui/react'
 import { useState } from 'react';
 
@@ -48,7 +49,10 @@ export function EditableAutocompleteInput(props: { items: { label: string, secon
         <Popover>
             <PopoverTrigger>
                 <HStack>
-                    <EditableInput placeholder={props.placeholder} onKeyDown={handleKey} onChange={(event) => setFilterInput(event.target.value)} value={filterInput} />
+                    <Editable>
+                        <EditablePreview />
+                        <EditableInput placeholder={props.placeholder} onKeyDown={handleKey} onChange={(event) => setFilterInput(event.target.value)} value={filterInput} />
+                    </Editable>
                     <Text>{completedText}</Text>
                 </HStack>
             </PopoverTrigger>
