@@ -2,17 +2,20 @@ import 'react-diff-view/style/index.css'
 
 import _ from 'lodash';
 
-import { isAddress } from 'viem';
+import { getFunctionSelector, isAddress } from 'viem';
+import { formatAbiItem } from 'viem/dist/cjs/utils/abi/formatAbiItem'
 
 import {
   Box,
   Button,
   Container,
+  EditableInput,
   FormControl,
   FormHelperText,
   FormLabel,
   HStack,
   Heading,
+  Text,
   Input,
 } from '@chakra-ui/react'
 import { ethers } from 'ethers'
@@ -22,10 +25,14 @@ import { useContractWrite, usePrepareSendTransaction, useSendTransaction } from 
 import { Transaction } from '../components/Transaction'
 import { useTxnStager } from '../hooks/backend'
 import { useStore } from '../store'
+import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput';
+import { useCannonPackageContracts } from '../hooks/cannon';
 
 export function RunCustom() {
   const [target, setTarget] = useState('')
   const [txnData, setTxnData] = useState('')
+  const [execContract, setExecContract] = useState('')
+  const [execFunc, setExecFunc] = useState('')
   const [value, setValue] = useState(ethers.BigNumber.from(0))
   const [queuedTxns, setQueuedTxns] = useState([]);
 
@@ -36,7 +43,9 @@ export function RunCustom() {
     toAddress = target
 
   }
-  // TODO: populate to address if target is a cannon package...
+  const cannonInfo = useCannonPackageContracts(target);
+
+  console.log(cannonInfo);
 
   const stagedTxn = usePrepareSendTransaction({
     account: safeAddress,
@@ -60,6 +69,15 @@ export function RunCustom() {
 
   const funcIsPayable = false;
 
+  function extractFunctionNames(contractAbi: any[]) {
+
+    return contractAbi
+      .filter(a => a.type === 'function' && a.stateMutability !== 'view')
+      .map(a => {
+        return { label: formatAbiItem(a), secondary: getFunctionSelector(a) }
+      })
+  }
+
   return (
     <Container maxW="100%" w="container.sm">
       <FormControl mb="4">
@@ -72,6 +90,23 @@ export function RunCustom() {
           case, you will supply with custom data/ABI).
         </FormHelperText>
       </FormControl>
+
+      {cannonInfo.registryQuery.isSuccess && !cannonInfo.contracts && <Text>Cannon package detected. Loading from IPFS (this may take some time)...</Text>}
+
+      {cannonInfo.contracts && <FormControl mb="4">
+        <HStack textStyle='monospace'>
+          <FormLabel>Contract</FormLabel>
+          <EditableAutocompleteInput placeholder='Contract' items={Object.entries(cannonInfo.contracts).map(([k,v]) => ({ label: k, secondary: v.address }))} onChange={(item) => setExecContract(item)} />
+          <Text>.</Text>
+          <EditableAutocompleteInput placeholder='func' items={execContract ? extractFunctionNames(cannonInfo.contracts[execContract].abi) : []} onChange={(item) => setExecFunc(item)} />
+        </HStack>
+        <FormHelperText>
+          Enter the contract or package for which this transaction should be
+          executed. This can either be a Cannon package (in which case, you will
+          be prompted to select method, args, etc.), or an address (in which
+          case, you will supply with custom data/ABI).
+        </FormHelperText>
+      </FormControl>}
 
       {(isAddress(target) || funcIsPayable) && <FormControl mb="4">
         <FormLabel>Value</FormLabel>
@@ -92,7 +127,7 @@ export function RunCustom() {
 
       {/* todo: nonce override */}
 
-      {queuedTxns.length && <Box mb="6">
+      {queuedTxns.length > 0 && <Box mb="6">
         <Heading size="sm">Transactions to Queue</Heading>
         {/* <Transaction modalDisplay /> */}
         <HStack>

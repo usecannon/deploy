@@ -15,6 +15,9 @@ import { RunCustom } from './pages/RunCustom'
 import { SafeAddressInput } from './components/SafeAddressInput'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -59,7 +62,9 @@ export function App() {
   return (
     <ChakraProvider>
       <WalletProvider>
-        <RouterProvider router={router} />
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
       </WalletProvider>
     </ChakraProvider>
   )

@@ -1,6 +1,8 @@
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
+import _ from 'lodash';
 import {
   CannonWrapperGenericProvider,
+  ChainArtifacts,
   ChainBuilderRuntime,
   ChainDefinition,
   DeploymentInfo,
@@ -11,15 +13,14 @@ import {
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
-import { useEffect } from 'react'
-import { useNetwork } from 'wagmi'
+import { useEffect, useState } from 'react'
+import { useChainId, useNetwork } from 'wagmi'
 import { useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
 import { StepExecutionError, build, createPublishData } from '../utils/cannon'
-import { Store, useStore } from '../store'
+import { useStore } from '../store'
 import { createFork } from '../utils/rpc'
-import { getSafeChain } from './safe'
 
 export type BuildState =
   | {
@@ -179,9 +180,9 @@ export function useCannonBuild() {
 
       const publishLoader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
 
-      const miscUrl = await publishLoader.putMisc(runtime.misc)
+      const miscUrl = await publishLoader.put(runtime.misc)
 
-      const deployUrl = await publishLoader.putDeploy({
+      const deployUrl = await publishLoader.put({
         def: def.toJson(),
         state: newState,
         options: incompleteDeploy.options,
@@ -255,40 +256,102 @@ export function useCannonBuild() {
   return startBuild
 }
 
-export function useCannonPackage(packageRef: string, variant = 'main') {
-  return useQuery(['cannon', 'pkg', packageRef, variant], {
-    queryFn: async () => {
-      const registry = new OnChainRegistry({
-        signerOrProvider: 'settings.registryProviderUrl',
-        address: 'settings.registryAddress',
-      })
-      const loader = new IPFSBrowserLoader('settings.ipfsUrl', registry)
+export function useCannonPackage(packageRef: string, variant = '') {
 
-      const pkgUrl = await registry.getUrl(packageRef, variant)
+  const chainId = useChainId();
+
+  if (!variant) {
+    variant = `${chainId}-main`;
+  }
+
+  const settings = useStore((s) => s.settings)
+  
+  const registryQuery = useQuery(['cannon', 'registry', packageRef, variant], {
+    queryFn: async () => {
+      if (packageRef.length < 3) {
+        return null
+      }
+
+      const registry = new OnChainRegistry({
+        signerOrProvider: settings.registryProviderUrl,
+        address: settings.registryAddress,
+      })
+
+      const url = await registry.getUrl(packageRef, variant)
+
+      if (url) {
+        return url
+      } else {
+        throw new Error(`package not found: ${packageRef} (${variant})`)
+      }
+    },
+  })
+
+  const pkgUrl = registryQuery.data
+
+  const ipfsQuery = useQuery(['cannon', 'pkg', pkgUrl], {
+    queryFn: async () => {
+
+      if (!pkgUrl) {
+        return null
+      }
+
+      const loader = new IPFSBrowserLoader(settings.ipfsUrl, null)
 
       const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
       if (deployInfo) {
         return deployInfo
       } else {
-        throw new Error('package not found')
+        throw new Error('failed to download package data')
       }
     },
   })
+
+  return {
+    registryQuery,
+    ipfsQuery,
+    pkgUrl,
+    pkg: ipfsQuery.data
+  }
 }
 
-export function useCannonContracts(packageRef: string, variant = 'main') {
-  const deployInfoQuery = useCannonPackage(packageRef, variant)
+type ContractInfo = {
+  [x: string]: { address: string, abi: any[] };
+}
+
+export function getContractsRecursive(
+  outputs: ChainArtifacts,
+  signerOrProvider: ethers.Signer | ethers.providers.Provider,
+  prefix?: string
+): ContractInfo {
+  let contracts = _.mapValues(outputs.contracts, (ci) => {
+    return { address: ci.address, abi: ci.abi };
+  });
+  if (prefix) {
+    contracts = _.mapKeys(contracts, (_, contractName) => `${prefix}.${contractName}`);
+  }
+  for (const [importName, importOutputs] of Object.entries(outputs.imports || {})) {
+    const newContracts = getContractsRecursive(importOutputs, signerOrProvider, importName);
+    contracts = { ...contracts, ...newContracts };
+  }
+  return contracts;
+}
+
+
+export function useCannonPackageContracts(packageRef: string, variant = '') {
+  const pkg = useCannonPackage(packageRef, variant)
+  const [contracts, setContracts] = useState<ContractInfo|null>(null);
 
   useEffect(() => {
-    ;async () => {
-      if (deployInfoQuery.data) {
-        const info = deployInfoQuery.data
+    const getContracts = async () => {
+      if (pkg.pkg) {
+        const info = pkg.pkg
 
         const readRuntime = new ChainBuilderRuntime(
           {
-            provider: p.provider,
-            chainId: info.chainId || 1,
+            provider: null,
+            chainId: 1,
             getSigner: () => {
               return new Promise(() => {})
             },
@@ -303,8 +366,14 @@ export function useCannonContracts(packageRef: string, variant = 'main') {
           readRuntime,
           new ChainDefinition(info.def),
           info.state
-        )
+        );
+
+        setContracts(getContractsRecursive(outputs, null));
       }
     }
-  }, [deployInfoQuery.data])
+
+    getContracts();
+  }, [pkg.pkg])
+
+  return { contracts, ...pkg }
 }
