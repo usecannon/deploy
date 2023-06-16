@@ -14,7 +14,7 @@ import {
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
-import { useChainId, useNetwork } from 'wagmi'
+import { Address, useChainId, useNetwork } from 'wagmi'
 import { useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
@@ -317,7 +317,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
 }
 
 type ContractInfo = {
-  [x: string]: { address: string, abi: any[] };
+  [x: string]: { address: Address, abi: any[] };
 }
 
 export function getContractsRecursive(
@@ -326,7 +326,7 @@ export function getContractsRecursive(
   prefix?: string
 ): ContractInfo {
   let contracts = _.mapValues(outputs.contracts, (ci) => {
-    return { address: ci.address, abi: ci.abi };
+    return { address: ci.address as Address, abi: ci.abi };
   });
   if (prefix) {
     contracts = _.mapKeys(contracts, (_, contractName) => `${prefix}.${contractName}`);
@@ -346,9 +346,7 @@ export function useCannonPackageContracts(packageRef: string, variant = '') {
 
   useEffect(() => {
     const getContracts = async () => {
-      console.log('CONTRACTS', 'chk');
       if (pkg.pkg) {
-        console.log('CONTRACTS', 'be setting');
         const info = pkg.pkg
 
         const loader = new IPFSBrowserLoader(settings.ipfsUrl, null)
@@ -371,8 +369,6 @@ export function useCannonPackageContracts(packageRef: string, variant = '') {
           new ChainDefinition(info.def),
           info.state
         );
-
-        console.log('CONTRACTS', 'done');
 
         setContracts(getContractsRecursive(outputs, null));
       }

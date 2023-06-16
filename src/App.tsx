@@ -39,6 +39,10 @@ const router = createBrowserRouter([
         path: '/run',
         element: <RunCustom />,
       },
+      {
+        path: '/txn/:chainId/:safeAddress/:nonce',
+        element: <TransactionDetail />
+      }
     ],
   },
 ])

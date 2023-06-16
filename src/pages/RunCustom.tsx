@@ -2,7 +2,7 @@ import 'react-diff-view/style/index.css'
 
 import _ from 'lodash';
 
-import { getFunctionSelector, isAddress } from 'viem';
+import { Address, Hex, TransactionRequestBase, encodePacked, getFunctionSelector, isAddress, zeroAddress } from 'viem';
 import { formatAbiItem } from 'viem/dist/cjs/utils/abi/formatAbiItem'
 
 import {
@@ -27,16 +27,15 @@ import { useTxnStager } from '../hooks/backend'
 import { useStore } from '../store'
 import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput';
 import { useCannonPackageContracts } from '../hooks/cannon';
+import { AddIcon, ChevronDownIcon, MinusIcon } from '@chakra-ui/icons';
+import { DisplayedTransaction } from '../components/DisplayedTransaction';
+import { makeMultisend } from '../utils/multisend';
 
 export function RunCustom() {
   const [target, setTarget] = useState('')
-  const [txnData, setTxnData] = useState('')
-  const [execContract, setExecContract] = useState('')
-  const [execFunc, setExecFunc] = useState('')
-  const [value, setValue] = useState(ethers.BigNumber.from(0))
-  const [queuedTxns, setQueuedTxns] = useState([]);
+  const [queuedTxns, setQueuedTxns] = useState<Omit<TransactionRequestBase, 'from'>[]>([null]);
 
-  const safeAddress = useStore((s) => s ? s.safeAddress.split(':')[1] : s) as `0x${string}`
+  const safeAddress = useStore((s) => s ? s.safeAddress.split(':')[1] : s) as Address
 
   let toAddress: string | null = null
   if (isAddress(target)) {
@@ -45,37 +44,32 @@ export function RunCustom() {
   }
   const cannonInfo = useCannonPackageContracts(target);
 
-  console.log(cannonInfo);
+  const multisendTxn = queuedTxns.indexOf(null) === -1 ? makeMultisend(
+    [{ to: zeroAddress, data: encodePacked(['string'], [cannonInfo.pkgUrl || '']) } as Partial<TransactionRequestBase>].concat(queuedTxns)
+  ) : { value: 0n }
 
   const stagedTxn = usePrepareSendTransaction({
     account: safeAddress,
-    to: toAddress,
-    data: ('0x' +
-      (txnData.startsWith('0x') ? txnData.slice(2) : txnData)) as `0x${string}`,
-    value: BigInt(value.toString()),
+    ...multisendTxn,
+    value: BigInt(multisendTxn.value)
   })
 
   // TODO: check types
-  const stager = useTxnStager({
-    to: toAddress,
-    value: value.toString(),
+  const stager = useTxnStager(stagedTxn.data ? {
+    to: stagedTxn.data.to,
+    value: stagedTxn.data.value.toString(),
+    data: stagedTxn.data.data,
     gasPrice: stagedTxn.data?.gasPrice?.toString(),
     safeTxGas: stagedTxn.data?.gas?.toString()
-  })
+  } : {})
 
   const execTxn = useContractWrite(stager.executeTxnConfig);
 
-  console.log('tx stager', stager);
-
   const funcIsPayable = false;
 
-  function extractFunctionNames(contractAbi: any[]) {
-
-    return contractAbi
-      .filter(a => a.type === 'function' && a.stateMutability !== 'view')
-      .map(a => {
-        return { label: formatAbiItem(a), secondary: getFunctionSelector(a) }
-      })
+  function updateQueuedTxn(i: number, txn: Omit<TransactionRequestBase, 'from'>) {
+    queuedTxns[i] = txn;
+    setQueuedTxns(_.clone(queuedTxns))
   }
 
   return (
@@ -91,25 +85,23 @@ export function RunCustom() {
         </FormHelperText>
       </FormControl>
 
-      {cannonInfo.registryQuery.isSuccess && !cannonInfo.contracts && <Text>Cannon package detected. Loading from IPFS (this may take some time)...</Text>}
+      {cannonInfo.pkgUrl && !cannonInfo.contracts && <Text>Cannon package detected. Loading from IPFS (this may take some time)...</Text>}
 
       {cannonInfo.contracts && <FormControl mb="4">
-        <HStack textStyle='monospace'>
-          <EditableAutocompleteInput placeholder='Contract' items={Object.entries(cannonInfo.contracts).map(([k,v]) => ({ label: k, secondary: v.address }))} onChange={(item) => setExecContract(item)} />
-          <Text>.</Text>
-          <EditableAutocompleteInput placeholder='func' items={execContract ? extractFunctionNames(cannonInfo.contracts[execContract].abi) : []} onChange={(item) => setExecFunc(item)} />
+        <Heading size="sm">Transactions to Queue</Heading>
+        {queuedTxns.map((txn, i) => <DisplayedTransaction contracts={cannonInfo.contracts} onTxn={(txn) => updateQueuedTxn(i, txn)} />)}
+        <HStack>
+          <Button onClick={() => setQueuedTxns(_.clone(queuedTxns.concat([{}])))}><AddIcon /></Button>
+          {queuedTxns.length > 1 && <Button onClick={() => setQueuedTxns(_.clone(queuedTxns.slice(0, queuedTxns.length - 1)))}><MinusIcon /></Button>}
         </HStack>
         <FormHelperText>
-          Enter the contract or package for which this transaction should be
-          executed. This can either be a Cannon package (in which case, you will
-          be prompted to select method, args, etc.), or an address (in which
-          case, you will supply with custom data/ABI).
+          Type a contract name from the cannon package, followed by a function with args to execute. To execute more than one function, click the plus button.
         </FormHelperText>
       </FormControl>}
 
       {(isAddress(target) || funcIsPayable) && <FormControl mb="4">
         <FormLabel>Value</FormLabel>
-        <Input type="text" onChange={(event) => setValue(ethers.utils.parseEther(event.target.value))} />
+        <Input type="text" onChange={(event) => updateQueuedTxn(0, { ...queuedTxns[0], value: BigInt(event.target.value) })} />
         <FormHelperText>
           Amount of ETH to send as part of transaction
         </FormHelperText>
@@ -118,7 +110,7 @@ export function RunCustom() {
 
       {isAddress(target) && <FormControl mb="4">
         <FormLabel>Transaction Data</FormLabel>
-        <Input type="text" placeholder='0x' onChange={(event) => setTxnData(event.target.value || '0x')} />
+        <Input type="text" placeholder='0x' onChange={(event) => updateQueuedTxn(0, { ...queuedTxns[0], data: event.target.value as Hex || '0x' })} />
         <FormHelperText>
           0x prefixed hex code data to send with transaction
         </FormHelperText>
@@ -126,25 +118,24 @@ export function RunCustom() {
 
       {/* todo: nonce override */}
 
-      {queuedTxns.length > 0 && <Box mb="6">
-        <Heading size="sm">Transactions to Queue</Heading>
-        {/* <Transaction modalDisplay /> */}
+      {(cannonInfo.contracts || isAddress(target)) && <Box mb="6">
         <HStack>
           <Button
             w="100%"
-            isDisabled={!stager.canSign}
+            isDisabled={!stagedTxn.data || !stager.canSign}
             onClick={() => stager.sign()}
           >
             Sign
           </Button>
           <Button
             w="100%"
-            isDisabled={!stager.canExecute}
+            isDisabled={!stagedTxn.data || !stager.canExecute}
             onClick={() => execTxn.write()}
           >
             Execute
           </Button>
         </HStack>
+        {stagedTxn.isError && <Text>Transaction Error: {stagedTxn.error.message}</Text>}
       </Box>}
     </Container>
   )

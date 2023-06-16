@@ -3,23 +3,24 @@ import { Box, Container, Heading } from '@chakra-ui/react'
 import { Transaction } from '../components/Transaction'
 import { usePendingTransactions } from '../hooks/safe'
 import { useStore } from '../store'
+import { useSafeTransactions } from '../hooks/backend'
 
 export function Transactions() {
   const safeAddress = useStore((s) => s.safeAddress)
-  const pendingTransactions = usePendingTransactions(safeAddress)
+  const {staged} = useSafeTransactions()
 
   return (
     <Container maxW="100%" w="container.sm">
       <Box mb="6">
         <Heading size="sm">
-          Pending Transactions ({pendingTransactions.length})
+          Pending Transactions ({staged.length})
         </Heading>
         {safeAddress &&
-          pendingTransactions.map((tx) => (
+          staged.map((tx) => (
             <Transaction
-              key={tx.safeTxHash}
+              key={JSON.stringify(tx.txn)}
               safeAddress={safeAddress}
-              tx={tx}
+              tx={tx.txn}
             />
           ))}
       </Box>

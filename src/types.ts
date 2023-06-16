@@ -1,5 +1,7 @@
+import { Address } from "viem";
+
 export type SafeTransaction = {
-    to: string;
+    to: Address;
     value: string;
     data: string;
     operation: string;

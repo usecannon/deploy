@@ -21,7 +21,11 @@ export function useSafeTransactions() {
     functionName: 'nonce',
   })
   
-  const stagedQuery = useQuery(['staged', chainId, safeAddress], { queryFn: async () => axios.get(`${BACKEND_URL}/${chainId}/${safeAddress}`)});
+  const stagedQuery = useQuery(['staged', chainId, safeAddress], { queryFn: async () => {
+    if (!chainId || !safeAddress) return
+      return axios.get(`${BACKEND_URL}/${chainId}/${safeAddress}`)
+    }
+  });
 
   // how to query historical events with wagmi? idk
   /*const historySuccessQuery = useContractEvent({
@@ -71,9 +75,6 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
     refundReceiver: safeAddress,
     _nonce: staged.length ? _.last(staged).txn._nonce + 1 : Number(nonce)
   };
-
-  console.log(staged);
-  console.log('NEW NONCE', safeTxn._nonce);
 
   // try to match with an existing transaction
   const alreadyStaged = staged.find(s => _.isEqual(s.txn, safeTxn));
