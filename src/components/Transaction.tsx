@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom'
 
 interface Params {
   safeAddress: string
+  chainId: number
   tx: SafeTransaction
   modalDisplay?: boolean
   canSign?: boolean
@@ -31,13 +32,13 @@ interface Params {
 
 export function Transaction({
   safeAddress,
+  chainId,
   tx,
   modalDisplay = false,
   canSign = false,
   canExecute = false,
 }: Params) {
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const chain = getSafeChain(safeAddress)
 
   return (
     <Flex
@@ -48,8 +49,8 @@ export function Transaction({
       borderRadius="md"
       alignItems="center"
     >
-      <Box>
-        <Text>{chain.name}</Text>
+      <Box alignContent={'center'}>
+        <Text>{chainId}</Text>
         <Heading size="md">Transaction #{tx._nonce}</Heading>
       </Box>
       {modalDisplay ? (
@@ -71,7 +72,7 @@ export function Transaction({
         </>
       ) : (
         <Box ml='auto'>
-          <Link to={`/txn/${chain.id}/${safeAddress}/${tx._nonce}`}>
+          <Link to={`/txn/${chainId}/${safeAddress}/${tx._nonce}`}>
             <Button>
               Details
               {/* Should link to pages/Transaction at /txn/chainId/txId */}

@@ -30,12 +30,17 @@ import { useCannonPackageContracts } from '../hooks/cannon';
 import { AddIcon, ChevronDownIcon, MinusIcon } from '@chakra-ui/icons';
 import { DisplayedTransaction } from '../components/DisplayedTransaction';
 import { makeMultisend } from '../utils/multisend';
+import { redirect } from 'react-router-dom';
+
+import * as query from '../utils/query'
 
 export function RunCustom() {
   const [target, setTarget] = useState('')
   const [queuedTxns, setQueuedTxns] = useState<Omit<TransactionRequestBase, 'from'>[]>([null]);
 
-  const safeAddress = useStore((s) => s ? s.safeAddress.split(':')[1] : s) as Address
+  console.log('qd txns', queuedTxns)
+
+  const safeAddress = useStore(s => s.safeAddresses[s.safeIndex]?.address)
 
   let toAddress: string | null = null
   if (isAddress(target)) {
@@ -61,7 +66,12 @@ export function RunCustom() {
     data: stagedTxn.data.data,
     gasPrice: stagedTxn.data?.gasPrice?.toString(),
     safeTxGas: stagedTxn.data?.gas?.toString()
-  } : {})
+  } : {}, {
+    onSignComplete() {
+      console.log('signing is complete, redirect')
+      redirect('/')
+    }
+  })
 
   const execTxn = useContractWrite(stager.executeTxnConfig);
 
@@ -89,7 +99,7 @@ export function RunCustom() {
 
       {cannonInfo.contracts && <FormControl mb="4">
         <Heading size="sm">Transactions to Queue</Heading>
-        {queuedTxns.map((txn, i) => <DisplayedTransaction contracts={cannonInfo.contracts} onTxn={(txn) => updateQueuedTxn(i, txn)} />)}
+        {queuedTxns.map((txn, i) => <DisplayedTransaction editable contracts={cannonInfo.contracts} onTxn={(txn) => updateQueuedTxn(i, txn)} />)}
         <HStack>
           <Button onClick={() => setQueuedTxns(_.clone(queuedTxns.concat([{}])))}><AddIcon /></Button>
           {queuedTxns.length > 1 && <Button onClick={() => setQueuedTxns(_.clone(queuedTxns.slice(0, queuedTxns.length - 1)))}><MinusIcon /></Button>}

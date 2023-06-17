@@ -1,12 +1,12 @@
 import { Box, Container, Heading } from '@chakra-ui/react'
 
 import { Transaction } from '../components/Transaction'
-import { usePendingTransactions } from '../hooks/safe'
 import { useStore } from '../store'
 import { useSafeTransactions } from '../hooks/backend'
 
 export function Transactions() {
-  const safeAddress = useStore((s) => s.safeAddress)
+  const safeAddress = useStore(s => s.safeAddresses[s.safeIndex]?.address)
+  const chainId = useStore(s => s.safeAddresses[s.safeIndex]?.chainId)
   const {staged} = useSafeTransactions()
 
   return (
@@ -20,6 +20,7 @@ export function Transactions() {
             <Transaction
               key={JSON.stringify(tx.txn)}
               safeAddress={safeAddress}
+              chainId={chainId}
               tx={tx.txn}
             />
           ))}

@@ -16,6 +16,7 @@ import { SafeAddressInput } from './components/SafeAddressInput'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { TransactionDetail } from './pages/TransactionDetail'
 
 const queryClient = new QueryClient();
 

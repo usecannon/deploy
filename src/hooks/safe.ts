@@ -17,17 +17,12 @@ export function isShortName(shortName: string): boolean {
 }
 
 export function isSafeAddress(safeAddress: string): boolean {
-  if (typeof safeAddress !== 'string') return false
-  const splitted = safeAddress.trim().split(':')
-  if (splitted.length !== 2) return false
-  const [shortName, address] = splitted
-  return isShortName(shortName) && isAddress(address)
+  return isAddress(safeAddress)
 }
 
 export function getSafeAddress(safeAddress: string) {
   if (!isSafeAddress(safeAddress)) return null
-  const [shortName, address] = safeAddress.trim().split(':')
-  return `${shortName.toLowerCase()}:${getAddress(address)}`
+  return `${getAddress(safeAddress)}`
 }
 
 export function getSafeUrl(safeAddress: string) {

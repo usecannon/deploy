@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ethers } from "ethers";
-import { useAccount, useChainId, useContractEvent, useContractRead, useContractReads, useMutation, usePrepareContractWrite, useQuery, useWalletClient } from "wagmi";
+import { Address, useAccount, useChainId, useContractEvent, useContractRead, useContractReads, useMutation, usePrepareContractWrite, useQuery, useWalletClient } from "wagmi";
 import { SafeTransaction } from "../types";
 
 import SafeABI from '../../backend/src/abi/Safe.json';
@@ -10,20 +10,25 @@ import { useMemo } from "react";
 
 const BACKEND_URL = 'http://127.0.0.1:3000';
 
-export function useSafeTransactions() {
+export function useSafeTransactions(options: { chainId?: string, safeAddress?: Address } = {}) {
   const chainId = useChainId();
 
-  const safeAddress = useStore((s) => s ? s.safeAddress.split(':')[1] : s) as `0x${string}`
+  const safeAddress = useStore((s) => s ? (s.safeAddresses || []).find(s => s.chainId === chainId)?.address : s) as Address
+  const stagingUrl = useStore((s) => s.settings.stagingUrl)
+
+  const queryChainId = options.chainId || chainId
+  const querySafeAddress = options.safeAddress || safeAddress
 
   const nonceQuery = useContractRead({
     abi: SafeABI,
-    address: safeAddress,
+    address: querySafeAddress,
     functionName: 'nonce',
   })
+
   
-  const stagedQuery = useQuery(['staged', chainId, safeAddress], { queryFn: async () => {
-    if (!chainId || !safeAddress) return
-      return axios.get(`${BACKEND_URL}/${chainId}/${safeAddress}`)
+  const stagedQuery = useQuery(['staged', queryChainId, querySafeAddress], { queryFn: async () => {
+    if (!queryChainId || !querySafeAddress) return
+      return axios.get(`${stagingUrl}/${queryChainId}/${querySafeAddress}`)
     }
   });
 
@@ -54,14 +59,18 @@ export function useSafeTransactions() {
   }
 }
 
-export function useTxnStager(txn: Partial<SafeTransaction>) {
+export function useTxnStager(txn: Partial<SafeTransaction>, options: { chainId?: string, safeAddress?: Address, onSignComplete?: () => void } = {}) {
   const chainId = useChainId();
 
   const account = useAccount()
   const walletClient = useWalletClient()
 
-  const safeAddress = useStore((s) => s ? s.safeAddress.split(':')[1] : s) as `0x${string}`
-  const { nonce, staged, stagedQuery } = useSafeTransactions();
+  const safeAddress = useStore((s) => s ? (s.safeAddresses || []).find(s => s.chainId === chainId)?.address: s) as Address
+
+  const queryChainId = options.chainId || chainId
+  const querySafeAddress = options.safeAddress || safeAddress
+
+  const { nonce, staged, stagedQuery } = useSafeTransactions(options);
 
   const safeTxn: SafeTransaction = {
     to: txn.to || ethers.constants.AddressZero,
@@ -72,8 +81,8 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
     baseGas: txn.baseGas || '0',
     gasPrice: txn.gasPrice || '0',
     gasToken: txn.gasToken || ethers.constants.AddressZero,
-    refundReceiver: safeAddress,
-    _nonce: staged.length ? _.last(staged).txn._nonce + 1 : Number(nonce)
+    refundReceiver: querySafeAddress,
+    _nonce: txn._nonce || (staged.length ? _.last(staged).txn._nonce + 1 : Number(nonce))
   };
 
   // try to match with an existing transaction
@@ -84,7 +93,7 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
       contracts: [
         {
           abi: SafeABI as any,
-          address: safeAddress,
+          address: querySafeAddress,
           functionName: 'getTransactionHash',
           args: [
             safeTxn.to, 
@@ -101,12 +110,12 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
         },
         {
           abi: SafeABI as any,
-          address: safeAddress,
+          address: querySafeAddress,
           functionName: 'getThreshold',
         },
         {
           abi: SafeABI as any,
-          address: safeAddress,
+          address: querySafeAddress,
           functionName: 'isOwner',
           args: [account.address]
         }
@@ -114,7 +123,7 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
     }
   );
 
-  const hashToSign = reads.isSuccess ? reads.data[0].result as unknown as `0x${string}` : null;
+  const hashToSign = reads.isSuccess ? reads.data[0].result as unknown as Address : null;
 
   const alreadyStagedSigners = useMemo(() => {
     if (!hashToSign || !alreadyStaged) {
@@ -143,7 +152,7 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
       const newStaged = _.cloneDeep(alreadyStaged) || { txn, sigs: [] };
       newStaged.sigs.splice(sigInsertIdx, 0, sig);
 
-      return await axios.post(`${BACKEND_URL}/${chainId}/${safeAddress}`, newStaged);
+      return await axios.post(`${BACKEND_URL}/${queryChainId}/${querySafeAddress}`, newStaged);
     },
     onSuccess: async () => {
       stagedQuery.refetch()
@@ -159,8 +168,8 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
   }
   
   const stageTxnMutate = usePrepareContractWrite({
-    abi: SafeABI as any,
-    address: safeAddress,
+    abi: SafeABI as any[],
+    address: querySafeAddress,
     functionName: 'execTransaction',
     args: [
       safeTxn.to, 
@@ -176,16 +185,17 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
     ],
   })
 
-  // types seem to be busted for results that come back from wagmi when it cant very well parse into the abi
-
   // must not have already signed in order to sign
   const existingSigsCount = (alreadyStaged ? alreadyStaged.sigs.length : 0);
+  const currentNonce = nonce == BigInt(safeTxn._nonce)
   const isSigner = reads.isSuccess && !reads.isFetching && !reads.isRefetching ? reads.data[2].result as unknown as boolean : false;
   const canSign = isSigner && walletClient.data && alreadyStagedSigners.indexOf(account.address) === -1;
   const canExecute = reads.isSuccess && !reads.isFetching && !reads.isRefetching ?
     (
-      (canSign && existingSigsCount + 1 >= requiredSigs) || 
-      (isSigner && existingSigsCount >= requiredSigs)
+      (
+        (canSign && existingSigsCount + 1 >= requiredSigs) || 
+        (isSigner && existingSigsCount >= requiredSigs)
+      ) && currentNonce
     ) : false;
 
   return {
@@ -201,6 +211,8 @@ export function useTxnStager(txn: Partial<SafeTransaction>) {
       gnosisSignature[gnosisSignature.length - 1] += 4;
 
       await mutation.mutate({ txn: safeTxn, sig: ethers.utils.hexlify(gnosisSignature) });
+      
+      options.onSignComplete()
     },
 
     signMutation: mutation,

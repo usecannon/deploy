@@ -7,18 +7,33 @@ import { useState } from 'react';
 
 import _ from 'lodash';
 import { EditableAutocompleteInput } from './EditableAutocompleteInput';
-import { Address, TransactionRequestBase, encodeFunctionData, getFunctionSelector } from 'viem';
+import { Address, Hex, TransactionRequestBase, decodeFunctionData, encodeFunctionData, getFunctionSelector, hexToString, stringToHex, trim } from 'viem';
+import { useAccount } from 'wagmi';
+import { useStore } from '../store';
 
 export function DisplayedTransaction(props: { contracts: { [key: string]: { address: Address, abi: any[] }}, txn?: Omit<TransactionRequestBase, 'from'>, onTxn?: (txn: Omit<TransactionRequestBase, 'from'>|null) => void, editable?: boolean }) {
 
-    const [execContract, setExecContract] = useState('')
-    const [execFunc, setExecFunc] = useState('')
-    const [execFuncArgs, setExecFuncArgs] = useState([]);
+    const safeAddress = useStore(s => s.safeAddresses[s.safeIndex]?.address)
+    const account = useAccount()
+
+    const parsedContractNames = props.txn ? Object.entries(props.contracts).filter(c => c[1].address === props.txn.to).map(v => v[0]) : '';
+
+    let parsedContract = '';
+    let parsedFunction = null;
+    for (const n of parsedContractNames) {
+        try {
+            parsedFunction = decodeFunctionData({ abi: props.contracts[n].abi, data: props.txn.data })
+            parsedContract = n
+            break
+        } catch {}
+    }
+
+    const [execContract, setExecContract] = useState(parsedContract)
+    const [execFunc, setExecFunc] = useState(parsedFunction ? parsedFunction.functionName.split('(')[0] : '')
+    const [execFuncArgs, setExecFuncArgs] = useState(parsedFunction ? parsedFunction.args.map(v => v.toString()) : [])
 
     const execContractInfo = execContract ? props.contracts[execContract] : null;
     const execFuncFragment = execContractInfo && execFunc ? execContractInfo.abi.find(f => f.name === execFunc) : null;
-
-    console.log('exec func fragment', execFuncFragment);
 
     function selectExecFunc(label: string) {
         if (execFunc !== label) {
@@ -26,40 +41,67 @@ export function DisplayedTransaction(props: { contracts: { [key: string]: { addr
 
             const abiFragment = execContractInfo.abi.find(f => f.name === label);
     
-            if (!abiFragment.inputs.length) {
-                // transaction is valid
-                props.onTxn({
-                    to: execContractInfo.address,
-                    data: getFunctionSelector(abiFragment)
-                })
-            }
-            else {
-                props.onTxn(null);
+            if (props.onTxn) {
+                if (!abiFragment.inputs.length) {
+                    // transaction is valid
+                    props.onTxn({
+                        to: execContractInfo.address,
+                        data: getFunctionSelector(abiFragment)
+                    })
+                }
+                else {
+                    props.onTxn(null);
+                }
             }
         }
     }
 
+    function encodeArg(type: string, val: string) {
+        if (type.startsWith('bytes') && !val.startsWith('0x')) {
+            return stringToHex(val || '', { size: 32 })
+        } if (type == 'bool') {
+            return val === 'true' ? true : false
+        } else {
+            return val;
+        }
+    }
+
+    function decodeArg(type: string, val: string) {
+        if (type.startsWith('bytes') && val.startsWith('0x')) {
+            return hexToString(trim(val as Hex, { dir: 'right'}))
+        } else if (type == 'bool') {
+            return val ? 'true' : 'false'
+        } else {
+            return val;
+        }
+    }
+
     function updateFuncArg(arg: number, val: string) {
-        while (execFuncArgs.length < execFuncFragment.inputs.length) {
-            execFuncArgs.push('')
-        }
+        try {
+            while (execFuncArgs.length < execFuncFragment.inputs.length) {
+                execFuncArgs.push('')
+            }
+    
+            while(execFuncArgs.length > execFuncFragment.inputs.length) {
+                execFuncArgs.pop()
+            }
 
-        while(execFuncArgs.length > execFuncFragment.inputs.length) {
-            execFuncArgs.pop()
-        }
+            execFuncArgs[arg] = encodeArg(execFuncFragment.inputs[arg].type, val);
 
-        execFuncArgs[arg] = val;
-        setExecFuncArgs(_.clone(execFuncArgs));
-
-        if (!execFuncArgs.find(a => a === '')) {
-            // we have a valid transaction
-            props.onTxn({
-                to: execContractInfo.address,
-                data: encodeFunctionData({
-                    abi: [execFuncFragment],
-                    args: execFuncArgs
+            setExecFuncArgs(_.clone(execFuncArgs));
+    
+            if (props.onTxn && !execFuncArgs.find(a => a === '')) {
+                // we have a valid transaction
+                props.onTxn({
+                    to: execContractInfo.address,
+                    data: encodeFunctionData({
+                        abi: [execFuncFragment],
+                        args: execFuncArgs
+                    })
                 })
-            })
+            }
+        } catch (err) {
+            console.log('arg handle fail', err)
         }
     }
 
@@ -75,8 +117,20 @@ export function DisplayedTransaction(props: { contracts: { [key: string]: { addr
             switch (execFuncFragment.inputs[arg].type) {
                 case 'bool':
                     return [{ label: 'true', secondary: '' }, { label: 'false', secondary: '' }]
-                default: // bytes32, string, address
-                    return [{ label: execFuncArgs[arg] || '', secondary: '' }]
+                case 'address':
+                    return [
+                        { label: execFuncArgs[arg] || '', secondary: '' }, 
+                        { label: safeAddress, secondary: 'Safe Address' },
+                        { label: account.address, secondary: 'Your Address' },
+                        ...Object.entries(props.contracts).map(([l, c]) => ({ label: c.address, secondary: l }))
+                    ]
+                default: // bytes32, string
+                    return [
+                        {
+                            label: decodeArg(execFuncFragment.inputs[arg].type, execFuncArgs[arg] || '') || '',
+                            secondary: ''
+                        }
+                    ]
             }
         }
 
@@ -95,12 +149,38 @@ export function DisplayedTransaction(props: { contracts: { [key: string]: { addr
 
     return (
         <HStack fontFamily={'monospace'} gap={0} fontSize={24}>
-            <EditableAutocompleteInput color='blue' tabKeys='.' placeholder='Contract' items={Object.entries(props.contracts).map(([k,v]) => ({ label: k, secondary: v.address }))} onChange={(item) => setExecContract(item)} />
+            <EditableAutocompleteInput 
+                color='blue' 
+                defaultValue={execContract}
+                tabKeys='.' 
+                placeholder='Contract' 
+                items={Object.entries(props.contracts).map(([k,v]) => ({ label: k, secondary: v.address }))} 
+                onChange={(item) => setExecContract(item)} 
+                editable={props.editable} 
+            />
             <Text>.</Text>
-            <EditableAutocompleteInput color='red' tabKeys='(' placeholder='func' items={execContract ? extractFunctionNames(execContractInfo.abi) : []} onChange={selectExecFunc} onPending={selectExecFunc} />
+            <EditableAutocompleteInput 
+                color='red' 
+                defaultValue={execFunc}
+                tabKeys='(' 
+                placeholder='func' 
+                items={execContract ? extractFunctionNames(execContractInfo.abi) : []} 
+                onChange={selectExecFunc} 
+                onPending={selectExecFunc} 
+                editable={props.editable} 
+            />
             <Text>(</Text>
             {(execFuncFragment?.inputs || []).map((arg, i) => ([
-                <EditableAutocompleteInput color='green' tabKeys=',' placeholder={arg.name || arg.type || arg.internalType} items={generateArgOptions(i)} onFilterChange={(v) => updateFuncArg(i, v)} onChange={(v) => updateFuncArg(i, v)} />, 
+                <EditableAutocompleteInput 
+                    color='green' 
+                    defaultValue={execFuncArgs[i]}
+                    tabKeys=',' 
+                    placeholder={arg.name || arg.type || arg.internalType} 
+                    items={generateArgOptions(i)} 
+                    onFilterChange={(v) => { console.log('update filter change'); updateFuncArg(i, v) }} 
+                    onChange={(v) => console.log('on change', updateFuncArg(i, v))} 
+                    editable={props.editable} 
+                />, 
                 <Text>{i < execFuncFragment.inputs.length - 1 ? ',' : ''}</Text>
             ]))}
             <Text>)</Text>

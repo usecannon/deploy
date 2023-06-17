@@ -1,15 +1,19 @@
 import entries from 'just-entries'
 import {
+  Button,
   FormControl,
   FormErrorMessage,
   FormHelperText,
   FormLabel,
+  HStack,
   Input,
 } from '@chakra-ui/react'
 
 import { Store, useStore } from '../store'
 import { isIpfsUploadEndpoint } from '../utils/ipfs'
 import { validatePreset } from '../utils/cannon'
+import { Address, isAddress } from 'viem'
+import { AddIcon, MinusIcon } from '@chakra-ui/icons'
 
 type Setting = {
   title: string
@@ -32,6 +36,11 @@ const SETTINGS: Record<keyof Store['settings'], Setting> = {
         return 'Looks like you configured an IPFS URL that is not running on port 5001 nor is using the protocol https+ipfs://, which means that the gateway is not compatible with uploading new files. Are you sure you are using the correct ipfs node url?'
       }
     },
+  },
+  stagingUrl: {
+    title: 'Staging Service URL',
+    placeholder: 'https://service.com',
+    description: 'Provide a URL to stage transactions. Must be the same as other staged transaction operators to accumulate signatures.',
   },
   publishTags: {
     title: 'Package Tags',
@@ -76,9 +85,51 @@ export function useSettingsValidation() {
 export function Settings() {
   const settings = useStore((s) => s.settings)
   const setSettings = useStore((s) => s.setSettings)
+  const safeAddresses = useStore((s) => s.safeAddresses)
+  const setSafeAddresses = useStore((s) => s.setSafeAddresses)
 
   return (
     <>
+      <FormControl
+        key={'safeaddrs'}
+        isRequired={true}
+        mb="4"
+      >
+        <FormLabel>Safe Addresses</FormLabel>
+        {safeAddresses.map((safeAddress, i) => <HStack>
+          <Input
+            type={'text'}
+            placeholder={'0x000...'}
+            defaultValue={safeAddress.address}
+            onChange={(evt) => {
+              if (isAddress(evt.target.value)) {
+                safeAddresses[i].address = evt.target.value
+                setSafeAddresses(safeAddresses)
+              }
+            }}
+          />
+          <Input
+            type={'text'}
+            placeholder={'1'}
+            defaultValue={safeAddress.chainId}
+            onChange={(evt) => {
+              try {
+                safeAddresses[i].chainId = parseInt(evt.target.value)
+                setSafeAddresses(safeAddresses)
+              } catch (err) {
+                // validation
+              }
+            }}
+          />
+        </HStack>)}
+
+        <HStack>
+          <Button onClick={() => setSafeAddresses(safeAddresses.concat([{ address: '' as Address, chainId: 0 }]))}><AddIcon /></Button>
+          {safeAddresses.length > 1 && <Button onClick={() => setSafeAddresses(safeAddresses.slice(0, safeAddresses.length - 1))}><MinusIcon /></Button>}
+        </HStack>
+        
+        <FormHelperText>Provide a list of addresses and chains for each gnosis safe you want to interact with.</FormHelperText>
+      </FormControl>
       {entries(SETTINGS).map(([key, s]) => {
         const val = settings[key]
         const validationError =
