@@ -7,8 +7,10 @@ import {
   FormControl,
   FormHelperText,
   FormLabel,
+  HStack,
   Heading,
   Input,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -56,53 +58,50 @@ export function Deploy() {
       filepath="omnibus-mainnet.toml"
     />
     */}
-      <Tabs isFitted>
-        <TabList>
-          <Tab>Deploy from GitHub</Tab>
-          <Tab>Complete Partial Deployment</Tab>
-        </TabList>
 
-        <TabPanels>
-          <TabPanel>
-            <FormControl mb="4">
-              <FormLabel>GitHub URL</FormLabel>
-              <Input type="text" />
-              <FormHelperText>
-                Enter the GitHub URL for branch of the GitOps repository to
-                deploy. You will able to execute the transactions you are
-                permitted to and queue the rest.
-              </FormHelperText>
-            </FormControl>
 
-            <Box mb="6">git diff here</Box>
+    <FormControl mb="4">
+      <FormLabel>Git Repo URL</FormLabel>
+      <HStack>
+        <Input type="text" placeholder="https://github.com/myorg/myrepo" />
+        <Input type="text" placeholder="cannonfile.toml" />
+      </HStack>
+      <FormHelperText>
+        Enter the GitHub URL for branch of the GitOps repository to
+        deploy. You will able to execute the transactions you are
+        permitted to and queue the rest.
+      </FormHelperText>
+    </FormControl>
 
-            <Box mb="6">
-              <Heading size="sm">Transactions to Queue</Heading>
-              {/* <Transaction modalDisplay /> */}
-              <Button w="100%">Add to Queue</Button>
-            </Box>
-          </TabPanel>
+    <FormControl mb="4">
+      <FormLabel>Branch</FormLabel>
+      <HStack>
+        <Select>
+          <option value=""></option>
+        </Select>
+      </HStack>
+      <FormHelperText>
+        If you don't want to deploy from the default branch. Cannon will automatically detect the previous release.
+      </FormHelperText>
+    </FormControl>
 
-          <TabPanel>
-            <FormControl mb="4">
-              <FormLabel>Partial Cannon Deployment IPFS Hash</FormLabel>
-              <Input type="text" />
-              <FormHelperText>
-                After running a build using the Cannon CLI, any remaining
-                transactions that must be executed with this tool can be staged
-                by providing the IPFS hash of the partial deployment data.
-              </FormHelperText>
-            </FormControl>
+    {/* TODO: insert/load override settings here */}
 
-            <Box mb="6">
-              <Heading size="sm">Transactions to Queue</Heading>
-              {/* <Transaction modalDisplay isExecutable />
-              <Transaction modalDisplay /> */}
-              <Button w="100%">Add to Queue</Button>
-            </Box>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+    <FormControl mb="4">
+      <FormLabel>Optional Partial Deploy</FormLabel>
+      <Input type="text" />
+      <FormHelperText>
+        If the deployment you are executing required executing some transactions outside the safe (ex. contract deployments,
+        transactions requiring permission of EOA), please supply the IPFS hash here.
+      </FormHelperText>
+    </FormControl>
+
+    <Box mb="6">git diff here</Box>
+
+    <Box mb="6">
+      <Button w="100%">Add to Queue</Button>
+    </Box>
+
     </Container>
   )
 }

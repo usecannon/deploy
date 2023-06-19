@@ -42,10 +42,14 @@ interface BuildProps {
   cid: string
 }
 
+export function useLoadCannonDefinition() {
+
+}
+
 export function useCannonBuild() {
   const chainId = useNetwork().chain?.id
   const safeAddress = useStore((s) =>
-    s.safeAddress ? s.safeAddress.split(':')[1] : ''
+    s.safeAddresses ? s.safeAddresses[s.safeIndex] : ''
   )
   const settings = useStore((s) => s.settings)
   const setBuildState = useStore(

@@ -1977,6 +1977,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@iarna/toml@npm:^2.2.5":
+  version: 2.2.5
+  resolution: "@iarna/toml@npm:2.2.5"
+  checksum: b63b2b2c4fd67969a6291543ada0303d45593801ee744b60f5390f183c03d9192bc67a217abb24be945158f1935f02840d9ffff40c0142aa171b5d3b6b6a3ea5
+  languageName: node
+  linkType: hard
+
 "@isaacs/cliui@npm:^8.0.2":
   version: 8.0.2
   resolution: "@isaacs/cliui@npm:8.0.2"
@@ -4245,6 +4252,7 @@ __metadata:
     "@chakra-ui/react": ^2.7.0
     "@emotion/react": ^11.11.0
     "@emotion/styled": ^11.11.0
+    "@iarna/toml": ^2.2.5
     "@isomorphic-git/lightning-fs": ^4.6.0
     "@parcel/transformer-inline-string": 2.8.3
     "@rainbow-me/rainbowkit": ^1.0.1
@@ -4267,6 +4275,7 @@ __metadata:
     crypto-hash: ^2.0.1
     crypto-js: ^4.1.1
     deepmerge-ts: ^5.1.0
+    diff: ^5.1.0
     eslint: ^8.38.0
     eslint-config-prettier: ^8.8.0
     ethers: ^5.7.2
@@ -6403,6 +6412,13 @@ __metadata:
   version: 0.0.3
   resolution: "diff3@npm:0.0.3"
   checksum: 28d883f1057b9873dfcb38cd2750337e6b32bf184bb1c0fb3292efeb83c597f1ce9b8f508bdd0d623a58b9ca1c917b1f297b90cb7fce3a62b26b0dde496f70e6
+  languageName: node
+  linkType: hard
+
+"diff@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "diff@npm:5.1.0"
+  checksum: c7bf0df7c9bfbe1cf8a678fd1b2137c4fb11be117a67bc18a0e03ae75105e8533dbfb1cda6b46beb3586ef5aed22143ef9d70713977d5fb1f9114e21455fba90
   languageName: node
   linkType: hard
 
