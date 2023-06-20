@@ -13,18 +13,21 @@ import {
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useSwitchNetwork } from 'wagmi'
 
 import * as query from '../utils/query'
 import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
-import { useSwitchNetwork } from 'wagmi'
 
 export function SafeAddressInput() {
   const safeAddresses = useStore((s) => s.safeAddresses)
-  
+
   const { switchNetwork } = useSwitchNetwork()
 
-  if (safeAddresses.length > 0 && !query.get('address') || !query.get('chainId')) {
+  if (
+    safeAddresses.length > 0 &&
+    (!query.get('address') || !query.get('chainId'))
+  ) {
     query.set('address', safeAddresses[0].address)
     query.set('chainId', safeAddresses[0].chainId.toString())
   }
@@ -43,7 +46,7 @@ export function SafeAddressInput() {
     const [safeAddress, chainId] = v.split(':')
     query.set('address', safeAddress)
     query.set('chainId', chainId)
-    
+
     if (switchNetwork) {
       switchNetwork(parseInt(chainId))
     }
@@ -53,8 +56,14 @@ export function SafeAddressInput() {
     <Container maxW="100%" w="container.sm" pt="4" pb="8">
       <FormControl mb="4">
         <FormLabel>Safe Address</FormLabel>
-        <Select onSelect={(event) => setSelectedSafe(event.currentTarget.value)}>
-          {safeAddresses.map((o, i) => <option key={i} value={`${o.address}:${o.chainId}`}>{o.address} ({o.chainId})</option>)}
+        <Select
+          onSelect={(event) => setSelectedSafe(event.currentTarget.value)}
+        >
+          {safeAddresses.map((o, i) => (
+            <option key={i} value={`${o.address}:${o.chainId}`}>
+              {o.address} ({o.chainId})
+            </option>
+          ))}
         </Select>
       </FormControl>
     </Container>
