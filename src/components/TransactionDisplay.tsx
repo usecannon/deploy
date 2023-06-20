@@ -1,59 +1,74 @@
 import { Box, Button, Container, Flex, Heading, Text } from '@chakra-ui/react'
-import { SafeTransaction } from '../types'
-import { DisplayedTransaction } from './DisplayedTransaction'
-import { Hex, decodeAbiParameters, decodeFunctionData, hexToString, zeroAddress } from 'viem'
+import {
+  Hex,
+  decodeAbiParameters,
+  decodeFunctionData,
+  hexToString,
+  zeroAddress,
+} from 'viem'
 
 import MulticallABI from '../../backend/src/abi/Multicall.json'
+import { DisplayedTransaction } from './DisplayedTransaction'
+import { SafeTransaction } from '../types'
 import { useCannonPackageContracts } from '../hooks/cannon'
 
 export function TransactionDisplay(props: { safeTxn: SafeTransaction }) {
-
   // see waht we can parse out of the data
-  let decoded: { args: readonly unknown[], functionName: string } = { args: [], functionName: '' };
+  let decoded: { args: readonly unknown[]; functionName: string } = {
+    args: [],
+    functionName: '',
+  }
   try {
     decoded = decodeFunctionData({
       abi: MulticallABI,
-      data: props.safeTxn.data as Hex
-    });
-  } catch(err) {
-    console.log('didnt parse', err);
+      data: props.safeTxn.data as Hex,
+    })
+  } catch (err) {
+    console.log('didnt parse', err)
   }
-
 
   let hintCannonPackage = ''
   if (
-      (
-        decoded.functionName === 'aggregate3' || 
-        decoded.functionName === 'aggregate3Value'
-      ) &&
-      decoded.args[0][0].target === zeroAddress
-    ) {
+    (decoded.functionName === 'aggregate3' ||
+      decoded.functionName === 'aggregate3Value') &&
+    decoded.args[0][0].target === zeroAddress
+  ) {
     hintCannonPackage = hexToString(decoded.args[0][0].callData)
   }
 
-  console.log('got hint data', hintCannonPackage, decoded);
+  console.log('got hint data', hintCannonPackage, decoded)
 
-  const cannonInfo = useCannonPackageContracts(hintCannonPackage ? '@' + hintCannonPackage.replace('://', ':') : '')
+  const cannonInfo = useCannonPackageContracts(
+    hintCannonPackage ? '@' + hintCannonPackage.replace('://', ':') : ''
+  )
 
-  console.log('cannon info', cannonInfo);
+  console.log('cannon info', cannonInfo)
 
   if (cannonInfo.contracts) {
-    const txns = (decoded.args[0] as any[]).slice(1).map(txn => ({ to: txn.target, data: txn.callData, value: txn.value }));
-  
-    return (<Box maxW="100%">
-        <Heading size="sm">Transactions</Heading>
-        {txns.map((txn, i) => <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />)}
-        
-      </Box>)
+    const txns = (decoded.args[0] as any[])
+      .slice(1)
+      .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))
 
+    return (
+      <Box maxW="100%">
+        <Heading size="sm">Transactions</Heading>
+        {txns.map((txn, i) => (
+          <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
+        ))}
+      </Box>
+    )
   } else {
-    return <Container>
-      <Text>Parsing Transaction Data...</Text>
-    </Container>
+    return (
+      <Container>
+        <Text>Parsing Transaction Data...</Text>
+      </Container>
+    )
   }
 
   // TODO: print raw
-  return <Container>
-        <Text>Unable to parse data!</Text>
-  </Container>
+  return (
+    <Container>
+      <Text>Unable to parse data!</Text>
+    </Container>
+  )
 }

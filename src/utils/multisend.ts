@@ -1,15 +1,24 @@
 import _ from 'lodash'
+import {
+  Address,
+  Hex,
+  TransactionRequestBase,
+  encodeFunctionData,
+  zeroAddress,
+} from 'viem'
 
 import MulticallABI from '../../backend/src/abi/Multicall.json'
-
-import { Address, Hex, TransactionRequestBase, encodeFunctionData, zeroAddress } from "viem";
-import { SafeTransaction } from "../types";
+import { SafeTransaction } from '../types'
 
 const MULTICALL_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11'
 
-export function makeMultisend(txns: Partial<TransactionRequestBase>[]): { operation: string, to: Address, value: string, data: Hex} {
-
-  let totalValue = BigInt(0);
+export function makeMultisend(txns: Partial<TransactionRequestBase>[]): {
+  operation: string
+  to: Address
+  value: string
+  data: Hex
+} {
+  let totalValue = BigInt(0)
   for (const txn of txns) {
     totalValue = totalValue + (txn.value || 0n)
   }
@@ -21,7 +30,14 @@ export function makeMultisend(txns: Partial<TransactionRequestBase>[]): { operat
     data: encodeFunctionData({
       abi: MulticallABI,
       functionName: 'aggregate3Value',
-      args: [txns.map(txn => ({ target: txn.to || zeroAddress, callData: txn.data || '0x', value: txn.value || '0', allowFailure: false }))]
-    })
+      args: [
+        txns.map((txn) => ({
+          target: txn.to || zeroAddress,
+          callData: txn.data || '0x',
+          value: txn.value || '0',
+          allowFailure: false,
+        })),
+      ],
+    }),
   }
 }

@@ -1,5 +1,7 @@
 import _ from 'lodash'
 import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
+import path from '@isomorphic-git/lightning-fs/src/path'
+import toml from '@iarna/toml'
 import {
   CANNON_CHAIN_ID,
   CannonLoader,
@@ -19,10 +21,8 @@ import {
   createInitialContext,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
-import toml from '@iarna/toml'
 
 import * as git from './git'
-import path from '@isomorphic-git/lightning-fs/src/path'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
@@ -32,7 +32,6 @@ export interface StepExecutionError {
 }
 
 export class InMemoryLoader implements CannonLoader {
-
   private datas = new Map<string, string>()
   readonly space: number
   private idx = 0
@@ -57,7 +56,9 @@ export class InMemoryLoader implements CannonLoader {
 }
 
 export const inMemoryRegistry = new InMemoryRegistry()
-export const inMemoryLoader = new InMemoryLoader(Math.floor(Math.random() * 100000))
+export const inMemoryLoader = new InMemoryLoader(
+  Math.floor(Math.random() * 100000)
+)
 
 export async function build({
   chainId,
@@ -70,8 +71,8 @@ export async function build({
   chainId: number
   provider: CannonWrapperGenericProvider
   defaultSignerAddress: string
-  incompleteDeploy: DeploymentInfo,
-  registry: CannonRegistry,
+  incompleteDeploy: DeploymentInfo
+  registry: CannonRegistry
   loaders: { [k: string]: CannonLoader }
 }) {
   const runtime = new ChainBuilderRuntime(
@@ -160,10 +161,20 @@ export function validatePreset(preset: string) {
   return /^[a-z]+$/.test(preset)
 }
 
-export async function loadCannonfile(repo: string, ref: string, filepath: string) {
-  const filesList = new Set<string>();
-  const [rawDef, buf] = await loadChainDefinitionToml(repo, ref, filepath, [], filesList);
-  const def = new ChainDefinition(rawDef as RawChainDefinition);
+export async function loadCannonfile(
+  repo: string,
+  ref: string,
+  filepath: string
+) {
+  const filesList = new Set<string>()
+  const [rawDef, buf] = await loadChainDefinitionToml(
+    repo,
+    ref,
+    filepath,
+    [],
+    filesList
+  )
+  const def = new ChainDefinition(rawDef as RawChainDefinition)
   //const pkg = loadPackageJson(path.join(path.dirname(filepath), 'package.json'));
 
   const ctx: ChainBuilderContext = {
@@ -176,49 +187,82 @@ export async function loadCannonfile(repo: string, ref: string, filepath: string
     txns: {},
     imports: {},
     extras: {},
-  };
+  }
 
-  const name = def.getName(ctx);
-  const version = def.getVersion(ctx);
+  const name = def.getName(ctx)
+  const version = def.getVersion(ctx)
 
-  return { def, name, version, cannonfile: buf.toString(), filesList };
+  return { def, name, version, cannonfile: buf.toString(), filesList }
 }
 
-async function loadChainDefinitionToml(repo: string, ref: string, filepath: string, trace: string[], files: Set<string>): Promise<[Partial<RawChainDefinition>, string]> {
-  let buf: string;
+async function loadChainDefinitionToml(
+  repo: string,
+  ref: string,
+  filepath: string,
+  trace: string[],
+  files: Set<string>
+): Promise<[Partial<RawChainDefinition>, string]> {
+  let buf: string
   try {
-    buf = await git.readFile(repo, ref, filepath);
+    buf = await git.readFile(repo, ref, filepath)
   } catch (err) {
-    throw new Error(`problem while reading artifact (trace): ${trace.join(', ')}: ${err.toString()}`)
+    throw new Error(
+      `problem while reading artifact (trace): ${trace.join(
+        ', '
+      )}: ${err.toString()}`
+    )
   }
 
   files.add(path.normalize(filepath))
 
-  let rawDef: Partial<RawChainDefinition> & { include?: string[] };
+  let rawDef: Partial<RawChainDefinition> & { include?: string[] }
   try {
-    rawDef = toml.parse(buf);
+    rawDef = toml.parse(buf)
   } catch (err: any) {
-    throw new Error(`error encountered while parsing toml file ${filepath}: ${err.toString()}`);
+    throw new Error(
+      `error encountered while parsing toml file ${filepath}: ${err.toString()}`
+    )
   }
 
-  const assembledDef: Partial<RawChainDefinition> = {};
+  const assembledDef: Partial<RawChainDefinition> = {}
 
   // we only want to "override" new steps with old steps. So, if we get 2 levels deep, that means we are parsing
   // a step contents, and we should just take the srcValue
-  const customMerge = (_objValue: any, srcValue: any, _key: string, _object: string, _source: any, stack: any) => {
+  const customMerge = (
+    _objValue: any,
+    srcValue: any,
+    _key: string,
+    _object: string,
+    _source: any,
+    stack: any
+  ) => {
     if (stack.size === 2) {
       // cut off merge for any deeper than this
-      return srcValue;
+      return srcValue
     }
-  };
-
-  for (const additionalFilepath of rawDef.include || []) {
-    const abspath = filepath.includes('/') ? path.join(path.dirname(filepath), additionalFilepath) : additionalFilepath;
-
-    _.mergeWith(assembledDef, (await loadChainDefinitionToml(repo, ref, abspath, [filepath].concat(trace), files))[0], customMerge);
   }
 
-  _.mergeWith(assembledDef, _.omit(rawDef, 'include'), customMerge);
+  for (const additionalFilepath of rawDef.include || []) {
+    const abspath = filepath.includes('/')
+      ? path.join(path.dirname(filepath), additionalFilepath)
+      : additionalFilepath
 
-  return [assembledDef, buf];
+    _.mergeWith(
+      assembledDef,
+      (
+        await loadChainDefinitionToml(
+          repo,
+          ref,
+          abspath,
+          [filepath].concat(trace),
+          files
+        )
+      )[0],
+      customMerge
+    )
+  }
+
+  _.mergeWith(assembledDef, _.omit(rawDef, 'include'), customMerge)
+
+  return [assembledDef, buf]
 }

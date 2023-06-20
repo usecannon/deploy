@@ -13,13 +13,13 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react'
-import { SafeMultisigTransactionListResponse } from '@safe-global/api-kit'
-
-import { TransactionDisplay } from '../components/TransactionDisplay'
-import { getSafeChain } from '../hooks/safe'
-import { SafeTransaction } from '../types'
 import { CheckIcon } from '@chakra-ui/icons'
 import { Link } from 'react-router-dom'
+import { SafeMultisigTransactionListResponse } from '@safe-global/api-kit'
+
+import { SafeTransaction } from '../types'
+import { TransactionDisplay } from '../components/TransactionDisplay'
+import { getSafeChain } from '../hooks/safe'
 
 interface Params {
   safeAddress: string
@@ -71,7 +71,7 @@ export function Transaction({
           </Modal>
         </>
       ) : (
-        <Box ml='auto'>
+        <Box ml="auto">
           <Link to={`/txn/${chainId}/${safeAddress}/${tx._nonce}`}>
             <Button>
               Details

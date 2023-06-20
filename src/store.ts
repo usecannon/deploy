@@ -5,15 +5,15 @@ import { BuildState } from './hooks/cannon'
 import { Address } from 'viem'
 
 export interface State {
-  safeAddresses: { address: Address, chainId: number }[],
-  safeIndex: number,
+  safeAddresses: { address: Address; chainId: number }[]
+  safeIndex: number
   build: {
     cid: string
     buildState: BuildState
   }
   settings: {
-    ipfsUrl: string,
-    stagingUrl: string,
+    ipfsUrl: string
+    stagingUrl: string
     publishTags: string
     preset: string
     registryAddress: string
@@ -74,7 +74,10 @@ const useStore = create<Store>()(
     // Persist only settings and safe addresses on local storage
     {
       name: 'cannon-state',
-      partialize: (state) => ({ settings: state.settings, safeAddresses: state.safeAddresses }),
+      partialize: (state) => ({
+        settings: state.settings,
+        safeAddresses: state.safeAddresses,
+      }),
       merge: (persisted, initial) => deepmerge(initial, persisted) as Store,
     }
   )

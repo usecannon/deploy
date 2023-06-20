@@ -1,5 +1,6 @@
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
 import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   RainbowKitProvider,
   darkTheme,
@@ -13,12 +14,11 @@ import { Deploy } from './pages/Deploy'
 import { Menu } from './components/Menu'
 import { RunCustom } from './pages/RunCustom'
 import { SafeAddressInput } from './components/SafeAddressInput'
+import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { TransactionDetail } from './pages/TransactionDetail'
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
 const router = createBrowserRouter([
   {
@@ -42,8 +42,8 @@ const router = createBrowserRouter([
       },
       {
         path: '/txn/:chainId/:safeAddress/:nonce',
-        element: <TransactionDetail />
-      }
+        element: <TransactionDetail />,
+      },
     ],
   },
 ])

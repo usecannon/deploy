@@ -1,11 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import * as git from '../utils/git'
-import http from 'isomorphic-git/http/web'
-
 import diff from 'diff'
-
+import http from 'isomorphic-git/http/web'
 import { ServerRef, listServerRefs } from 'isomorphic-git'
-import { useMemo } from 'react';
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+
+import * as git from '../utils/git'
 
 export function useGitRefsList(url: string) {
   const refsQuery = useQuery(['git', 'ls-remote', url], {
@@ -13,19 +12,19 @@ export function useGitRefsList(url: string) {
       if (url) {
         return listServerRefs({
           http,
-          corsProxy: "https://cors.isomorphic-git.org",
+          corsProxy: 'https://cors.isomorphic-git.org',
           url,
-          protocolVersion: 1 // reccomended when not filtering prefix
+          protocolVersion: 1, // reccomended when not filtering prefix
         })
       }
 
       return []
-    }
+    },
   })
 
   return {
     refsQuery,
-    refs: refsQuery.data as ServerRef[]
+    refs: refsQuery.data as ServerRef[],
   }
 }
 
@@ -36,13 +35,13 @@ export function useGitFilesList(url: string, ref: string, path: string) {
     queryFn: async () => {
       return git.readDir(url, ref, path)
     },
-    enabled: gitRepoQuery.isSuccess
+    enabled: gitRepoQuery.isSuccess,
   })
 
   return {
     gitRepoQuery,
     readdirQuery,
-    contents: readdirQuery.data
+    contents: readdirQuery.data,
   }
 }
 
@@ -53,12 +52,12 @@ export function useGitRepo(url: string, ref: string, files: string[]) {
       await git.init(url, ref)
       const fileContents = []
       for (const file of files) {
-        fileContents.push(await git.readFile(url, ref, file));
+        fileContents.push(await git.readFile(url, ref, file))
       }
 
       return fileContents
     },
-    enabled: url != '' && ref != ''
+    enabled: url != '' && ref != '',
   })
 }
 
@@ -69,7 +68,12 @@ export function useGitRepo(url: string, ref: string, files: string[]) {
  * @param toRef the branch or git commit hash the diff ends at
  * @param files the files to be includedi n the diff (files not part of this array are not included)
  */
-export function useGitDiff(url: string, fromRef: string, toRef: string, files: string[]) {
+export function useGitDiff(
+  url: string,
+  fromRef: string,
+  toRef: string,
+  files: string[]
+) {
   const fromQuery = useGitRepo(url, fromRef, files)
   const toQuery = useGitRepo(url, toRef, files)
 
@@ -79,7 +83,7 @@ export function useGitDiff(url: string, fromRef: string, toRef: string, files: s
       const fromFiles = fromQuery.data
       const toFiles = fromQuery.data
 
-      for (let i = 0;i < fromFiles.length;i++) {
+      for (let i = 0; i < fromFiles.length; i++) {
         patches.push(diff.createPatch(files[i], fromFiles[i], toFiles[i]))
       }
     }
@@ -90,6 +94,6 @@ export function useGitDiff(url: string, fromRef: string, toRef: string, files: s
   return {
     patches,
     fromQuery,
-    toQuery
+    toQuery,
   }
 }
