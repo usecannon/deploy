@@ -2,6 +2,8 @@ import _ from 'lodash'
 import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
 import {
   CANNON_CHAIN_ID,
+  CannonLoader,
+  CannonRegistry,
   CannonWrapperGenericProvider,
   ChainArtifacts,
   ChainBuilderContext,
@@ -10,6 +12,7 @@ import {
   DeploymentInfo,
   Events,
   IPFSLoader,
+  InMemoryRegistry,
   RawChainDefinition,
   TransactionMap,
   build as cannonBuild,
@@ -28,18 +31,48 @@ export interface StepExecutionError {
   err: Error
 }
 
+export class InMemoryLoader implements CannonLoader {
+
+  private datas = new Map<string, string>()
+  readonly space: number
+  private idx = 0
+
+  constructor(space: number) {
+    this.space = space
+  }
+
+  getLabel(): string {
+    return 'in memory'
+  }
+
+  async read(url: string): Promise<any | null> {
+    return JSON.parse(this.datas.get(url))
+  }
+  async put(misc: any): Promise<string | null> {
+    const k = `mem://${this.space}/${this.idx++}`
+    this.datas.set(k, JSON.stringify(misc))
+
+    return k
+  }
+}
+
+export const inMemoryRegistry = new InMemoryRegistry()
+export const inMemoryLoader = new InMemoryLoader(Math.floor(Math.random() * 100000))
+
 export async function build({
   chainId,
   provider,
   defaultSignerAddress,
   incompleteDeploy,
-  loader,
+  registry,
+  loaders,
 }: {
   chainId: number
   provider: CannonWrapperGenericProvider
   defaultSignerAddress: string
-  incompleteDeploy: DeploymentInfo
-  loader: IPFSLoader
+  incompleteDeploy: DeploymentInfo,
+  registry: CannonRegistry,
+  loaders: { [k: string]: CannonLoader }
 }) {
   const runtime = new ChainBuilderRuntime(
     {
@@ -51,8 +84,8 @@ export async function build({
       allowPartialDeploy: true,
       publicSourceCode: true,
     },
-    null,
-    { ipfs: loader }
+    registry,
+    loaders
   )
 
   const simulatedSteps: ChainArtifacts[] = []
@@ -159,6 +192,8 @@ async function loadChainDefinitionToml(repo: string, ref: string, filepath: stri
     throw new Error(`problem while reading artifact (trace): ${trace.join(', ')}: ${err.toString()}`)
   }
 
+  files.add(path.normalize(filepath))
+
   let rawDef: Partial<RawChainDefinition> & { include?: string[] };
   try {
     rawDef = toml.parse(buf);
@@ -178,7 +213,7 @@ async function loadChainDefinitionToml(repo: string, ref: string, filepath: stri
   };
 
   for (const additionalFilepath of rawDef.include || []) {
-    const abspath = path.join(path.dirname(filepath), additionalFilepath);
+    const abspath = filepath.includes('/') ? path.join(path.dirname(filepath), additionalFilepath) : additionalFilepath;
 
     _.mergeWith(assembledDef, (await loadChainDefinitionToml(repo, ref, abspath, [filepath].concat(trace), files))[0], customMerge);
   }

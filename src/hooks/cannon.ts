@@ -1,26 +1,29 @@
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import _ from 'lodash';
 import {
+  CannonStorage,
   CannonWrapperGenericProvider,
   ChainArtifacts,
   ChainBuilderRuntime,
   ChainDefinition,
   DeploymentInfo,
   FallbackRegistry,
-  InMemoryRegistry,
   OnChainRegistry,
+  copyPackage,
+  createInitialContext,
   getOutputs,
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { Address, useChainId, useNetwork } from 'wagmi'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
-import { StepExecutionError, build, createPublishData } from '../utils/cannon'
+import { StepExecutionError, build, createPublishData, inMemoryLoader, inMemoryRegistry, loadCannonfile } from '../utils/cannon'
 import { useStore } from '../store'
 import { createFork } from '../utils/rpc'
+import { useGitRepo } from './git';
 
 export type BuildState =
   | {
@@ -42,42 +45,37 @@ interface BuildProps {
   cid: string
 }
 
-export function useLoadCannonDefinition() {
+export function useLoadCannonDefinition(repo: string, ref: string, filepath: string) {
 
+  const loadGitRepoQuery = useGitRepo(repo, ref, [])
+
+  const loadDefinitionQuery = useQuery(['cannon', 'loaddef', repo, ref, filepath], {
+    queryFn: async () => {
+      return loadCannonfile(repo, ref, filepath)
+    },
+    enabled: loadGitRepoQuery.isSuccess
+  })
+
+  return {
+    loadDefinitionQuery,
+    def: loadDefinitionQuery.data?.def,
+    filesList: loadDefinitionQuery.data?.filesList
+  }
 }
 
-export function useCannonBuild() {
+export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   const chainId = useNetwork().chain?.id
   const safeAddress = useStore((s) =>
-    s.safeAddresses ? s.safeAddresses[s.safeIndex] : ''
-  )
+    s.safeAddresses ? s.safeAddresses[s.safeIndex].address : ''
+  ) as Address
   const settings = useStore((s) => s.settings)
   const setBuildState = useStore(
     (s) => (buildState: BuildState) => s.setBuild({ buildState })
   )
 
-  const startBuild = async (props: BuildProps) => {
-    if (!props.cid) return setBuildState({ status: 'idle', message: '' })
-
-    setBuildState({
-      status: 'loading',
-      message: 'Loading build...',
-    })
-
-    const cid = parseIpfsHash(props.cid)
-
-    if (!cid) {
-      return setBuildState({
-        status: 'error',
-        message: 'Package url on IPFS must have the format "@ipfs:Qm..."',
-      })
-    }
-
-    const packageUrl = `@ipfs:${cid}`
-
-    let fork: EthereumProvider
-    try {
-      fork = await createFork({
+  const buildQuery = useQuery(['cannon', 'build', def], {
+    queryFn: async () => {
+      let fork: EthereumProvider = await createFork({
         url: settings.forkProviderUrl,
         chainId,
         impersonate: [safeAddress],
@@ -91,33 +89,21 @@ export function useCannonBuild() {
         address: settings.registryAddress,
       })
 
-      const loader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
+      const ipfsLoader = new IPFSBrowserLoader(settings.ipfsUrl)
 
       setBuildState({
         status: 'loading',
         message: 'Loading deployment data',
       })
 
-      // Load partial deployment from IPFS
-      const incompleteDeploy = await loader.read(packageUrl)
+      // Load upgrade from deployment from IPFS
+      const ctx = await createInitialContext(def, {}, chainId, {})
+      const incompleteDeploy = 
+        await ipfsLoader.read(
+          await registry.getUrl(upgradeFrom || `${def.getName(ctx)}:latest`, `${chainId}-${settings.preset}`)
+        )
 
       console.log('Deploy: ', incompleteDeploy)
-
-      if (!incompleteDeploy) {
-        throw new Error(
-          `Package not found: ${packageUrl} (chainId: ${chainId} | preset: ${settings.preset})`
-        )
-      }
-
-      if (incompleteDeploy.status === 'none') {
-        throw new Error('Selected deployment is not initialized')
-      }
-
-      if (incompleteDeploy.status === 'complete') {
-        throw new Error(
-          'Selected deployment is already completed, there are no pending transactions'
-        )
-      }
 
       setBuildState({
         status: 'loading',
@@ -133,28 +119,21 @@ export function useCannonBuild() {
       // Create a regsitry that loads data first from Memory to be able to utilize
       // the locally built data
       const fallbackRegistry = new FallbackRegistry([
-        new InMemoryRegistry(),
+        inMemoryRegistry,
         registry,
       ])
-      const inMemoryLoader = new IPFSBrowserLoader(
-        settings.ipfsUrl,
-        fallbackRegistry
-      )
 
       const {
-        name,
-        version,
-        def,
         newState,
         simulatedTxs,
         runtime,
-        skippedSteps,
       } = await build({
         chainId: chainId,
         provider,
         defaultSignerAddress: safeAddress,
         incompleteDeploy,
-        loader: inMemoryLoader,
+        registry: fallbackRegistry,
+        loaders: { 'mem': inMemoryLoader, 'ipfs': ipfsLoader },
       })
 
       if (simulatedTxs.length === 0) {
@@ -177,87 +156,44 @@ export function useCannonBuild() {
         })
       )
 
-      setBuildState({
-        status: 'loading',
-        message: 'Uploading new build to IPFS',
-      })
-
-      const publishLoader = new IPFSBrowserLoader(settings.ipfsUrl, registry)
-
-      const miscUrl = await publishLoader.put(runtime.misc)
-
-      const deployUrl = await publishLoader.put({
-        def: def.toJson(),
-        state: newState,
-        options: incompleteDeploy.options,
-        status: skippedSteps.length > 0 ? 'partial' : 'complete',
-        meta: incompleteDeploy.meta,
-        miscUrl,
-      })
-
-      if (!deployUrl) {
-        throw new Error(
-          `Could not upload build to IPFS node "${settings.ipfsUrl}"`
-        )
-      }
-
-      const registryChainId = (await registry.provider.getNetwork()).chainId
-
-      if (registryChainId === chainId) {
-        setBuildState({
-          status: 'loading',
-          message: 'Preparing package for publication',
-        })
-
-        const tags = (settings.publishTags || '')
-          .split(',')
-          .map((t) => t.trim())
-          .filter((t) => !!t)
-
-        const publishData = createPublishData({
-          packageName: name,
-          variant: settings.preset,
-          packageTags: [version, ...tags],
-          packageVersionUrl: deployUrl,
-          packageMetaUrl: miscUrl,
-        })
-
-        steps.push({
-          name: 'Publish to registry',
-          tx: {
-            to: settings.registryAddress,
-            value: '0',
-            data: publishData,
-          },
-        })
-
-        setBuildState({
-          status: 'success',
-          message:
-            'Ready to stage! Click the button below to queue the transactions',
-          url: deployUrl,
-          steps,
-          skipped: skippedSteps,
-        })
-      } else {
-        setBuildState({
-          status: 'success',
-          message:
-            'Done - Cannon Registry will not be updated because it is on a different network than the current Safe',
-          url: deployUrl,
-          steps,
-          skipped: skippedSteps,
-        })
-      }
-    } catch (err) {
-      console.error(err)
-      return setBuildState({ status: 'error', message: err.message })
-    } finally {
       if (fork) await fork.disconnect()
-    }
-  }
 
-  return startBuild
+      console.log('CANNON BUILD FINISH', { runtime, state: newState, steps })
+
+      return { runtime, state: newState, steps }
+    },
+    enabled: !_.isNil(def)
+  })
+
+  return {
+    buildQuery
+  }
+}
+
+export function useCannonWriteDeployToIpfs(runtime: ChainBuilderRuntime, deployInfo: DeploymentInfo) {
+  const settings = useStore((s) => s.settings)
+
+  const writeToIpfsMutation = useMutation({
+    mutationFn: async () => {
+      const def = new ChainDefinition(deployInfo.def)
+      const ctx = await createInitialContext(def, deployInfo.meta, runtime.chainId, deployInfo.options)
+
+      return await copyPackage({
+        fromStorage: runtime,
+        toStorage: new CannonStorage(new OnChainRegistry({
+          signerOrProvider: settings.registryProviderUrl,
+          address: settings.registryAddress,
+        }), { ipfs: new IPFSBrowserLoader(settings.ipfsUrl) }, 'ipfs'),
+        packageRef: `${def.getName(ctx)}-${def.getVersion(ctx)}`,
+        variant: `${runtime.chainId}-${settings.preset}`,
+        tags: ['latest']
+      })
+    }
+  })
+
+  return {
+    writeToIpfsMutation
+  }
 }
 
 export function useCannonPackage(packageRef: string, variant = '') {
@@ -295,12 +231,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
 
   const ipfsQuery = useQuery(['cannon', 'pkg', pkgUrl], {
     queryFn: async () => {
-
-      if (!pkgUrl) {
-        return null
-      }
-
-      const loader = new IPFSBrowserLoader(settings.ipfsUrl, null)
+      const loader = new IPFSBrowserLoader(settings.ipfsUrl)
 
       const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
@@ -310,6 +241,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
         throw new Error('failed to download package data')
       }
     },
+    enabled: pkgUrl !== ''
   })
 
   return {
@@ -353,7 +285,7 @@ export function useCannonPackageContracts(packageRef: string, variant = '') {
       if (pkg.pkg) {
         const info = pkg.pkg
 
-        const loader = new IPFSBrowserLoader(settings.ipfsUrl, null)
+        const loader = new IPFSBrowserLoader(settings.ipfsUrl)
         const readRuntime = new ChainBuilderRuntime(
           {
             provider: null,

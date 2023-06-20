@@ -4,25 +4,51 @@ import http from 'isomorphic-git/http/web'
 
 import diff from 'diff'
 
-import { listServerRefs } from 'isomorphic-git'
+import { ServerRef, listServerRefs } from 'isomorphic-git'
 import { useMemo } from 'react';
 
 export function useGitRefsList(url: string) {
-  return useQuery(['git', 'ls-remote', url], {
+  const refsQuery = useQuery(['git', 'ls-remote', url], {
     queryFn: async () => {
-      return listServerRefs({
-        http,
-        corsProxy: "https://cors.isomorphic-git.org",
-        url,
-        protocolVersion: 1 // reccomended when not filtering prefix
-      });
+      if (url) {
+        return listServerRefs({
+          http,
+          corsProxy: "https://cors.isomorphic-git.org",
+          url,
+          protocolVersion: 1 // reccomended when not filtering prefix
+        })
+      }
+
+      return []
     }
   })
+
+  return {
+    refsQuery,
+    refs: refsQuery.data as ServerRef[]
+  }
+}
+
+export function useGitFilesList(url: string, ref: string, path: string) {
+  const gitRepoQuery = useGitRepo(url, ref, [])
+
+  const readdirQuery = useQuery(['git', 'readdir', url, ref, path], {
+    queryFn: async () => {
+      return git.readDir(url, ref, path)
+    },
+    enabled: gitRepoQuery.isSuccess
+  })
+
+  return {
+    gitRepoQuery,
+    readdirQuery,
+    contents: readdirQuery.data
+  }
 }
 
 // load files from a git repo
 export function useGitRepo(url: string, ref: string, files: string[]) {
-  return useQuery({
+  return useQuery(['git', 'clone', url, ref, files], {
     queryFn: async () => {
       await git.init(url, ref)
       const fileContents = []
@@ -31,7 +57,8 @@ export function useGitRepo(url: string, ref: string, files: string[]) {
       }
 
       return fileContents
-    }
+    },
+    enabled: url != '' && ref != ''
   })
 }
 

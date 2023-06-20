@@ -41,6 +41,12 @@ export async function readFile(repo: string, ref: string, filepath: string) {
   return (await fs.readFile(`${dir}/${filepath}`, 'utf8')) as string
 }
 
+export async function readDir(repo: string, ref: string, path: string) {
+  const fs = getFs('git-repositories')
+  const dir = getDir(repo, ref)
+  return (await fs.readdir(`${dir}/${path}`)) as string[]
+}
+
 async function _mkdirp(fs, dir: string) {
   try {
     await fs.mkdir(dir)

@@ -19,8 +19,8 @@ export function TransactionDetail() {
 
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction|null = null
-  if (parseInt(nonce) >= safeNonce) {
-    safeTxn = staged.find(s => s.txn._nonce.toString() === nonce).txn;
+  if (parseInt(nonce) >= safeNonce && staged) {
+    safeTxn = staged.find(s => s.txn._nonce.toString() === nonce)?.txn || null;
   }
 
   const stager = useTxnStager(safeTxn || {})

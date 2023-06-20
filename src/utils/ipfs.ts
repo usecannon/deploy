@@ -23,9 +23,9 @@ export function isIpfsUploadEndpoint(ipfsUrl: string) {
 }
 
 export class IPFSBrowserLoader extends IPFSLoader {
-  constructor(ipfsUrl: string, registry: CannonRegistry) {
+  constructor(ipfsUrl: string) {
     const { url, headers } = createIpfsUrl(ipfsUrl)
-    super(url.replace(/\/$/, ''), registry, headers)
+    super(url.replace(/\/$/, ''), headers)
   }
 }
 
