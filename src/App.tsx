@@ -29,15 +29,15 @@ const router = createBrowserRouter([
         element: <Transactions />,
       },
       {
-        path: '/build',
+        path: '/partial-deployments',
         element: <Build />,
       },
       {
-        path: '/deploy',
+        path: '/gitops-diffs',
         element: <Deploy />,
       },
       {
-        path: '/run',
+        path: '/transactions',
         element: <RunCustom />,
       },
       {
