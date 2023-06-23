@@ -1,11 +1,17 @@
 import { QueryClient } from '@tanstack/react-query'
 import { configureChains, createConfig } from 'wagmi'
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
-import { goerli, mainnet, optimism, polygon } from 'wagmi/chains'
+import {
+  goerli,
+  mainnet,
+  optimism,
+  polygon,
+  optimismGoerli,
+} from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 
 const { chains, publicClient } = configureChains(
-  [mainnet, optimism, polygon, goerli],
+  [mainnet, optimism, polygon, goerli, optimismGoerli],
   [publicProvider()]
 )
 

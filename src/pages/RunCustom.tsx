@@ -12,9 +12,13 @@ import {
   zeroAddress,
 } from 'viem'
 import {
+  Container,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
   Box,
   Button,
-  Container,
   EditableInput,
   FormControl,
   FormHelperText,
@@ -110,25 +114,28 @@ export function RunCustom() {
 
   return (
     <Container maxW="100%" w="container.sm">
-      <FormControl mb="4">
-        <FormLabel>Target</FormLabel>
+      <FormControl mb="6">
+        <FormLabel>Cannon Package or Contract Address</FormLabel>
         <Input
           type="text"
           onChange={(event) => setTarget(event.target.value)}
         />
         <FormHelperText>
-          Enter the contract or package for which this transaction should be
-          executed. This can either be a Cannon package (in which case, you will
-          be prompted to select method, args, etc.), or an address (in which
-          case, you will supply with custom data/ABI).
+          The Cannon package must have deployment data for the network your
+          wallet is connected to.
         </FormHelperText>
       </FormControl>
 
       {cannonInfo.pkgUrl && !cannonInfo.contracts && (
-        <Text>
-          Cannon package detected. Loading from IPFS (this may take some
-          time)...
-        </Text>
+        <Alert status="info">
+          <AlertIcon />
+          <Box>
+            <AlertTitle lineHeight="1.2">Cannon Package Detected</AlertTitle>
+            <AlertDescription fontSize="sm">
+              Downloading {cannonInfo.pkgUrl}
+            </AlertDescription>
+          </Box>
+        </Alert>
       )}
 
       {cannonInfo.contracts && (
