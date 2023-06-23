@@ -1,5 +1,13 @@
 import { ArrowForwardIcon } from '@chakra-ui/icons'
-import { Box, Button, Container, Wrap, WrapItem } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  Container,
+  Wrap,
+  WrapItem,
+  Text,
+  Code,
+} from '@chakra-ui/react'
 import { useAccount, useNetwork } from 'wagmi'
 
 import { Alert } from '../components/Alert'
@@ -21,7 +29,7 @@ export function Build() {
   if (isDisconnected) {
     return (
       <Container maxW="100%" w="container.sm">
-        <Alert status="info">Connect you wallet first please</Alert>
+        <Alert status="info">You must connect a wallet.</Alert>
       </Container>
     )
   }
@@ -29,13 +37,20 @@ export function Build() {
   if (!chainId) {
     return (
       <Container maxW="100%" w="container.sm">
-        <Alert status="error">Could not connect with ethereum network</Alert>
+        <Alert status="error">Could not connect to chain id {chainId}.</Alert>
       </Container>
     )
   }
 
   return (
-    <Container maxW="100%" w="container.md">
+    <Container maxW="100%" w="container.sm">
+      <Text mb="8">
+        If you use the Cannon CLI’s <Code>build</Code> command and it is unable
+        to complete all of the necessary transactions, it will generate a
+        "partial build" package on IPFS. Provide the IPFS hash and this tool to
+        queue the remaining transactions on the Safe.
+      </Text>
+
       <Stepper size="lg" index={activeStep} mb="6">
         <Step
           title="Settings"

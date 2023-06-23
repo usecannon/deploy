@@ -114,6 +114,11 @@ export function RunCustom() {
 
   return (
     <Container maxW="100%" w="container.sm">
+      <Text mb="8">
+        Use this tool to specify transactions to queue, either for a Cannon
+        package or any contract address.
+      </Text>
+
       <FormControl mb="6">
         <FormLabel>Cannon Package or Contract Address</FormLabel>
         <Input

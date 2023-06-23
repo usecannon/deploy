@@ -107,6 +107,11 @@ export function Deploy() {
   ) {
     return (
       <Container maxW="100%" w="container.sm">
+        <Text mb="8">
+          If your protocol is managed using a GitOps repository (with
+          cannonfiles on GitHub), you can use this tool to queue transactions
+          that would be created by merging the branch you specify.
+        </Text>
         <Box
           p="6"
           bg={colorMode === 'dark' ? 'blackAlpha.400' : 'blackAlpha.50'}
