@@ -10,10 +10,17 @@ import {
 } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
 
-const { chains, publicClient } = configureChains(
-  [mainnet, optimism, polygon, goerli, optimismGoerli],
-  [publicProvider()]
-)
+export const supportedChains = [
+  mainnet,
+  optimism,
+  polygon,
+  goerli,
+  optimismGoerli,
+]
+
+const { chains, publicClient } = configureChains(supportedChains, [
+  publicProvider(),
+])
 
 const { connectors } = getDefaultWallets({
   appName: 'Cannon Deploy',

@@ -9,6 +9,8 @@ import { useAccount, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { chains } from '../constants'
+import { useStore } from '../store'
+import { supportedChains } from '../wallet'
 
 export function isShortName(shortName: string): boolean {
   if (typeof shortName !== 'string') return false
@@ -129,4 +131,44 @@ export function usePendingTransactions(safeAddress: string) {
   }, [safeApi, safeAddress])
 
   return pendingTransactions
+}
+export const useGetSafeAddresses = (): void => {
+  const { address } = useAccount()
+  const setSafeAddresses = useStore((state) => state.setSafeAddresses)
+
+  useEffect(() => {
+    const fetchSafes = async () => {
+      if (address) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const web3 = new Web3((window as any).ethereum) as any
+
+        const safesPromises = supportedChains.map(async (chain) => {
+          const chainData = chains.find((c) => chain.id === c.id)
+          if (chainData?.serviceUrl) {
+            const safeService = new SafeApiKit({
+              txServiceUrl: chainData.serviceUrl,
+              ethAdapter: new Web3Adapter({ web3 }),
+            })
+            const safes = await safeService.getSafesByOwner(address)
+            return { chainId: chain.id, safes: safes.safes }
+          }
+          return { chainId: chain.id, safes: [] }
+        })
+
+        const safes = await Promise.all(safesPromises)
+
+        const result = safes.flatMap((entry) => {
+          const chainSafes = entry?.safes || []
+          return chainSafes.map((address) => ({
+            chainId: entry.chainId,
+            address: address as `0x${string}`,
+          }))
+        })
+
+        setSafeAddresses(result)
+      }
+    }
+
+    fetchSafes()
+  }, [address, setSafeAddresses])
 }
