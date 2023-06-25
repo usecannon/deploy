@@ -13,13 +13,10 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react'
-import { CheckIcon } from '@chakra-ui/icons'
 import { Link } from 'react-router-dom'
-import { SafeMultisigTransactionListResponse } from '@safe-global/api-kit'
 
 import { SafeTransaction } from '../types'
 import { TransactionDisplay } from '../components/TransactionDisplay'
-import { getSafeChain } from '../hooks/safe'
 
 interface Params {
   safeAddress: string

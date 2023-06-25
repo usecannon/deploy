@@ -12,30 +12,30 @@ import {
 } from '@chakra-ui/react'
 import { ExternalLinkIcon } from '@chakra-ui/icons'
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useSwitchNetwork } from 'wagmi'
 
-import * as query from '../utils/query'
 import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
   const safeAddresses = useStore((s) => s.safeAddresses)
+  const setSelectedSafeAddress = useStore((s) => s.setSelectedSafe)
 
   const { switchNetwork } = useSwitchNetwork()
+  let [searchParams, setSearchParams] = useSearchParams();
 
   if (
     safeAddresses.length > 0 &&
-    (!query.get('address') || !query.get('chainId'))
+    (!searchParams.get('address') || !searchParams.get('chainId'))
   ) {
-    query.set('address', safeAddresses[0].address)
-    query.set('chainId', safeAddresses[0].chainId.toString())
+    setSelectedSafe(`${searchParams.get('address')}:${searchParams.get('chainId')}`)
   }
 
   // Load the safe address from url
   useEffect(() => {
-    const loadedSafeAddress = query.get('address')
-    const loadedChainId = query.get('chainId')
+    const loadedSafeAddress = searchParams.get('address')
+    const loadedChainId = searchParams.get('chainId')
 
     if (loadedSafeAddress && loadedChainId)
       setSelectedSafe(`${loadedSafeAddress}:${loadedChainId}`)
@@ -44,10 +44,21 @@ export function SafeAddressInput() {
   // If the user puts a correct address in the input, update the url
   function setSelectedSafe(v: string) {
     const [safeAddress, chainId] = v.split(':')
-    query.set('address', safeAddress)
-    query.set('chainId', chainId)
+    
+    const newSafeIdx = 
+    safeAddresses.findIndex(
+      s => s.address === safeAddress && 
+      s.chainId.toString() === chainId);
+
+    console.log('THE NEW SAFE IDX IS', newSafeIdx)
+    if (newSafeIdx) {
+      setSelectedSafeAddress(newSafeIdx)
+    }
+
+    setSearchParams([['address', safeAddress], ['chainId', chainId]])
 
     if (switchNetwork) {
+      console.log('NETWORK CAN BE SWITCHED!')
       switchNetwork(parseInt(chainId))
     }
   }
@@ -57,7 +68,8 @@ export function SafeAddressInput() {
       <FormControl mb="4">
         <FormLabel>Safe Address</FormLabel>
         <Select
-          onSelect={(event) => setSelectedSafe(event.currentTarget.value)}
+          value={`${searchParams.get('address')}:${searchParams.get('chainId')}`}
+          onChange={(event) => setSelectedSafe(event.currentTarget.value)}
         >
           {safeAddresses.map((o, i) => (
             <option key={i} value={`${o.address}:${o.chainId}`}>

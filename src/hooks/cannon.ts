@@ -19,11 +19,10 @@ import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { IPFSBrowserLoader, parseIpfsHash } from '../utils/ipfs'
+import { IPFSBrowserLoader } from '../utils/ipfs'
 import {
   StepExecutionError,
   build,
-  createPublishData,
   inMemoryLoader,
   inMemoryRegistry,
   loadCannonfile,
@@ -47,10 +46,6 @@ export type BuildState =
       }[]
       skipped: StepExecutionError[]
     }
-
-interface BuildProps {
-  cid: string
-}
 
 export function useLoadCannonDefinition(
   repo: string,
@@ -79,15 +74,17 @@ export function useLoadCannonDefinition(
 export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   const chainId = useNetwork().chain?.id
   const safeAddress = useStore((s) =>
-    s.safeAddresses.length ? s.safeAddresses[s.safeIndex].address : ''
+    s.safeAddresses.length ? s.safeAddresses[s.safeIndex]?.address : ''
   ) as Address
   const settings = useStore((s) => s.settings)
-  const setBuildState = useStore(
-    (s) => (buildState: BuildState) => s.setBuild({ buildState })
-  )
 
-  const buildQuery = useQuery(['cannon', 'build', def], {
+  const [buildStatus, setBuildStatus] = useState('')
+  const [builtStepCount, setBuiltStepCount] = useState(0)
+
+  const buildQuery = useQuery(['cannon', 'build', def, upgradeFrom], {
     queryFn: async () => {
+      console.log('SAFE ADDRESS IS', safeAddress)
+      setBuildStatus('Creating fork...')
       const fork: EthereumProvider = await createFork({
         url: settings.forkProviderUrl,
         chainId,
@@ -104,26 +101,23 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
       const ipfsLoader = new IPFSBrowserLoader(settings.ipfsUrl)
 
-      setBuildState({
-        status: 'loading',
-        message: 'Loading deployment data',
-      })
+      setBuildStatus('Loading deployment data...')
 
       // Load upgrade from deployment from IPFS
       const ctx = await createInitialContext(def, {}, chainId, {})
-      const incompleteDeploy = await ipfsLoader.read(
-        await registry.getUrl(
-          upgradeFrom || `${def.getName(ctx)}:latest`,
-          `${chainId}-${settings.preset}`
-        )
+
+      let upgradeFromUrl: string = await registry.getUrl(
+        upgradeFrom || `${def.getName(ctx)}:latest`,
+        `${chainId}-${settings.preset}`
       )
 
-      console.log('Deploy: ', incompleteDeploy)
+      if (!upgradeFromUrl && upgradeFrom) {
+        throw new Error('upgrade from deployment not found')
+      }
 
-      setBuildState({
-        status: 'loading',
-        message: 'Generating pending transactions',
-      })
+      const incompleteDeploy = upgradeFromUrl ? await ipfsLoader.read(upgradeFromUrl) : null
+
+      console.log('upgrade from: ', incompleteDeploy)
 
       const provider = new CannonWrapperGenericProvider(
         {},
@@ -138,18 +132,26 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
         registry,
       ])
 
-      const { newState, simulatedTxs, runtime } = await build({
+      const { newState, simulatedTxs, skippedSteps, runtime } = await build({
         chainId: chainId,
         provider,
+        def,
+        options: {},
         defaultSignerAddress: safeAddress,
         incompleteDeploy,
         registry: fallbackRegistry,
         loaders: { mem: inMemoryLoader, ipfs: ipfsLoader },
+        onStepExecute: (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
+          setBuildStatus(`Building ${stepType}.${stepLabel}...`)
+        }
       })
+
+      console.log('CANNON BUILD FINISH', { runtime, state: newState, simulatedTxs, skippedSteps })
 
       if (simulatedTxs.length === 0) {
         throw new Error(
-          'There are no transactions that can be executed on Safe'
+          'There are no transactions that can be executed on Safe. Skipped Steps:\n' +
+          skippedSteps.map(s => `${s.name}: ${s.err.toString()}`).join('\n')
         )
       }
 
@@ -169,15 +171,19 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
       if (fork) await fork.disconnect()
 
-      console.log('CANNON BUILD FINISH', { runtime, state: newState, steps })
-
       return { runtime, state: newState, steps }
     },
     enabled: !_.isNil(def),
+    staleTime: Infinity,
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: false
   })
 
   return {
     buildQuery,
+    buildStatus
   }
 }
 

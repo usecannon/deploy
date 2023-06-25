@@ -3,7 +3,6 @@ import { Box, Button, Container, Wrap, WrapItem } from '@chakra-ui/react'
 import { useAccount, useNetwork } from 'wagmi'
 
 import { Alert } from '../components/Alert'
-import { CannonBuild } from '../components/CannonBuild'
 import { Settings, useSettingsValidation } from '../components/Settings'
 import { Step, Stepper, useSteps } from '../components/Stepper'
 
@@ -66,7 +65,6 @@ export function Build() {
           </Wrap>
         </>
       )}
-      {activeStep === 1 && <CannonBuild />}
       <Box pb="35" />
     </Container>
   )

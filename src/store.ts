@@ -27,6 +27,7 @@ export interface Actions {
   setBuild: (state: Partial<State['build']>) => void
   setSettings: (state: Partial<State['settings']>) => void
   setSafeAddresses: (state: Partial<State['safeAddresses']>) => void
+  setSelectedSafe: (idx: number) => void
 }
 
 export type Store = State & Actions
@@ -69,6 +70,11 @@ const useStore = create<Store>()(
         set((state) => ({
           ...state,
           safeAddresses: newState,
+        })),
+      setSelectedSafe: (newSelectedIdx) => 
+        set((state) => ({
+          ...state,
+          safeIndex: newSelectedIdx,
         })),
     }),
     // Persist only settings and safe addresses on local storage

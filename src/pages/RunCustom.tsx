@@ -26,7 +26,7 @@ import {
 } from '@chakra-ui/react'
 import { ethers } from 'ethers'
 import { formatAbiItem } from 'viem/dist/cjs/utils/abi/formatAbiItem'
-import { redirect } from 'react-router-dom'
+import { redirect, useNavigate } from 'react-router-dom'
 import {
   useContractWrite,
   usePrepareSendTransaction,
@@ -48,6 +48,8 @@ export function RunCustom() {
   const [queuedTxns, setQueuedTxns] = useState<
     Omit<TransactionRequestBase, 'from'>[]
   >([null])
+
+  const navigate = useNavigate()
 
   console.log('qd txns', queuedTxns)
 
@@ -91,7 +93,7 @@ export function RunCustom() {
     {
       onSignComplete() {
         console.log('signing is complete, redirect')
-        redirect('/')
+        navigate('/')
       },
     }
   )

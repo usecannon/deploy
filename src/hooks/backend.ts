@@ -101,6 +101,7 @@ export function useTxnStager(
 
   const { nonce, staged, stagedQuery } = useSafeTransactions(options)
 
+  //console.log('staged txns', staged.length, _.last(staged).txn._nonce + 1, nonce)
   const safeTxn: SafeTransaction = {
     to: txn.to || ethers.constants.AddressZero,
     value: txn.value || '0',
@@ -113,7 +114,7 @@ export function useTxnStager(
     refundReceiver: querySafeAddress,
     _nonce:
       txn._nonce ||
-      (staged.length ? _.last(staged).txn._nonce + 1 : Number(nonce)),
+      (staged.length ? _.last(staged).txn._nonce + 1 : Number(nonce || 0)),
   }
 
   // try to match with an existing transaction

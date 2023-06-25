@@ -30,12 +30,6 @@ export function getSafeUrl(safeAddress: string) {
   return `https://app.safe.global/home?safe=${getSafeAddress(safeAddress)}`
 }
 
-export function getSafeChain(safeAddress: string) {
-  if (!isSafeAddress(safeAddress)) return null
-  const [shortName] = safeAddress.split(':')
-  return chains.find((chain) => chain.shortName === shortName)
-}
-
 export function useSafeWriteApi(): SafeApiKit | null {
   const { address, isDisconnected } = useAccount()
   const network = useNetwork()

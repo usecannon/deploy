@@ -56,6 +56,12 @@ export const chains = [
     serviceUrl: 'https://safe-transaction-base-testnet.safe.global',
   },
   {
+    id: 11155111,
+    name: 'Sepolia',
+    shortName: 'sepolia',
+    serviceurl: '',
+  },
+  {
     id: 1313161554,
     name: 'Aurora',
     shortName: 'aurora',

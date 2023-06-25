@@ -3,6 +3,7 @@ import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
 import path from '@isomorphic-git/lightning-fs/src/path'
 import toml from '@iarna/toml'
 import {
+  BuildOptions,
   CANNON_CHAIN_ID,
   CannonLoader,
   CannonRegistry,
@@ -19,8 +20,15 @@ import {
   TransactionMap,
   build as cannonBuild,
   createInitialContext,
+  registerAction,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
+
+// cannon plugins supported by the web interface
+//import cannonRouterPlugin from 'cannon-plugin-router'
+
+// registration of the cannon plugins
+//registerAction(cannonRouterPlugin)
 
 import * as git from './git'
 
@@ -63,17 +71,23 @@ export const inMemoryLoader = new InMemoryLoader(
 export async function build({
   chainId,
   provider,
+  def,
+  options,
   defaultSignerAddress,
   incompleteDeploy,
   registry,
   loaders,
+  onStepExecute,
 }: {
   chainId: number
   provider: CannonWrapperGenericProvider
+  def: ChainDefinition
+  options: BuildOptions
   defaultSignerAddress: string
   incompleteDeploy: DeploymentInfo
   registry: CannonRegistry
   loaders: { [k: string]: CannonLoader }
+  onStepExecute: (stepType: string, stepName: string, outputs: ChainArtifacts) => void
 }) {
   const runtime = new ChainBuilderRuntime(
     {
@@ -92,10 +106,13 @@ export async function build({
   const simulatedSteps: ChainArtifacts[] = []
   const skippedSteps: StepExecutionError[] = []
 
+
+
   runtime.on(
     Events.PostStepExecute,
     (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
       simulatedSteps.push(stepOutput)
+      onStepExecute(stepType, stepLabel, stepOutput)
     }
   )
 
@@ -104,20 +121,21 @@ export async function build({
     skippedSteps.push({ name: stepName, err })
   })
 
-  await runtime.restoreMisc(incompleteDeploy.miscUrl)
-  const def = new ChainDefinition(incompleteDeploy.def)
+  if (incompleteDeploy) {
+    await runtime.restoreMisc(incompleteDeploy.miscUrl)
+  }
 
   const ctx = await createInitialContext(
     def,
-    incompleteDeploy.meta,
+    incompleteDeploy?.meta || {},
     chainId,
-    incompleteDeploy.options
+    incompleteDeploy?.options || options
   )
 
   const newState = await cannonBuild(
     runtime,
     def,
-    incompleteDeploy.state ?? {},
+    incompleteDeploy?.state ?? {},
     ctx
   )
 
