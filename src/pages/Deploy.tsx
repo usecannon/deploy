@@ -17,6 +17,7 @@ import {
   TabPanels,
   Tabs,
   Text,
+  useColorMode,
 } from '@chakra-ui/react'
 import { Diff, Hunk, parseDiff } from 'react-diff-view'
 import { Hex, TransactionRequestBase, encodePacked, keccak256, stringToBytes, toHex, trim, zeroAddress, zeroAddress } from 'viem'
@@ -39,6 +40,7 @@ import { SafeTransaction } from '../types'
 import { useNavigate } from 'react-router-dom'
 
 export function Deploy() {
+  const { colorMode } = useColorMode()
   const safeAddress = useStore((s) => s.safeAddresses[s.safeIndex]?.address)
 
   const prepareDeployOnchainStore = usePrepareSendTransaction(
@@ -149,16 +151,25 @@ export function Deploy() {
   ) {
     return (
       <Container maxW="100%" w="container.sm">
-        <Text>
-          You need to deploy the Onchain Store contract to execute a deployment.
+        <Text mb="8">
+          If your protocol is managed using a GitOps repository (with
+          cannonfiles on GitHub), you can use this tool to queue transactions
+          that would be created by merging the branch you specify.
         </Text>
-        <Text>
-          This is a one-time-per-network operation, and will cost a small amount
-          of gas on your personal wallet.
-        </Text>
-        <Button onClick={() => deployOnchainStore.sendTransaction()}>
-          Deploy Onchain Store
-        </Button>
+        <Box
+          p="6"
+          bg={colorMode === 'dark' ? 'blackAlpha.400' : 'blackAlpha.50'}
+          borderRadius="12px"
+        >
+          <Text mb={4}>
+            To use this tool, you need to deploy the on-chain store contract.
+            This is a one time (per network) operation and will cost a small
+            amount of gas.
+          </Text>
+          <Button w="100%" onClick={() => deployOnchainStore.sendTransaction()}>
+            Deploy On-Chain Store Contract
+          </Button>
+        </Box>
       </Container>
     )
   }

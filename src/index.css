@@ -7,10 +7,3 @@ body {
   height: 100vh;
   width: 100vw;
 }
-
-/* Safe.global sidebar toggler */
-@media (min-width: 900px) {
-  body {
-    padding-left: 8px;
-  }
-}

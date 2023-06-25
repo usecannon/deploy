@@ -17,6 +17,7 @@ import { SafeAddressInput } from './components/SafeAddressInput'
 import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
+import { useGetSafeAddresses } from './hooks/safe'
 
 const queryClient = new QueryClient()
 
@@ -29,15 +30,15 @@ const router = createBrowserRouter([
         element: <Transactions />,
       },
       {
-        path: '/build',
+        path: '/partial-deployments',
         element: <Build />,
       },
       {
-        path: '/deploy',
+        path: '/gitops-diffs',
         element: <Deploy />,
       },
       {
-        path: '/run',
+        path: '/transactions',
         element: <RunCustom />,
       },
       {
@@ -63,6 +64,8 @@ export function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.setItem('debug', 'cannon*')
   }, [])
+
+  useGetSafeAddresses()
 
   return (
     <ChakraProvider>
