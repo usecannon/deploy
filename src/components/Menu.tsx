@@ -13,9 +13,9 @@ import { NavLink } from 'react-router-dom'
 
 const pages = [
   { to: '/', title: 'Transaction Queue' },
+  { to: '/transactions', title: 'Queue Transactions' },
   { to: '/partial-deployments', title: 'Queue Partial Deployments' },
   { to: '/gitops-diffs', title: 'Queue GitOps Diffs' },
-  { to: '/transactions', title: 'Queue Transactions' },
 ] as const
 
 function NavItem({ to, title }: { to: string; title: string }) {
