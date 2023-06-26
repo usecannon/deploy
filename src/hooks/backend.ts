@@ -17,6 +17,7 @@ import { useMemo } from 'react'
 
 import SafeABI from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
+import { useSafeAddress } from './safe'
 import { useStore } from '../store'
 
 const BACKEND_URL = 'http://127.0.0.1:3000'
@@ -25,10 +26,7 @@ export function useSafeTransactions(
   options: { chainId?: string; safeAddress?: Address } = {}
 ) {
   const chainId = useChainId()
-
-  const safeAddress = useStore((s) =>
-    s ? (s.safeAddresses || []).find((s) => s.chainId === chainId)?.address : s
-  ) as Address
+  const safeAddress = useSafeAddress()
   const stagingUrl = useStore((s) => s.settings.stagingUrl)
 
   const queryChainId = options.chainId || chainId
@@ -91,10 +89,7 @@ export function useTxnStager(
 
   const account = useAccount()
   const walletClient = useWalletClient()
-
-  const safeAddress = useStore((s) =>
-    s ? (s.safeAddresses || []).find((s) => s.chainId === chainId)?.address : s
-  ) as Address
+  const safeAddress = useSafeAddress()
 
   const queryChainId = options.chainId || chainId
   const querySafeAddress = options.safeAddress || safeAddress

@@ -17,7 +17,7 @@ import { SafeAddressInput } from './components/SafeAddressInput'
 import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
-import { useGetSafeAddresses } from './hooks/safe'
+import { loadWalletPublicSafes } from './hooks/safe'
 
 const queryClient = new QueryClient()
 
@@ -65,7 +65,7 @@ export function App() {
     if (typeof window !== 'undefined') localStorage.setItem('debug', 'cannon*')
   }, [])
 
-  useGetSafeAddresses()
+  loadWalletPublicSafes()
 
   return (
     <ChakraProvider>

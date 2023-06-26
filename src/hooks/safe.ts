@@ -5,12 +5,12 @@ import SafeApiKit, {
 } from '@safe-global/api-kit'
 import { Web3Adapter } from '@safe-global/protocol-kit'
 import { getAddress, isAddress } from 'viem'
-import { useAccount, useNetwork } from 'wagmi'
+import { useAccount, useChainId, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { chains } from '../constants'
-import { useStore } from '../store'
 import { supportedChains } from '../wallet'
+import { useStore } from '../store'
 
 export function isShortName(shortName: string): boolean {
   if (typeof shortName !== 'string') return false
@@ -56,25 +56,35 @@ export function useSafeWriteApi(): SafeApiKit | null {
   }, [chain, isDisconnected])
 }
 
+function _createSafeApiKit(chainId: number, address: string) {
+  const chain = chains.find((chain) => chain.id === chainId)
+
+  if (!chain?.serviceUrl) return null
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const web3 = new Web3((window as any).ethereum) as any
+
+  return new SafeApiKit({
+    txServiceUrl: chain.serviceUrl,
+    ethAdapter: new Web3Adapter({
+      web3,
+      signerAddress: address,
+    }),
+  })
+}
+
 export function useSafeReadApi(safeAddress: string): SafeApiKit | null {
-  const serviceUrl = useMemo(() => {
+  const [chainId, walletAddress] = useMemo(() => {
     if (!safeAddress) return null
-    const [shortName] = safeAddress.split(':')
+    const [shortName, walletAddress] = safeAddress.split(':')
     const chain = chains.find((chain) => chain.shortName === shortName)
-    return chain?.serviceUrl || null
+    return chain ? [chain.id, walletAddress] : null
   }, [safeAddress])
 
-  return useMemo(() => {
-    if (!serviceUrl) return null
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const web3 = new Web3((window as any).ethereum) as any
-
-    return new SafeApiKit({
-      txServiceUrl: serviceUrl,
-      ethAdapter: new Web3Adapter({ web3 }),
-    })
-  }, [serviceUrl])
+  return useMemo(
+    () => _createSafeApiKit(chainId, walletAddress),
+    [chainId, walletAddress]
+  )
 }
 
 export function useSafeInfo(safeAddress: string) {
@@ -126,43 +136,46 @@ export function usePendingTransactions(safeAddress: string) {
 
   return pendingTransactions
 }
-export const useGetSafeAddresses = (): void => {
+
+export const loadWalletPublicSafes = () => {
   const { address } = useAccount()
   const setSafeAddresses = useStore((state) => state.setSafeAddresses)
 
   useEffect(() => {
     const fetchSafes = async () => {
-      if (address) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const web3 = new Web3((window as any).ethereum) as any
+      if (!address) return
 
-        const safesPromises = supportedChains.map(async (chain) => {
-          const chainData = chains.find((c) => chain.id === c.id)
-          if (chainData?.serviceUrl) {
-            const safeService = new SafeApiKit({
-              txServiceUrl: chainData.serviceUrl,
-              ethAdapter: new Web3Adapter({ web3 }),
-            })
-            const safes = await safeService.getSafesByOwner(address)
-            return { chainId: chain.id, safes: safes.safes }
-          }
-          return { chainId: chain.id, safes: [] }
-        })
+      const safesPromises = supportedChains.map(async (chain) => {
+        const safeService = _createSafeApiKit(chain.id, address)
 
-        const safes = await Promise.all(safesPromises)
+        if (safeService) {
+          const safes = await safeService.getSafesByOwner(address)
+          return { chainId: chain.id, safes: safes.safes }
+        }
 
-        const result = safes.flatMap((entry) => {
-          const chainSafes = entry?.safes || []
-          return chainSafes.map((address) => ({
-            chainId: entry.chainId,
-            address: address as `0x${string}`,
-          }))
-        })
+        return { chainId: chain.id, safes: [] }
+      })
 
-        setSafeAddresses(result)
-      }
+      const safes = await Promise.all(safesPromises)
+
+      const result = safes.flatMap((entry) => {
+        const chainSafes = entry?.safes || []
+        return chainSafes.map((address) => ({
+          chainId: entry.chainId,
+          address: address as `0x${string}`,
+        }))
+      })
+
+      setSafeAddresses(result)
     }
 
     fetchSafes()
   }, [address, setSafeAddresses])
+}
+
+export function useSafeAddress() {
+  const chainId = useChainId()
+  return useStore(
+    (s) => s.safeAddresses.find((s) => s.chainId === chainId)?.address || null
+  )
 }

@@ -59,7 +59,7 @@ export const chains = [
     id: 11155111,
     name: 'Sepolia',
     shortName: 'sepolia',
-    serviceurl: '',
+    serviceUrl: '',
   },
   {
     id: 1313161554,
