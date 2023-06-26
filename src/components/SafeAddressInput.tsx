@@ -23,13 +23,15 @@ export function SafeAddressInput() {
   const setSelectedSafeAddress = useStore((s) => s.setSelectedSafe)
 
   const { switchNetwork } = useSwitchNetwork()
-  let [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams()
 
   if (
     safeAddresses.length > 0 &&
     (!searchParams.get('address') || !searchParams.get('chainId'))
   ) {
-    setSelectedSafe(`${searchParams.get('address')}:${searchParams.get('chainId')}`)
+    setSelectedSafe(
+      `${searchParams.get('address')}:${searchParams.get('chainId')}`
+    )
   }
 
   // Load the safe address from url
@@ -37,25 +39,28 @@ export function SafeAddressInput() {
     const loadedSafeAddress = searchParams.get('address')
     const loadedChainId = searchParams.get('chainId')
 
-    if (loadedSafeAddress && loadedChainId)
+    if (loadedSafeAddress && loadedChainId) {
       setSelectedSafe(`${loadedSafeAddress}:${loadedChainId}`)
+    }
   }, [])
 
   // If the user puts a correct address in the input, update the url
   function setSelectedSafe(v: string) {
     const [safeAddress, chainId] = v.split(':')
-    
-    const newSafeIdx = 
-    safeAddresses.findIndex(
-      s => s.address === safeAddress && 
-      s.chainId.toString() === chainId);
+
+    const newSafeIdx = safeAddresses.findIndex(
+      (s) => s.address === safeAddress && s.chainId.toString() === chainId
+    )
 
     console.log('THE NEW SAFE IDX IS', newSafeIdx)
     if (newSafeIdx) {
       setSelectedSafeAddress(newSafeIdx)
     }
 
-    setSearchParams([['address', safeAddress], ['chainId', chainId]])
+    setSearchParams([
+      ['address', safeAddress],
+      ['chainId', chainId],
+    ])
 
     if (switchNetwork) {
       console.log('NETWORK CAN BE SWITCHED!')
@@ -68,7 +73,9 @@ export function SafeAddressInput() {
       <FormControl mb="4">
         <FormLabel>Safe Address</FormLabel>
         <Select
-          value={`${searchParams.get('address')}:${searchParams.get('chainId')}`}
+          value={`${searchParams.get('address')}:${searchParams.get(
+            'chainId'
+          )}`}
           onChange={(event) => setSelectedSafe(event.currentTarget.value)}
         >
           {safeAddresses.map((o, i) => (
