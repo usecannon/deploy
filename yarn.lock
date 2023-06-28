@@ -4284,7 +4284,7 @@ __metadata:
     axios: ^1.3.5
     browser-level: ^1.0.1
     buffer: ^5.5.0
-    cannon-plugin-router: ^1.0.13
+    cannon-plugin-router: ^1.0.14
     crypto-browserify: ^3.12.0
     crypto-hash: ^2.0.1
     crypto-js: ^4.1.1
@@ -5737,12 +5737,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cannon-plugin-router@npm:^1.0.13":
-  version: 1.0.13
-  resolution: "cannon-plugin-router@npm:1.0.13"
+"cannon-plugin-router@npm:^1.0.14":
+  version: 1.0.14
+  resolution: "cannon-plugin-router@npm:1.0.14"
   dependencies:
     "@synthetixio/router": ^3.1.4
-  checksum: 73eb9799fb9f1cbb0cd4b19d1625192a9a7eead48c0adfea84f25bd1b95b779ce5554468d660144e30fedc2d7dced74f98ef910e8f477059ecec38a1b397931c
+  checksum: 862773d52b871bb7f2454c7487d0110ff570d75dc3070b698d3d7493464ae5dc6c73399a1080028ad089f2aad0da78991b6f3d7b5db69304a3d8d9c40b0638cf
   languageName: node
   linkType: hard
 

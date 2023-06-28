@@ -32,8 +32,14 @@ import { createFork } from '../utils/rpc'
 import { useGitRepo } from './git'
 import { useStore } from '../store'
 
+// TODO: in the future register actions that are found in a cannon definition automatically with stubs
 import cannonPluginRouter from 'cannon-plugin-router'
-registerAction(cannonPluginRouter)
+registerAction({
+  ...cannonPluginRouter,
+  exec: () => {
+    throw new Error('cannot execute step')
+  }
+})
 
 export type BuildState =
   | {
