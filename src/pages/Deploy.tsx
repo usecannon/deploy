@@ -20,7 +20,17 @@ import {
   useColorMode,
 } from '@chakra-ui/react'
 import { Diff, Hunk, parseDiff } from 'react-diff-view'
-import { Hex, TransactionRequestBase, encodePacked, keccak256, stringToBytes, toHex, trim, zeroAddress, zeroAddress } from 'viem'
+import {
+  Hex,
+  TransactionRequestBase,
+  encodePacked,
+  keccak256,
+  stringToBytes,
+  toHex,
+  trim,
+  zeroAddress,
+  zeroAddress,
+} from 'viem'
 import {
   useContractRead,
   useContractWrite,
@@ -41,7 +51,7 @@ import { useNavigate } from 'react-router-dom'
 
 export function Deploy() {
   const { colorMode } = useColorMode()
-  const safeAddress = useStore((s) => s.safeAddresses[s.safeIndex]?.address)
+  const currentSafe = useStore((s) => s.currentSafe)
 
   const prepareDeployOnchainStore = usePrepareSendTransaction(
     onchainStore.deployTxn
@@ -87,7 +97,7 @@ export function Deploy() {
     abi: onchainStore.ABI,
     address: onchainStore.deployAddress,
     functionName: 'getWithAddress',
-    args: [safeAddress, keccak256(stringToBytes(`${gitUrl}`))], // TODO: include preset here
+    args: [currentSafe.address, keccak256(stringToBytes(`${gitUrl}`))], // TODO: include preset here
   })
 
   const { patches } = useGitDiff(
@@ -106,21 +116,25 @@ export function Deploy() {
     partialDeployIpfs ? `@ipfs:${partialDeployIpfs}` : null
   )
 
-
   const multicallTxn: Partial<TransactionRequestBase> =
-    buildInfo.buildQuery.data && buildInfo.buildQuery.data.steps.indexOf(null) === -1
+    buildInfo.buildQuery.data &&
+    buildInfo.buildQuery.data.steps.indexOf(null) === -1
       ? makeMultisend(
           [
             {
               to: zeroAddress,
               data: encodePacked(['string'], ['']),
             } as Partial<TransactionRequestBase>,
-          ].concat(buildInfo.buildQuery.data.steps.map(s => s.tx as unknown as Partial<TransactionRequestBase>))
+          ].concat(
+            buildInfo.buildQuery.data.steps.map(
+              (s) => s.tx as unknown as Partial<TransactionRequestBase>
+            )
+          )
         )
       : { value: 0n }
 
   const stagedTxn = usePrepareSendTransaction({
-    account: safeAddress,
+    account: currentSafe.address,
     ...multicallTxn,
     value: BigInt(multicallTxn.value),
   })
@@ -258,35 +272,35 @@ export function Deploy() {
         })}
       </Box>
 
-      {buildInfo.buildQuery.isFetching && <Box mb="6">
-        {buildInfo.buildStatus}
-      </Box>}
+      {buildInfo.buildQuery.isFetching && (
+        <Box mb="6">{buildInfo.buildStatus}</Box>
+      )}
 
-      {buildInfo.buildQuery.isError && <Box mb="6">
-        {buildInfo.buildQuery.error.toString() as string}
-      </Box>}
+      {buildInfo.buildQuery.isError && (
+        <Box mb="6">{buildInfo.buildQuery.error.toString() as string}</Box>
+      )}
 
       <Box mb="6">
-          <HStack>
-            <Button
-              w="100%"
-              isDisabled={!stagedTxn || !stager.canSign}
-              onClick={() => stager.sign()}
-            >
-              Sign
-            </Button>
-            <Button
-              w="100%"
-              isDisabled={!stagedTxn || !stager.canExecute}
-              onClick={() => execTxn.write()}
-            >
-              Execute
-            </Button>
-          </HStack>
-          {stagedTxn.isError && (
-            <Text>Transaction Error: {stagedTxn.error.message}</Text>
-          )}
-        </Box>
+        <HStack>
+          <Button
+            w="100%"
+            isDisabled={!stagedTxn || !stager.canSign}
+            onClick={() => stager.sign()}
+          >
+            Sign
+          </Button>
+          <Button
+            w="100%"
+            isDisabled={!stagedTxn || !stager.canExecute}
+            onClick={() => execTxn.write()}
+          >
+            Execute
+          </Button>
+        </HStack>
+        {stagedTxn.isError && (
+          <Text>Transaction Error: {stagedTxn.error.message}</Text>
+        )}
+      </Box>
     </Container>
   )
 }

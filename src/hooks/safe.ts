@@ -8,9 +8,9 @@ import { getAddress, isAddress } from 'viem'
 import { useAccount, useChainId, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
+import { State, useStore } from '../store'
 import { chains } from '../constants'
 import { supportedChains } from '../wallet'
-import { useStore } from '../store'
 
 export function isShortName(shortName: string): boolean {
   if (typeof shortName !== 'string') return false
@@ -20,6 +20,15 @@ export function isShortName(shortName: string): boolean {
 
 export function isSafeAddress(safeAddress: string): boolean {
   return isAddress(safeAddress)
+}
+
+export function isValidSafe(safe: State['currentSafe']): boolean {
+  return (
+    !!safe &&
+    isAddress(safe.address) &&
+    typeof safe.chainId === 'number' &&
+    supportedChains.some((chain) => chain.id === safe.chainId)
+  )
 }
 
 export function getSafeAddress(safeAddress: string) {
@@ -139,7 +148,7 @@ export function usePendingTransactions(safeAddress: string) {
 
 export const loadWalletPublicSafes = () => {
   const { address } = useAccount()
-  const setSafeAddresses = useStore((state) => state.setSafeAddresses)
+  const addSafeAddresses = useStore((s) => s.addSafeAddresses)
 
   useEffect(() => {
     const fetchSafes = async () => {
@@ -158,19 +167,19 @@ export const loadWalletPublicSafes = () => {
 
       const safes = await Promise.all(safesPromises)
 
-      const result = safes.flatMap((entry) => {
+      const safeAddresses = safes.flatMap((entry) => {
         const chainSafes = entry?.safes || []
         return chainSafes.map((address) => ({
-          chainId: entry.chainId,
           address: address as `0x${string}`,
+          chainId: entry.chainId,
         }))
       })
 
-      setSafeAddresses(result)
+      addSafeAddresses(safeAddresses)
     }
 
     fetchSafes()
-  }, [address, setSafeAddresses])
+  }, [address])
 }
 
 export function useSafeAddress() {

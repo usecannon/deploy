@@ -12,13 +12,13 @@ import {
   zeroAddress,
 } from 'viem'
 import {
-  Container,
   Alert,
+  AlertDescription,
   AlertIcon,
   AlertTitle,
-  AlertDescription,
   Box,
   Button,
+  Container,
   EditableInput,
   FormControl,
   FormHelperText,
@@ -48,21 +48,16 @@ import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
 
 export function RunCustom() {
+  const currentSafe = useStore((s) => s.currentSafe)
+  const navigate = useNavigate()
+
   const [target, setTarget] = useState('')
   const [queuedTxns, setQueuedTxns] = useState<
     Omit<TransactionRequestBase, 'from'>[]
   >([null])
 
-  const navigate = useNavigate()
-
   console.log('qd txns', queuedTxns)
 
-  const safeAddress = useStore((s) => s.safeAddresses[s.safeIndex]?.address)
-
-  let toAddress: string | null = null
-  if (isAddress(target)) {
-    toAddress = target
-  }
   const cannonInfo = useCannonPackageContracts(target)
 
   const multisendTxn =
@@ -78,7 +73,7 @@ export function RunCustom() {
       : { value: 0n }
 
   const stagedTxn = usePrepareSendTransaction({
-    account: safeAddress,
+    account: currentSafe.address,
     ...multisendTxn,
     value: BigInt(multisendTxn.value),
   })
