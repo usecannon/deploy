@@ -9,7 +9,8 @@ import { TransactionDisplay } from '../components/TransactionDisplay'
 import { useSafeTransactions, useTxnStager } from '../hooks/backend'
 
 export function TransactionDetail() {
-  let { chainId, safeAddress, nonce } = useParams()
+  let { safeAddress } = useParams()
+  const { chainId, nonce } = useParams()
 
   if (!isAddress(safeAddress)) {
     safeAddress = zeroAddress

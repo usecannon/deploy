@@ -77,9 +77,7 @@ export function useLoadCannonDefinition(
 
 export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   const chainId = useNetwork().chain?.id
-  const safeAddress = useStore((s) =>
-    s.safeAddresses.length ? s.safeAddresses[s.safeIndex]?.address : ''
-  ) as Address
+  const currentSafe = useStore((s) => s.currentSafe)
   const settings = useStore((s) => s.settings)
 
   const [buildStatus, setBuildStatus] = useState('')
@@ -87,12 +85,11 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
   const buildQuery = useQuery(['cannon', 'build', def, upgradeFrom], {
     queryFn: async () => {
-      console.log('SAFE ADDRESS IS', safeAddress)
       setBuildStatus('Creating fork...')
       const fork: EthereumProvider = await createFork({
         url: settings.forkProviderUrl,
         chainId,
-        impersonate: [safeAddress],
+        impersonate: [currentSafe.address],
       }).catch((err) => {
         err.message = `Could not create local fork for build: ${err.message}`
         throw err
@@ -110,7 +107,7 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
       // Load upgrade from deployment from IPFS
       const ctx = await createInitialContext(def, {}, chainId, {})
 
-      let upgradeFromUrl: string = await registry.getUrl(
+      const upgradeFromUrl: string = await registry.getUrl(
         upgradeFrom || `${def.getName(ctx)}:latest`,
         `${chainId}-${settings.preset}`
       )
@@ -119,7 +116,9 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
         throw new Error('upgrade from deployment not found')
       }
 
-      const incompleteDeploy = upgradeFromUrl ? await ipfsLoader.read(upgradeFromUrl) : null
+      const incompleteDeploy = upgradeFromUrl
+        ? await ipfsLoader.read(upgradeFromUrl)
+        : null
 
       console.log('upgrade from: ', incompleteDeploy)
 
@@ -141,21 +140,30 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
         provider,
         def,
         options: {},
-        defaultSignerAddress: safeAddress,
+        defaultSignerAddress: currentSafe.address,
         incompleteDeploy,
         registry: fallbackRegistry,
         loaders: { mem: inMemoryLoader, ipfs: ipfsLoader },
-        onStepExecute: (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
+        onStepExecute: (
+          stepType: string,
+          stepLabel: string,
+          stepOutput: ChainArtifacts
+        ) => {
           setBuildStatus(`Building ${stepType}.${stepLabel}...`)
-        }
+        },
       })
 
-      console.log('CANNON BUILD FINISH', { runtime, state: newState, simulatedTxs, skippedSteps })
+      console.log('CANNON BUILD FINISH', {
+        runtime,
+        state: newState,
+        simulatedTxs,
+        skippedSteps,
+      })
 
       if (simulatedTxs.length === 0) {
         throw new Error(
           'There are no transactions that can be executed on Safe. Skipped Steps:\n' +
-          skippedSteps.map(s => `${s.name}: ${s.err.toString()}`).join('\n')
+            skippedSteps.map((s) => `${s.name}: ${s.err.toString()}`).join('\n')
         )
       }
 
@@ -182,12 +190,12 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
     cacheTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: false
+    retry: false,
   })
 
   return {
     buildQuery,
-    buildStatus
+    buildStatus,
   }
 }
 

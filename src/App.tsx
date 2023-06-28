@@ -18,16 +18,21 @@ import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
 import { loadWalletPublicSafes } from './hooks/safe'
+import { useStore } from './store'
 
 const queryClient = new QueryClient()
 
 const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    element: <SafeLayout />,
     children: [
       {
         path: '/',
         element: <Transactions />,
+      },
+      {
+        path: '/transactions',
+        element: <RunCustom />,
       },
       {
         path: '/partial-deployments',
@@ -37,10 +42,11 @@ const router = createBrowserRouter([
         path: '/gitops-diffs',
         element: <Deploy />,
       },
-      {
-        path: '/transactions',
-        element: <RunCustom />,
-      },
+    ],
+  },
+  {
+    element: <PlainLayout />,
+    children: [
       {
         path: '/txn/:chainId/:safeAddress/:nonce',
         element: <TransactionDetail />,
@@ -49,12 +55,23 @@ const router = createBrowserRouter([
   },
 ])
 
-function AppLayout() {
+function PlainLayout() {
+  return (
+    <>
+      <Menu />
+      <Outlet />
+    </>
+  )
+}
+
+function SafeLayout() {
+  const currentSafe = useStore((s) => s.currentSafe)
+
   return (
     <>
       <Menu />
       <SafeAddressInput />
-      <Outlet />
+      {currentSafe && <Outlet />}
     </>
   )
 }

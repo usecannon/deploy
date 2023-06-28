@@ -36,7 +36,7 @@ export function DisplayedTransaction(props: {
   onTxn?: (txn: Omit<TransactionRequestBase, 'from'> | null) => void
   editable?: boolean
 }) {
-  const safeAddress = useStore((s) => s.safeAddresses[s.safeIndex]?.address)
+  const currentSafe = useStore((s) => s.currentSafe)
   const account = useAccount()
 
   const parsedContractNames = props.txn
@@ -55,7 +55,9 @@ export function DisplayedTransaction(props: {
       })
       parsedContract = n
       break
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   const [execContract, setExecContract] = useState(parsedContract)
@@ -165,7 +167,7 @@ export function DisplayedTransaction(props: {
         case 'address':
           return [
             { label: execFuncArgs[arg] || '', secondary: '' },
-            { label: safeAddress, secondary: 'Safe Address' },
+            { label: currentSafe.address, secondary: 'Safe Address' },
             { label: account.address, secondary: 'Your Address' },
             ...Object.entries(props.contracts).map(([l, c]) => ({
               label: c.address,

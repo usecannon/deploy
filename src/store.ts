@@ -1,12 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { deepmerge } from 'deepmerge-ts'
-import { BuildState } from './hooks/cannon'
 import { Address } from 'viem'
+import deepEqual from 'fast-deep-equal'
+import uniqWith from 'lodash/uniqWith'
+
+import { BuildState } from './hooks/cannon'
+
+type SafeDefinition = { address: Address; chainId: number }
 
 export interface State {
-  safeAddresses: { address: Address; chainId: number }[]
-  safeIndex: number
+  currentSafe: SafeDefinition | null
+  safeAddresses: SafeDefinition[]
   build: {
     cid: string
     buildState: BuildState
@@ -26,15 +31,14 @@ export interface Actions {
   setState: (state: Partial<State>) => void
   setBuild: (state: Partial<State['build']>) => void
   setSettings: (state: Partial<State['settings']>) => void
-  setSafeAddresses: (state: Partial<State['safeAddresses']>) => void
-  setSelectedSafe: (idx: number) => void
+  addSafeAddresses: (state: State['safeAddresses']) => void
 }
 
 export type Store = State & Actions
 
 const initialState = {
+  currentSafe: null,
   safeAddresses: [],
-  safeIndex: 0,
   build: {
     cid: '',
     buildState: {
@@ -66,16 +70,15 @@ const useStore = create<Store>()(
           ...state,
           settings: { ...state.settings, ...newState },
         })),
-      setSafeAddresses: (newState) =>
+      addSafeAddresses: (newAddresses) => {
         set((state) => ({
           ...state,
-          safeAddresses: newState,
-        })),
-      setSelectedSafe: (newSelectedIdx) => 
-        set((state) => ({
-          ...state,
-          safeIndex: newSelectedIdx,
-        })),
+          safeAddresses: uniqWith(
+            [...state.safeAddresses, ...newAddresses],
+            deepEqual
+          ),
+        }))
+      },
     }),
     // Persist only settings and safe addresses on local storage
     {

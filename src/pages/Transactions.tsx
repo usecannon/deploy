@@ -5,8 +5,7 @@ import { useSafeTransactions } from '../hooks/backend'
 import { useStore } from '../store'
 
 export function Transactions() {
-  const safeAddress = useStore((s) => s.safeAddresses[s.safeIndex]?.address)
-  const chainId = useStore((s) => s.safeAddresses[s.safeIndex]?.chainId)
+  const currenSafe = useStore((s) => s.currentSafe)
   const { staged } = useSafeTransactions()
 
   return (
@@ -21,12 +20,12 @@ export function Transactions() {
         <Heading size="md" mb="2">
           Pending Transactions ({staged.length})
         </Heading>
-        {safeAddress &&
+        {currenSafe &&
           staged.map((tx) => (
             <Transaction
               key={JSON.stringify(tx.txn)}
-              safeAddress={safeAddress}
-              chainId={chainId}
+              safeAddress={currenSafe.address}
+              chainId={currenSafe.chainId}
               tx={tx.txn}
             />
           ))}
