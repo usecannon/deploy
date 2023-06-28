@@ -20,7 +20,7 @@ import {
   useColorMode,
 } from '@chakra-ui/react'
 import { Diff, Hunk, parseDiff } from 'react-diff-view'
-import { Hex, TransactionRequestBase, encodePacked, keccak256, stringToBytes, toHex, trim, zeroAddress, zeroAddress } from 'viem'
+import { Hex, TransactionRequestBase, encodePacked, keccak256, stringToBytes, toHex, trim, zeroAddress } from 'viem'
 import {
   useContractRead,
   useContractWrite,
@@ -245,16 +245,22 @@ export function Deploy() {
 
       <Box mb="6">
         {patches.map((p) => {
-          const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
+          try {
+            const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
+            return (
+              <Diff
+                key={oldRevision + '-' + newRevision}
+                viewType="split"
+                diffType={type}
+                hunks={hunks}
+              />
+            )
+          } catch (err) {
+            console.error('diff didnt work:', err)
 
-          return (
-            <Diff
-              key={oldRevision + '-' + newRevision}
-              viewType="split"
-              diffType={type}
-              hunks={hunks}
-            />
-          )
+            return []
+          }
+
         })}
       </Box>
 

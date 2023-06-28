@@ -2,20 +2,12 @@ import {
   Container,
   FormControl,
   FormLabel,
-  IconButton,
-  Input,
-  InputGroup,
-  InputRightElement,
-  LinkBox,
-  LinkOverlay,
   Select,
 } from '@chakra-ui/react'
-import { ExternalLinkIcon } from '@chakra-ui/icons'
-import { useEffect, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSwitchNetwork } from 'wagmi'
 
-import { getSafeAddress, getSafeUrl } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
@@ -53,7 +45,7 @@ export function SafeAddressInput() {
     )
 
     console.log('THE NEW SAFE IDX IS', newSafeIdx)
-    if (newSafeIdx) {
+    if (newSafeIdx !== -1) {
       setSelectedSafeAddress(newSafeIdx)
     }
 

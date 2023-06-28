@@ -140,6 +140,8 @@ export function usePendingTransactions(safeAddress: string) {
 export const loadWalletPublicSafes = () => {
   const { address } = useAccount()
   const setSafeAddresses = useStore((state) => state.setSafeAddresses)
+  const safeIdx = useStore((state) => state.safeIndex)
+  const setSelectedSafe = useStore((state) => state.setSelectedSafe)
 
   useEffect(() => {
     const fetchSafes = async () => {
@@ -167,6 +169,12 @@ export const loadWalletPublicSafes = () => {
       })
 
       setSafeAddresses(result)
+
+      console.log('SETTING SAFE ADDRESSES', safeIdx)
+      if (safeIdx === -1) {
+        console.log("need to fix")
+        setSelectedSafe(0)
+      }
     }
 
     fetchSafes()

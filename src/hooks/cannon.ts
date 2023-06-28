@@ -13,6 +13,7 @@ import {
   copyPackage,
   createInitialContext,
   getOutputs,
+  registerAction,
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
@@ -30,6 +31,9 @@ import {
 import { createFork } from '../utils/rpc'
 import { useGitRepo } from './git'
 import { useStore } from '../store'
+
+import cannonPluginRouter from 'cannon-plugin-router'
+registerAction(cannonPluginRouter)
 
 export type BuildState =
   | {
