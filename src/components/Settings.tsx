@@ -87,36 +87,32 @@ export function Settings() {
   const settings = useStore((s) => s.settings)
   const setSettings = useStore((s) => s.setSettings)
   const safeAddresses = useStore((s) => s.safeAddresses)
-  const setSafeAddresses = useStore((s) => s.setSafeAddresses)
+  const setState = useStore((s) => s.setState)
 
   return (
     <>
       <FormControl key={'safeaddrs'} isRequired={true} mb="4">
         <FormLabel>Safe Addresses</FormLabel>
-        {safeAddresses.map((safeAddress, i) => (
-          <HStack>
+        {safeAddresses.map((safe, i) => (
+          <HStack key={i}>
             <Input
               type={'text'}
               placeholder={'0x000...'}
-              defaultValue={safeAddress.address}
+              defaultValue={safe.address}
               onChange={(evt) => {
                 if (isAddress(evt.target.value)) {
                   safeAddresses[i].address = evt.target.value
-                  setSafeAddresses(safeAddresses)
+                  setState({ safeAddresses: [...safeAddresses] })
                 }
               }}
             />
             <Input
               type={'text'}
               placeholder={'1'}
-              defaultValue={safeAddress.chainId}
+              defaultValue={safe.chainId}
               onChange={(evt) => {
-                try {
-                  safeAddresses[i].chainId = parseInt(evt.target.value)
-                  setSafeAddresses(safeAddresses)
-                } catch (err) {
-                  // validation
-                }
+                safeAddresses[i].chainId = Number.parseInt(evt.target.value)
+                setState({ safeAddresses: [...safeAddresses] })
               }}
             />
           </HStack>
@@ -125,24 +121,27 @@ export function Settings() {
         <HStack>
           <Button
             onClick={() =>
-              setSafeAddresses(
-                safeAddresses.concat([{ address: '' as Address, chainId: 0 }])
-              )
+              setState({
+                safeAddresses: [
+                  ...safeAddresses,
+                  { address: '' as Address, chainId: 0 },
+                ],
+              })
             }
           >
             <AddIcon />
           </Button>
-          {safeAddresses.length > 1 && (
-            <Button
-              onClick={() =>
-                setSafeAddresses(
-                  safeAddresses.slice(0, safeAddresses.length - 1)
-                )
-              }
-            >
-              <MinusIcon />
-            </Button>
-          )}
+          <Button
+            onClick={() => {
+              const result = [
+                ...safeAddresses.slice(0, safeAddresses.length - 1),
+              ]
+              setState({ safeAddresses: result })
+              if (result.length === 0) setState({ currentSafe: null })
+            }}
+          >
+            <MinusIcon />
+          </Button>
         </HStack>
 
         <FormHelperText>

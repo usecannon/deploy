@@ -31,7 +31,8 @@ export interface Actions {
   setState: (state: Partial<State>) => void
   setBuild: (state: Partial<State['build']>) => void
   setSettings: (state: Partial<State['settings']>) => void
-  addSafeAddresses: (state: State['safeAddresses']) => void
+  prependSafeAddress: (state: State['currentSafe']) => void
+  appendSafeAddresses: (state: State['safeAddresses']) => void
 }
 
 export type Store = State & Actions
@@ -70,7 +71,16 @@ const useStore = create<Store>()(
           ...state,
           settings: { ...state.settings, ...newState },
         })),
-      addSafeAddresses: (newAddresses) => {
+      prependSafeAddress: (newAddress) => {
+        set((state) => ({
+          ...state,
+          safeAddresses: uniqWith(
+            [newAddress, ...state.safeAddresses],
+            deepEqual
+          ),
+        }))
+      },
+      appendSafeAddresses: (newAddresses) => {
         set((state) => ({
           ...state,
           safeAddresses: uniqWith(

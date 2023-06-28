@@ -1,4 +1,3 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import {
   Box,
   Flex,
@@ -8,8 +7,11 @@ import {
   useColorMode,
   useColorModeValue,
 } from '@chakra-ui/react'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 import { NavLink } from 'react-router-dom'
+
+import { useStore } from '../store'
 
 const pages = [
   { to: '/', title: 'Transaction Queue' },
@@ -19,11 +21,16 @@ const pages = [
 ] as const
 
 function NavItem({ to, title }: { to: string; title: string }) {
+  const currentSafe = useStore((s) => s.currentSafe)
   const activeColor = useColorModeValue('blue.600', 'blue.300')
   const hoverColor = useColorModeValue('gray.400', 'whiteAlpha.700')
 
+  const link = currentSafe
+    ? `${to}?chainId=${currentSafe.chainId}&address=${currentSafe.address}`
+    : to
+
   return (
-    <NavLink to={to}>
+    <NavLink to={link}>
       {({ isActive }) => (
         <Text
           fontWeight="semibold"

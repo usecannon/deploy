@@ -17,42 +17,36 @@ import { useMemo } from 'react'
 
 import SafeABIJSON from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
+import { State, useStore } from '../store'
 import { useSafeAddress } from './safe'
-import { useStore } from '../store'
 
 const BACKEND_URL = 'http://127.0.0.1:3000'
 
 const SafeABI = SafeABIJSON as Abi
 
-export function useSafeTransactions(
-  options: { chainId?: string; safeAddress?: Address } = {}
-) {
-  const chainId = useChainId()
-  const safeAddress = useSafeAddress()
+export function useSafeTransactions(safe?: State['currentSafe']) {
   const stagingUrl = useStore((s) => s.settings.stagingUrl)
 
-  const queryChainId = options.chainId || chainId
-  const querySafeAddress = options.safeAddress || safeAddress
-
-  const nonceQuery = useContractRead({
-    abi: SafeABI,
-    address: querySafeAddress,
-    functionName: 'nonce',
-  })
-
-  const stagedQuery = useQuery(['staged', queryChainId, querySafeAddress], {
+  const stagedQuery = useQuery(['staged', safe?.chainId, safe?.address], {
     queryFn: async () => {
-      if (!queryChainId || !querySafeAddress) return
-      return axios.get(`${stagingUrl}/${queryChainId}/${querySafeAddress}`)
+      if (!safe) return
+      return axios.get(`${stagingUrl}/${safe.chainId}/${safe.address}`)
     },
   })
 
-  const staged = _.sortBy(
+  const nonceQuery = useContractRead({
+    address: safe?.address,
+    abi: SafeABI,
+    functionName: 'nonce',
+  })
+
+  const staged =
     stagedQuery.data && nonceQuery.data
-      ? stagedQuery.data.data.filter((t) => t.txn._nonce >= nonceQuery.data)
-      : [],
-    'txn._nonce'
-  ) as { txn: SafeTransaction; sigs: string[] }[]
+      ? _.sortBy(
+          stagedQuery.data.data.filter((t) => t.txn._nonce >= nonceQuery.data),
+          'txn._nonce'
+        )
+      : ([] as { txn: SafeTransaction; sigs: string[] }[])
 
   return {
     nonceQuery,

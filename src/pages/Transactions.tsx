@@ -6,7 +6,7 @@ import { useStore } from '../store'
 
 export function Transactions() {
   const currenSafe = useStore((s) => s.currentSafe)
-  const { staged } = useSafeTransactions()
+  const { staged } = useSafeTransactions(currenSafe)
 
   return (
     <Container maxW="100%" w="container.sm">

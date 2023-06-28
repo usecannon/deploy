@@ -1,84 +1,73 @@
 import deepEqual from 'fast-deep-equal'
 import { Address, useSwitchNetwork } from 'wagmi'
-import {
-  Alert,
-  Container,
-  FormControl,
-  FormLabel,
-  Select,
-} from '@chakra-ui/react'
+import { Alert, Container, FormControl, FormLabel } from '@chakra-ui/react'
+import { CreatableSelect } from 'chakra-react-select'
 import { useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-import { useLocation, useSearchParams } from 'react-router-dom'
-
-import { isValidSafe } from '../hooks/safe'
+import {
+  getSafeFromString,
+  isValidSafe,
+  isValidSafeString,
+} from '../hooks/safe'
 import { useStore } from '../store'
 
 export function SafeAddressInput() {
   const currentSafe = useStore((s) => s.currentSafe)
   const safeAddresses = useStore((s) => s.safeAddresses)
   const setState = useStore((s) => s.setState)
+  const prependSafeAddress = useStore((s) => s.prependSafeAddress)
 
   const { switchNetwork } = useSwitchNetwork()
   const [searchParams, setSearchParams] = useSearchParams()
-  const location = useLocation()
 
   const currentSafeIdx = currentSafe
     ? safeAddresses.findIndex((s) => deepEqual(currentSafe, s))
     : -1
+  const safeOptions = safeAddresses.map((safe, index) => ({
+    value: index,
+    label: `${safe.chainId}:${safe.address}`,
+  }))
 
   // Load the safe address from url
   useEffect(() => {
     if (searchParams.has('address') || searchParams.has('chainId')) {
-      const address = searchParams.get('address') as Address
       const chainId = Number.parseInt(searchParams.get('chainId'))
+      const address = searchParams.get('address') as Address
 
       const newSafe = { address, chainId }
 
       if (isValidSafe(newSafe)) {
-        setState({ currentSafe: newSafe })
+        if (!deepEqual(currentSafe, newSafe)) {
+          setState({ currentSafe: newSafe })
+        }
 
         if (!safeAddresses.some((s) => deepEqual(newSafe, s))) {
-          setState({
-            safeAddresses: [newSafe, ...safeAddresses],
-          })
+          prependSafeAddress(newSafe)
         }
       } else {
-        searchParams.delete('address')
         searchParams.delete('chainId')
+        searchParams.delete('address')
         setSearchParams(searchParams)
       }
-    } else if (safeAddresses.length > 0) {
-      const newSafe = safeAddresses[0]
-
-      if (!currentSafe) {
-        setState({ currentSafe: newSafe })
-      }
-
-      searchParams.set('address', newSafe.address)
-      searchParams.set('chainId', newSafe.chainId.toString())
-      setSearchParams(searchParams)
-
-      if (switchNetwork) {
-        switchNetwork(newSafe.chainId)
-      }
     }
-  }, [location])
+  }, [])
 
   // If the user puts a correct address in the input, update the url
-  function setSelectedSafe(index: number) {
-    const selectedSafe = safeAddresses[index]
-
-    if (!selectedSafe) {
-      searchParams.delete('address')
+  function handleSafeChange(index: number) {
+    if (index === -1) {
       searchParams.delete('chainId')
+      searchParams.delete('address')
       setSearchParams(searchParams)
-
+      setState({ currentSafe: null })
       return
     }
 
-    searchParams.set('address', selectedSafe.address)
+    const selectedSafe = safeAddresses[index]
+
+    setState({ currentSafe: selectedSafe })
     searchParams.set('chainId', selectedSafe.chainId.toString())
+    searchParams.set('address', selectedSafe.address)
     setSearchParams(searchParams)
 
     if (switchNetwork) {
@@ -86,24 +75,33 @@ export function SafeAddressInput() {
     }
   }
 
+  function handleSafeCreate(newSafeAddress: string) {
+    const newSafe = getSafeFromString(newSafeAddress)
+    if (newSafe) {
+      prependSafeAddress(newSafe)
+      // handleSafeChange(0)
+    }
+  }
+
   return (
     <Container maxW="100%" w="container.sm" pt="4" pb="8">
       <FormControl mb="4">
-        <FormLabel>Safe Address</FormLabel>
-        <Select
-          value={currentSafeIdx}
-          onChange={(event) =>
-            setSelectedSafe(Number.parseInt(event.currentTarget.value))
+        <FormLabel>Current Safe</FormLabel>
+        <CreatableSelect
+          isClearable
+          value={currentSafeIdx > -1 ? safeOptions[currentSafeIdx] : null}
+          options={safeOptions}
+          onChange={(selected) =>
+            handleSafeChange(selected ? selected.value : -1)
           }
-        >
-          {safeAddresses.map((safe, index) => (
-            <option key={index} value={index}>
-              {safe.address} (chainId: {safe.chainId})
-            </option>
-          ))}
-        </Select>
+          onCreateOption={handleSafeCreate}
+          isValidNewOption={(input) => {
+            console.log('->', input, isValidSafeString(input))
+            return isValidSafeString(input)
+          }}
+        />
       </FormControl>
-      {!currentSafe && <Alert status="info">Select a Safe to start</Alert>}
+      {!currentSafe && <Alert status="info">Choose a Safe to start</Alert>}
     </Container>
   )
 }

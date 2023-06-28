@@ -3,14 +3,17 @@ import SafeApiKit, {
   SafeInfoResponse,
   SafeMultisigTransactionListResponse,
 } from '@safe-global/api-kit'
+import { Address, getAddress, isAddress } from 'viem'
 import { Web3Adapter } from '@safe-global/protocol-kit'
-import { getAddress, isAddress } from 'viem'
 import { useAccount, useChainId, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { State, useStore } from '../store'
 import { chains } from '../constants'
 import { supportedChains } from '../wallet'
+
+type ChainId = (typeof chains)[number]['id']
+type SafeString = `${ChainId}:${Address}`
 
 export function isShortName(shortName: string): boolean {
   if (typeof shortName !== 'string') return false
@@ -22,6 +25,26 @@ export function isSafeAddress(safeAddress: string): boolean {
   return isAddress(safeAddress)
 }
 
+const addressStringRegex = /^[1-9][0-9]*:0x[a-fA-F0-9]{40}$/
+
+export function isValidSafeString(safeString: string): boolean {
+  if (typeof safeString !== 'string') return false
+  if (!addressStringRegex.test(safeString)) return false
+  const chainId = Number.parseInt(safeString.split(':')[0])
+  return chains.some((chain) => chain.id === chainId)
+}
+
+export function getSafeFromString(
+  safeString: string
+): State['currentSafe'] | null {
+  if (!isValidSafeString(safeString)) return null
+  const [chainId, address] = safeString.split(':')
+  return {
+    chainId: Number.parseInt(chainId),
+    address: getAddress(address),
+  }
+}
+
 export function isValidSafe(safe: State['currentSafe']): boolean {
   return (
     !!safe &&
@@ -31,14 +54,16 @@ export function isValidSafe(safe: State['currentSafe']): boolean {
   )
 }
 
-export function getSafeAddress(safeAddress: string) {
+export function getSafeShortNameAddress(safeAddress: string) {
   if (!isSafeAddress(safeAddress)) return null
   return `${getAddress(safeAddress)}`
 }
 
 export function getSafeUrl(safeAddress: string) {
   if (!isSafeAddress(safeAddress)) return null
-  return `https://app.safe.global/home?safe=${getSafeAddress(safeAddress)}`
+  return `https://app.safe.global/home?safe=${getSafeShortNameAddress(
+    safeAddress
+  )}`
 }
 
 export function useSafeWriteApi(): SafeApiKit | null {
@@ -148,7 +173,7 @@ export function usePendingTransactions(safeAddress: string) {
 
 export const loadWalletPublicSafes = () => {
   const { address } = useAccount()
-  const addSafeAddresses = useStore((s) => s.addSafeAddresses)
+  const appendSafeAddresses = useStore((s) => s.appendSafeAddresses)
 
   useEffect(() => {
     const fetchSafes = async () => {
@@ -175,7 +200,7 @@ export const loadWalletPublicSafes = () => {
         }))
       })
 
-      addSafeAddresses(safeAddresses)
+      appendSafeAddresses(safeAddresses)
     }
 
     fetchSafes()

@@ -20,7 +20,10 @@ export function TransactionDetail() {
     nonce: safeNonce,
     staged,
     stagedQuery,
-  } = useSafeTransactions({ chainId, safeAddress: safeAddress as Address })
+  } = useSafeTransactions({
+    chainId: Number.parseInt(chainId),
+    address: safeAddress as Address,
+  })
 
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
