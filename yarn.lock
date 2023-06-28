@@ -2826,10 +2826,10 @@
   dependencies:
     tslib "^2.4.0"
 
-"@synthetixio/router@3.1.3":
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/@synthetixio/router/-/router-3.1.3.tgz#ad81e059561cf98df3516e6a79a0a60918ec9b76"
-  integrity sha512-6t6hmn3FKekzPD1Dx02curGlNYviWzv+NrQ5IAfj1OMkH0QuqVoqplzwhiXPLoiqsVasE3iVACWyzsE2/US9Vw==
+"@synthetixio/router@^3.1.4":
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/@synthetixio/router/-/router-3.1.4.tgz#f08b3e0ef0f8cf5e4094efa3667cf1552caf9ed8"
+  integrity sha512-A35qPlFwfoukivAvk6BARAYSb+LPJaQyjJZf+HJQf6qwQRtCnuT/T7DPRF47ObCnst3rwgJaLK7jCzQVR7+WCg==
   dependencies:
     "@ethersproject/abi" "^5.7.0"
     ajv "^8.11.0"
@@ -4194,12 +4194,12 @@ caniuse-lite@^1.0.30001503:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001508.tgz#4461bbc895c692a96da399639cc1e146e7302a33"
   integrity sha512-sdQZOJdmt3GJs1UMNpCCCyeuS2IEGLXnHyAo9yIO5JJDjbjoVRij4M1qep6P6gFpptD1PqIYgzM+gwJbOi92mw==
 
-cannon-plugin-router@^1.0.11:
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/cannon-plugin-router/-/cannon-plugin-router-1.0.12.tgz#1686f23c0c67ac4f560a7e1adfcd3b75e2bcb1be"
-  integrity sha512-yvk0iFx77AZtkhW/y3rJL/W8pCsPIfpzNVtwWzEInJcEnqvgbnDgIe8oxC0Eqk9ytfxr93A3kPhtgZDIC1MODg==
+cannon-plugin-router@^1.0.13:
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/cannon-plugin-router/-/cannon-plugin-router-1.0.13.tgz#cee5cd6ea96857d3d50d7508a788cd442629e88c"
+  integrity sha512-Apa9KHiLptFoKulsnsEWolJ/rmVFjlbxcxeMMBfTmgFoibev/Yu5m5H164Z+mU6lWXUocJ5uIoS/5kHFY+YWYw==
   dependencies:
-    "@synthetixio/router" "3.1.3"
+    "@synthetixio/router" "^3.1.4"
 
 caseless@~0.12.0:
   version "0.12.0"
