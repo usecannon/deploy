@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import axios from 'axios'
+import type { Abi } from 'viem'
 import {
   Address,
   useAccount,
   useChainId,
-  useContractEvent,
   useContractRead,
   useContractReads,
   useMutation,
@@ -15,12 +15,14 @@ import {
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
 
-import SafeABI from '../../backend/src/abi/Safe.json'
+import SafeABIJSON from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
 import { useSafeAddress } from './safe'
 import { useStore } from '../store'
 
 const BACKEND_URL = 'http://127.0.0.1:3000'
+
+const SafeABI = SafeABIJSON as Abi
 
 export function useSafeTransactions(
   options: { chainId?: string; safeAddress?: Address } = {}
@@ -44,21 +46,6 @@ export function useSafeTransactions(
       return axios.get(`${stagingUrl}/${queryChainId}/${querySafeAddress}`)
     },
   })
-
-  // how to query historical events with wagmi? idk
-  /*const historySuccessQuery = useContractEvent({
-    abi: SafeABI,
-    address: safeAddress,
-    eventName: 'ExecutionSuccess',
-    listener: () => {}
-  });
-
-  const historyFailedQuery = useContractEvent({
-    abi: SafeABI,
-    address: safeAddress,
-    eventName: 'ExecutionFailure',
-    listener: () => {}
-  })*/
 
   const staged = _.sortBy(
     stagedQuery.data && nonceQuery.data
@@ -118,7 +105,7 @@ export function useTxnStager(
   const reads = useContractReads({
     contracts: [
       {
-        abi: SafeABI as any,
+        abi: SafeABI,
         address: querySafeAddress,
         functionName: 'getTransactionHash',
         args: [
@@ -135,12 +122,12 @@ export function useTxnStager(
         ],
       },
       {
-        abi: SafeABI as any,
+        abi: SafeABI,
         address: querySafeAddress,
         functionName: 'getThreshold',
       },
       {
-        abi: SafeABI as any,
+        abi: SafeABI,
         address: querySafeAddress,
         functionName: 'isOwner',
         args: [account.address],
@@ -214,7 +201,7 @@ export function useTxnStager(
   }
 
   const stageTxnMutate = usePrepareContractWrite({
-    abi: SafeABI as any[],
+    abi: SafeABI,
     address: querySafeAddress,
     functionName: 'execTransaction',
     args: [
