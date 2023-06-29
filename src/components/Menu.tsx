@@ -9,6 +9,7 @@ import {
   Text,
   useColorMode,
   useColorModeValue,
+  Tag,
 } from '@chakra-ui/react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { SettingsIcon } from '@chakra-ui/icons'
@@ -66,27 +67,35 @@ export function Menu() {
 
   return (
     <Box mb="6">
-      <Box
+      <Flex
         p={4}
         bg={colorMode === 'dark' ? 'blackAlpha.400' : 'blackAlpha.100'}
       >
-        <Flex display="flex" justifyContent="space-between">
-          <Text fontSize="26.5px" fontWeight="semibold">
-            Cannon Deployer
-          </Text>
-          <Flex>
-            <ConnectButton />
-            <NavLink to="/settings">
-              <IconButton
-                ml="3"
-                variant={'ghost'}
-                aria-label="settings"
-                icon={<SettingsIcon />}
-              />
-            </NavLink>
-          </Flex>
+        <Text fontSize="26.5px" fontWeight="semibold">
+          Cannon Deployer
+        </Text>
+        <Tag
+          ml="3"
+          size="sm"
+          height="24px"
+          my="auto"
+          variant="outline"
+          opacity="0.75"
+        >
+          Beta
+        </Tag>
+        <Flex ml="auto">
+          <ConnectButton />
+          <NavLink to="/settings">
+            <IconButton
+              ml="3"
+              variant={'ghost'}
+              aria-label="settings"
+              icon={<SettingsIcon />}
+            />
+          </NavLink>
         </Flex>
-      </Box>
+      </Flex>
       <Flex
         bg={colorMode === 'dark' ? 'blackAlpha.500' : 'blackAlpha.200'}
         p="3"
