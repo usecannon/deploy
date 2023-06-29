@@ -9,11 +9,11 @@ import {
 import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
 
-import { Build } from './pages/Build'
 import { Deploy } from './pages/Deploy'
 import { Menu } from './components/Menu'
 import { RunCustom } from './pages/RunCustom'
 import { SafeAddressInput } from './components/SafeAddressInput'
+import { SettingsPage } from './pages/SettingsPage'
 import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
@@ -35,10 +35,6 @@ const router = createBrowserRouter([
         element: <RunCustom />,
       },
       {
-        path: '/partial-deployments',
-        element: <Build />,
-      },
-      {
         path: '/gitops-diffs',
         element: <Deploy />,
       },
@@ -47,6 +43,10 @@ const router = createBrowserRouter([
   {
     element: <PlainLayout />,
     children: [
+      {
+        path: '/settings',
+        element: <SettingsPage />,
+      },
       {
         path: '/txn/:chainId/:safeAddress/:nonce',
         element: <TransactionDetail />,

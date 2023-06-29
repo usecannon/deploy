@@ -16,8 +16,8 @@ import { useStore } from '../store'
 const pages = [
   { to: '/', title: 'Transaction Queue' },
   { to: '/transactions', title: 'Queue Transactions' },
-  { to: '/partial-deployments', title: 'Queue Partial Deployments' },
   { to: '/gitops-diffs', title: 'Queue GitOps Diffs' },
+  { to: '/settings', title: 'Settings' },
 ] as const
 
 function NavItem({ to, title }: { to: string; title: string }) {
@@ -25,9 +25,10 @@ function NavItem({ to, title }: { to: string; title: string }) {
   const activeColor = useColorModeValue('blue.600', 'blue.300')
   const hoverColor = useColorModeValue('gray.400', 'whiteAlpha.700')
 
-  const link = currentSafe
-    ? `${to}?chainId=${currentSafe.chainId}&address=${currentSafe.address}`
-    : to
+  const link =
+    currentSafe && to !== '/settings'
+      ? `${to}?chainId=${currentSafe.chainId}&address=${currentSafe.address}`
+      : to
 
   return (
     <NavLink to={link}>

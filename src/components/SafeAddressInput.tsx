@@ -1,10 +1,11 @@
 import deepEqual from 'fast-deep-equal'
 import { Address, useSwitchNetwork } from 'wagmi'
-import { Alert, Container, FormControl, FormLabel } from '@chakra-ui/react'
+import { Container, FormControl, FormLabel } from '@chakra-ui/react'
 import { CreatableSelect } from 'chakra-react-select'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import { Alert } from './Alert'
 import {
   getSafeFromString,
   isValidSafe,
@@ -101,7 +102,7 @@ export function SafeAddressInput() {
           }}
         />
       </FormControl>
-      {!currentSafe && <Alert status="info">Choose a Safe to start</Alert>}
+      {!currentSafe && <Alert status="info">Choose a safe to start</Alert>}
     </Container>
   )
 }
