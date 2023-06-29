@@ -8,6 +8,7 @@ import {
 } from '@rainbow-me/rainbowkit'
 import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
+import theme from './theme'
 
 import { Deploy } from './pages/Deploy'
 import { Menu } from './components/Menu'
@@ -34,7 +35,7 @@ const router = createBrowserRouter([
         element: <RunCustom />,
       },
       {
-        path: '/gitops-diffs',
+        path: '/gitops',
         element: <Deploy />,
       },
     ],
@@ -82,7 +83,7 @@ export function App() {
   }, [])
 
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <WalletProvider>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />

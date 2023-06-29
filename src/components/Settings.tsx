@@ -1,9 +1,13 @@
 import entries from 'just-entries'
 import {
+  Alert,
+  AlertIcon,
+  Box,
   FormControl,
   FormErrorMessage,
   FormHelperText,
   FormLabel,
+  Heading,
   Input,
 } from '@chakra-ui/react'
 
@@ -23,7 +27,7 @@ type Setting = {
 
 const SETTINGS: Record<keyof Store['settings'], Setting> = {
   ipfsUrl: {
-    title: 'IPFS node URL',
+    title: 'IPFS Node URL',
     placeholder: 'http://localhost:5001',
     description:
       'Provide an IPFS URL to fetch Cannon packages and upload new builds.',
@@ -84,7 +88,16 @@ export function Settings() {
   const setSettings = useStore((s) => s.setSettings)
 
   return (
-    <>
+    <Box pb="12">
+      <Heading size="lg" mt="8" mb="4">
+        Settings
+      </Heading>
+
+      <Alert status="info" mb="8">
+        <AlertIcon />
+        Changes to settings automatically persist in your web browser.
+      </Alert>
+
       {entries(SETTINGS).map(([key, s]) => {
         const val = settings[key]
         const validationError =
@@ -114,6 +127,6 @@ export function Settings() {
           </FormControl>
         )
       })}
-    </>
+    </Box>
   )
 }

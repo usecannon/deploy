@@ -18,7 +18,11 @@ import {
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
-import { UseMutationOptions, useMutation, useQuery } from '@tanstack/react-query'
+import {
+  UseMutationOptions,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query'
 
 import { IPFSBrowserLoader } from '../utils/ipfs'
 import {
@@ -38,7 +42,7 @@ registerAction({
   ...cannonPluginRouter,
   exec: () => {
     throw new Error('cannot execute step')
-  }
+  },
 })
 
 export type BuildState =
@@ -90,12 +94,12 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   const [builtStepCount, setBuiltStepCount] = useState(0)
 
   const [buildResult, setBuildResult] = useState<{
-    runtime: ChainBuilderRuntime, 
-    state: any, 
-    steps: { name: string, gas: ethers.BigNumber, tx: BaseTransaction }[] 
+    runtime: ChainBuilderRuntime
+    state: any
+    steps: { name: string; gas: ethers.BigNumber; tx: BaseTransaction }[]
   } | null>(null)
 
-  const [buildError, setBuildError] = useState<string|null>(null)
+  const [buildError, setBuildError] = useState<string | null>(null)
 
   const buildFn = async () => {
     setBuildStatus('Creating fork...')
@@ -143,10 +147,7 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
     // Create a regsitry that loads data first from Memory to be able to utilize
     // the locally built data
-    const fallbackRegistry = new FallbackRegistry([
-      inMemoryRegistry,
-      registry,
-    ])
+    const fallbackRegistry = new FallbackRegistry([inMemoryRegistry, registry])
 
     const { newState, simulatedTxs, skippedSteps, runtime } = await build({
       chainId: chainId,
@@ -192,26 +193,29 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
     if (fork) await fork.disconnect()
 
     return { runtime, state: newState, steps }
-  };
+  }
 
   useEffect(() => {
     if (def && buildStatus === '') {
       setBuildResult(null)
       setBuildError(null)
-      buildFn().then((res) => {
-        setBuildResult(res)
-      }).catch((err) => {
-        setBuildError(err.toString())
-      }).finally(() => {
-        setBuildStatus('')
-      })
+      buildFn()
+        .then((res) => {
+          setBuildResult(res)
+        })
+        .catch((err) => {
+          setBuildError(err.toString())
+        })
+        .finally(() => {
+          setBuildStatus('')
+        })
     }
   }, [def, upgradeFrom])
 
   return {
     buildStatus,
     buildResult,
-    buildError
+    buildError,
   }
 }
 
@@ -289,7 +293,9 @@ export function useCannonPackage(packageRef: string, variant = '') {
 
   const ipfsQuery = useQuery(['cannon', 'pkg', pkgUrl], {
     queryFn: async () => {
-      const loader = new IPFSBrowserLoader(settings.ipfsUrl)
+      const loader = new IPFSBrowserLoader(
+        settings.ipfsUrl || 'https://ipfs.io/ipfs/'
+      )
 
       const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
@@ -351,7 +357,9 @@ export function useCannonPackageContracts(packageRef: string, variant = '') {
       if (pkg.pkg) {
         const info = pkg.pkg
 
-        const loader = new IPFSBrowserLoader(settings.ipfsUrl)
+        const loader = new IPFSBrowserLoader(
+          settings.ipfsUrl || 'https://ipfs.io/ipfs/'
+        )
         const readRuntime = new ChainBuilderRuntime(
           {
             provider: null,

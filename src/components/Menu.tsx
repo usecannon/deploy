@@ -1,6 +1,9 @@
 import {
+  Alert,
+  AlertIcon,
   Box,
   Flex,
+  Link,
   HStack,
   IconButton,
   Text,
@@ -8,16 +11,16 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { MoonIcon, SunIcon } from '@chakra-ui/icons'
-import { NavLink } from 'react-router-dom'
+import { SettingsIcon } from '@chakra-ui/icons'
+import { NavLink, useLocation } from 'react-router-dom'
+import { some, omit } from 'lodash'
 
 import { useStore } from '../store'
 
 const pages = [
-  { to: '/', title: 'Transaction Queue' },
+  { to: '/', title: 'Sign Transactions' },
   { to: '/transactions', title: 'Queue Transactions' },
-  { to: '/gitops-diffs', title: 'Queue GitOps Diffs' },
-  { to: '/settings', title: 'Settings' },
+  { to: '/gitops', title: 'Queue From GitOps' },
 ] as const
 
 function NavItem({ to, title }: { to: string; title: string }) {
@@ -47,10 +50,22 @@ function NavItem({ to, title }: { to: string; title: string }) {
 }
 
 export function Menu() {
-  const { colorMode, toggleColorMode } = useColorMode()
+  const { colorMode } = useColorMode()
+  const location = useLocation()
+  const settings = useStore((s) => s.settings)
+
+  const missingSettings = some(
+    omit(settings, 'forkProviderUrl'),
+    (value) => !value
+  )
+
+  const showSettingsAlert =
+    (location.pathname.includes('/transactions') ||
+      location.pathname.includes('/gitops')) &&
+    missingSettings
 
   return (
-    <>
+    <Box mb="6">
       <Box
         p={4}
         bg={colorMode === 'dark' ? 'blackAlpha.400' : 'blackAlpha.100'}
@@ -61,20 +76,20 @@ export function Menu() {
           </Text>
           <Flex>
             <ConnectButton />
-            <IconButton
-              ml="3"
-              variant={'ghost'}
-              aria-label="color mode"
-              icon={colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
-              onClick={toggleColorMode}
-            />
+            <NavLink to="/settings">
+              <IconButton
+                ml="3"
+                variant={'ghost'}
+                aria-label="settings"
+                icon={<SettingsIcon />}
+              />
+            </NavLink>
           </Flex>
         </Flex>
       </Box>
       <Flex
         bg={colorMode === 'dark' ? 'blackAlpha.500' : 'blackAlpha.200'}
         p="3"
-        mb="6"
         borderTop="1px solid"
         borderBottom="1px solid"
         borderTopColor={
@@ -90,6 +105,24 @@ export function Menu() {
           ))}
         </HStack>
       </Flex>
-    </>
+      {showSettingsAlert && (
+        <Alert status="error">
+          <Flex mx="auto">
+            <AlertIcon />
+            You must{' '}
+            <Link
+              mx="1"
+              fontWeight="medium"
+              textDecoration="underline"
+              as={NavLink}
+              to="/settings"
+            >
+              update your settings
+            </Link>{' '}
+            to queue transactions.
+          </Flex>
+        </Alert>
+      )}
+    </Box>
   )
 }

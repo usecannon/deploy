@@ -86,8 +86,8 @@ export function SafeAddressInput() {
 
   return (
     <Container maxW="100%" w="container.sm" pt="4" pb="8">
-      <FormControl mb="4">
-        <FormLabel>Current Safe</FormLabel>
+      <FormControl mb="6">
+        <FormLabel>Safe</FormLabel>
         <CreatableSelect
           isClearable
           value={currentSafe ? _safeToOption(currentSafe) : null}
@@ -105,7 +105,9 @@ export function SafeAddressInput() {
           }}
         />
       </FormControl>
-      {!currentSafe && <Alert status="info">Choose a safe to start</Alert>}
+      {!currentSafe && (
+        <Alert status="info">Select a Safe from the dropdown above.</Alert>
+      )}
     </Container>
   )
 }
