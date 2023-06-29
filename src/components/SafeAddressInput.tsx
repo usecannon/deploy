@@ -1,6 +1,17 @@
 import deepEqual from 'fast-deep-equal'
-import { Container, FormControl, FormLabel } from '@chakra-ui/react'
-import { CreatableSelect } from 'chakra-react-select'
+import { CloseIcon } from '@chakra-ui/icons'
+import {
+  Container,
+  FormControl,
+  FormLabel,
+  IconButton,
+  Spacer,
+} from '@chakra-ui/react'
+import {
+  CreatableSelect,
+  OptionProps,
+  chakraComponents,
+} from 'chakra-react-select'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSwitchNetwork } from 'wagmi'
@@ -18,18 +29,28 @@ import {
 import { State, useStore } from '../store'
 import { includes } from '../utils/array'
 
+type SafeOption = {
+  value: SafeString
+  label: string
+  isDeletable?: boolean
+}
+
 export function SafeAddressInput() {
   const currentSafe = useStore((s) => s.currentSafe)
   const safeAddresses = useStore((s) => s.safeAddresses)
   const setState = useStore((s) => s.setState)
+  const setCurrentSafe = useStore((s) => s.setCurrentSafe)
+  const deleteSafe = useStore((s) => s.deleteSafe)
   const prependSafeAddress = useStore((s) => s.prependSafeAddress)
   const walletSafes = useWalletPublicSafes()
 
   const { switchNetwork } = useSwitchNetwork()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const safeOptions = _safesToOptions(safeAddresses)
-  const walletSafeOptions = _safesToOptions(walletSafes)
+  const safeOptions = _safesToOptions(safeAddresses, { isDeletable: true })
+  const walletSafeOptions = _safesToOptions(
+    walletSafes.filter((s) => !includes(safeAddresses, s))
+  )
 
   // Load the safe address from url
   useEffect(() => {
@@ -66,7 +87,7 @@ export function SafeAddressInput() {
 
     const selectedSafe = parseSafe(safeString)
 
-    setState({ currentSafe: selectedSafe })
+    setCurrentSafe(selectedSafe)
     searchParams.set('chainId', selectedSafe.chainId.toString())
     searchParams.set('address', selectedSafe.address)
     setSearchParams(searchParams)
@@ -80,8 +101,11 @@ export function SafeAddressInput() {
     const newSafe = getSafeFromString(newSafeAddress)
     if (newSafe) {
       prependSafeAddress(newSafe)
-      // handleSafeChange(0)
     }
+  }
+
+  function handleSafeDelete(safeString: SafeString) {
+    deleteSafe(parseSafe(safeString))
   }
 
   return (
@@ -89,6 +113,8 @@ export function SafeAddressInput() {
       <FormControl mb="6">
         <FormLabel>Safe</FormLabel>
         <CreatableSelect
+          variant="filled"
+          isClearable
           value={currentSafe ? _safeToOption(currentSafe) : null}
           options={[
             ...safeOptions,
@@ -97,11 +123,19 @@ export function SafeAddressInput() {
               options: walletSafeOptions,
             },
           ]}
-          onChange={(selected) => handleSafeChange(selected.value || null)}
+          onChange={(selected: SafeOption) =>
+            handleSafeChange(selected?.value || null)
+          }
           onCreateOption={handleSafeCreate}
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore-next-line
+          onDeleteOption={(selected: SafeOption) =>
+            handleSafeDelete(selected?.value || null)
+          }
           isValidNewOption={(input) => {
             return isValidSafeString(input)
           }}
+          components={{ Option: DeletableOption }}
         />
       </FormControl>
       {!currentSafe && (
@@ -111,13 +145,51 @@ export function SafeAddressInput() {
   )
 }
 
-function _safeToOption(safe: State['currentSafe']) {
-  return {
-    value: safeToString(safe),
-    label: `${safe.address} (Chain ID: ${safe.chainId})`,
-  }
+function DeletableOption({
+  children,
+  ...props
+}: OptionProps<SafeOption> & {
+  selectProps?: { onDeleteOption?: (value: SafeOption) => void }
+}) {
+  const onDelete = props.selectProps?.onDeleteOption
+  return (
+    <chakraComponents.Option {...props}>
+      {children}
+      {onDelete && props.data.isDeletable && (
+        <>
+          <Spacer />
+          <IconButton
+            size="xs"
+            variant="ghost"
+            aria-label="Delete Option"
+            icon={<CloseIcon />}
+            onClick={(evt) => {
+              evt.preventDefault()
+              evt.stopPropagation()
+              onDelete(props.data)
+            }}
+          />
+        </>
+      )}
+    </chakraComponents.Option>
+  )
 }
 
-function _safesToOptions(safes: State['safeAddresses']) {
-  return safes.map(_safeToOption)
+function _safeToOption(
+  safe: State['currentSafe'],
+  extraProps: { isDeletable?: boolean } = {}
+) {
+  const option = {
+    value: safeToString(safe),
+    label: safeToString(safe) as string,
+  } as SafeOption
+  if (extraProps.isDeletable) option.isDeletable = true
+  return option
+}
+
+function _safesToOptions(
+  safes: State['safeAddresses'],
+  extraProps: { isDeletable?: boolean } = {}
+) {
+  return safes.map((s) => _safeToOption(s, extraProps))
 }

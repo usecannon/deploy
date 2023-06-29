@@ -36,10 +36,11 @@ export interface State {
 
 export interface Actions {
   setState: (state: Partial<State>) => void
-  setBuild: (state: Partial<State['build']>) => void
-  setSettings: (state: Partial<State['settings']>) => void
-  setCurrentSafe: (state: State['currentSafe']) => void
-  prependSafeAddress: (state: State['currentSafe']) => void
+  setBuild: (build: Partial<State['build']>) => void
+  setSettings: (settings: Partial<State['settings']>) => void
+  setCurrentSafe: (safe: State['currentSafe']) => void
+  deleteSafe: (safeToDelete: State['currentSafe']) => void
+  prependSafeAddress: (safeToPrepend: State['currentSafe']) => void
 }
 
 export type Store = State & Actions
@@ -84,6 +85,21 @@ const useStore = create<Store>()(
           if (!includes(state.safeAddresses, currentSafe)) {
             newState.safeAddresses = [currentSafe, ...newState.safeAddresses]
           }
+
+          return newState
+        })
+      },
+      deleteSafe: (safeToDelete) => {
+        set((state) => {
+          const newState = { ...state }
+
+          if (deepEqual(state.currentSafe, safeToDelete)) {
+            newState.currentSafe = null
+          }
+
+          newState.safeAddresses = newState.safeAddresses.filter(
+            (safe) => !deepEqual(safe, safeToDelete)
+          )
 
           return newState
         })
