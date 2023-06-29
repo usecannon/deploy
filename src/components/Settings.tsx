@@ -1,13 +1,9 @@
 import entries from 'just-entries'
-import { AddIcon, MinusIcon } from '@chakra-ui/icons'
-import { Address, isAddress } from 'viem'
 import {
-  Button,
   FormControl,
   FormErrorMessage,
   FormHelperText,
   FormLabel,
-  HStack,
   Input,
 } from '@chakra-ui/react'
 
@@ -86,69 +82,9 @@ export function useSettingsValidation() {
 export function Settings() {
   const settings = useStore((s) => s.settings)
   const setSettings = useStore((s) => s.setSettings)
-  const safeAddresses = useStore((s) => s.safeAddresses)
-  const setState = useStore((s) => s.setState)
 
   return (
     <>
-      <FormControl key={'safeaddrs'} isRequired={true} mb="4">
-        <FormLabel>Safe Addresses</FormLabel>
-        {safeAddresses.map((safe, i) => (
-          <HStack key={i}>
-            <Input
-              type={'text'}
-              placeholder={'0x000...'}
-              defaultValue={safe.address}
-              onChange={(evt) => {
-                if (isAddress(evt.target.value)) {
-                  safeAddresses[i].address = evt.target.value
-                  setState({ safeAddresses: [...safeAddresses] })
-                }
-              }}
-            />
-            <Input
-              type={'text'}
-              placeholder={'1'}
-              defaultValue={safe.chainId}
-              onChange={(evt) => {
-                safeAddresses[i].chainId = Number.parseInt(evt.target.value)
-                setState({ safeAddresses: [...safeAddresses] })
-              }}
-            />
-          </HStack>
-        ))}
-
-        <HStack>
-          <Button
-            onClick={() =>
-              setState({
-                safeAddresses: [
-                  ...safeAddresses,
-                  { address: '' as Address, chainId: 0 },
-                ],
-              })
-            }
-          >
-            <AddIcon />
-          </Button>
-          <Button
-            onClick={() => {
-              const result = [
-                ...safeAddresses.slice(0, safeAddresses.length - 1),
-              ]
-              setState({ safeAddresses: result })
-              if (result.length === 0) setState({ currentSafe: null })
-            }}
-          >
-            <MinusIcon />
-          </Button>
-        </HStack>
-
-        <FormHelperText>
-          Provide a list of addresses and chains for each gnosis safe you want
-          to interact with.
-        </FormHelperText>
-      </FormControl>
       {entries(SETTINGS).map(([key, s]) => {
         const val = settings[key]
         const validationError =
