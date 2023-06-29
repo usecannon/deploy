@@ -17,7 +17,6 @@ import { SettingsPage } from './pages/SettingsPage'
 import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
-import { loadWalletPublicSafes } from './hooks/safe'
 import { useStore } from './store'
 
 const queryClient = new QueryClient()
@@ -81,8 +80,6 @@ export function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.setItem('debug', 'cannon*')
   }, [])
-
-  loadWalletPublicSafes()
 
   return (
     <ChakraProvider>

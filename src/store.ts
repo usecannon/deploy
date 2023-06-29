@@ -6,8 +6,15 @@ import deepEqual from 'fast-deep-equal'
 import uniqWith from 'lodash/uniqWith'
 
 import { BuildState } from './hooks/cannon'
+import { chains } from './constants'
+import { includes } from './utils/array'
 
-type SafeDefinition = { address: Address; chainId: number }
+export type ChainId = (typeof chains)[number]['id']
+
+export type SafeDefinition = {
+  chainId: ChainId
+  address: Address
+}
 
 export interface State {
   currentSafe: SafeDefinition | null
@@ -31,8 +38,8 @@ export interface Actions {
   setState: (state: Partial<State>) => void
   setBuild: (state: Partial<State['build']>) => void
   setSettings: (state: Partial<State['settings']>) => void
+  setCurrentSafe: (state: State['currentSafe']) => void
   prependSafeAddress: (state: State['currentSafe']) => void
-  appendSafeAddresses: (state: State['safeAddresses']) => void
 }
 
 export type Store = State & Actions
@@ -71,20 +78,22 @@ const useStore = create<Store>()(
           ...state,
           settings: { ...state.settings, ...newState },
         })),
+      setCurrentSafe: (currentSafe) => {
+        set((state) => {
+          const newState = { ...state, currentSafe }
+
+          if (!includes(state.safeAddresses, currentSafe)) {
+            newState.safeAddresses = [currentSafe, ...newState.safeAddresses]
+          }
+
+          return newState
+        })
+      },
       prependSafeAddress: (newAddress) => {
         set((state) => ({
           ...state,
           safeAddresses: uniqWith(
             [newAddress, ...state.safeAddresses],
-            deepEqual
-          ),
-        }))
-      },
-      appendSafeAddresses: (newAddresses) => {
-        set((state) => ({
-          ...state,
-          safeAddresses: uniqWith(
-            [...state.safeAddresses, ...newAddresses],
             deepEqual
           ),
         }))

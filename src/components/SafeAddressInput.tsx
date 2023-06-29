@@ -1,49 +1,49 @@
 import deepEqual from 'fast-deep-equal'
-import { Address, useSwitchNetwork } from 'wagmi'
 import { Container, FormControl, FormLabel } from '@chakra-ui/react'
 import { CreatableSelect } from 'chakra-react-select'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useSwitchNetwork } from 'wagmi'
 
 import { Alert } from './Alert'
 import {
+  SafeString,
   getSafeFromString,
   isValidSafe,
   isValidSafeString,
+  parseSafe,
+  safeToString,
+  useWalletPublicSafes,
 } from '../hooks/safe'
-import { useStore } from '../store'
+import { State, useStore } from '../store'
+import { includes } from '../utils/array'
 
 export function SafeAddressInput() {
   const currentSafe = useStore((s) => s.currentSafe)
   const safeAddresses = useStore((s) => s.safeAddresses)
   const setState = useStore((s) => s.setState)
   const prependSafeAddress = useStore((s) => s.prependSafeAddress)
+  const walletSafes = useWalletPublicSafes()
 
   const { switchNetwork } = useSwitchNetwork()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const currentSafeIdx = currentSafe
-    ? safeAddresses.findIndex((s) => deepEqual(currentSafe, s))
-    : -1
-  const safeOptions = safeAddresses.map((safe, index) => ({
-    value: index,
-    label: `${safe.chainId}:${safe.address}`,
-  }))
+  const safeOptions = _safesToOptions(safeAddresses)
+  const walletSafeOptions = _safesToOptions(walletSafes)
 
   // Load the safe address from url
   useEffect(() => {
     if (searchParams.has('address') || searchParams.has('chainId')) {
-      const chainId = Number.parseInt(searchParams.get('chainId'))
-      const address = searchParams.get('address') as Address
-
-      const newSafe = { address, chainId }
+      const chainId = searchParams.get('chainId')
+      const address = searchParams.get('address')
+      const newSafe = parseSafe(`${chainId}:${address}`)
 
       if (isValidSafe(newSafe)) {
         if (!deepEqual(currentSafe, newSafe)) {
           setState({ currentSafe: newSafe })
         }
 
-        if (!safeAddresses.some((s) => deepEqual(newSafe, s))) {
+        if (!includes(safeAddresses, newSafe)) {
           prependSafeAddress(newSafe)
         }
       } else {
@@ -55,8 +55,8 @@ export function SafeAddressInput() {
   }, [])
 
   // If the user puts a correct address in the input, update the url
-  function handleSafeChange(index: number) {
-    if (index === -1) {
+  function handleSafeChange(safeString: SafeString) {
+    if (!safeString) {
       searchParams.delete('chainId')
       searchParams.delete('address')
       setSearchParams(searchParams)
@@ -64,7 +64,7 @@ export function SafeAddressInput() {
       return
     }
 
-    const selectedSafe = safeAddresses[index]
+    const selectedSafe = parseSafe(safeString)
 
     setState({ currentSafe: selectedSafe })
     searchParams.set('chainId', selectedSafe.chainId.toString())
@@ -90,14 +90,17 @@ export function SafeAddressInput() {
         <FormLabel>Current Safe</FormLabel>
         <CreatableSelect
           isClearable
-          value={currentSafeIdx > -1 ? safeOptions[currentSafeIdx] : null}
-          options={safeOptions}
-          onChange={(selected) =>
-            handleSafeChange(selected ? selected.value : -1)
-          }
+          value={currentSafe ? _safeToOption(currentSafe) : null}
+          options={[
+            ...safeOptions,
+            {
+              label: 'Fetched Wallet Safes',
+              options: walletSafeOptions,
+            },
+          ]}
+          onChange={(selected) => handleSafeChange(selected.value || null)}
           onCreateOption={handleSafeCreate}
           isValidNewOption={(input) => {
-            console.log('->', input, isValidSafeString(input))
             return isValidSafeString(input)
           }}
         />
@@ -105,4 +108,15 @@ export function SafeAddressInput() {
       {!currentSafe && <Alert status="info">Choose a safe to start</Alert>}
     </Container>
   )
+}
+
+function _safeToOption(safe: State['currentSafe']) {
+  return {
+    value: safeToString(safe),
+    label: safeToString(safe) as string,
+  }
+}
+
+function _safesToOptions(safes: State['safeAddresses']) {
+  return safes.map(_safeToOption)
 }

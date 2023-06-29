@@ -1,19 +1,30 @@
 import Web3 from 'web3'
+import Safe, { Web3Adapter } from '@safe-global/protocol-kit'
 import SafeApiKit, {
   SafeInfoResponse,
   SafeMultisigTransactionListResponse,
 } from '@safe-global/api-kit'
 import { Address, getAddress, isAddress } from 'viem'
-import { Web3Adapter } from '@safe-global/protocol-kit'
 import { useAccount, useChainId, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
-import { State, useStore } from '../store'
+import { ChainId, State, useStore } from '../store'
 import { chains } from '../constants'
 import { supportedChains } from '../wallet'
 
-type ChainId = (typeof chains)[number]['id']
-type SafeString = `${ChainId}:${Address}`
+export type SafeString = `${ChainId}:${Address}`
+
+export function safeToString(safe: State['currentSafe']): SafeString {
+  return `${safe.chainId}:${safe.address}`
+}
+
+export function parseSafe(safeString: string): State['currentSafe'] {
+  const [chainId, address] = safeString.split(':')
+  return {
+    chainId: Number.parseInt(chainId) as ChainId,
+    address: getAddress(address),
+  }
+}
 
 export function isShortName(shortName: string): boolean {
   if (typeof shortName !== 'string') return false
@@ -171,9 +182,9 @@ export function usePendingTransactions(safeAddress: string) {
   return pendingTransactions
 }
 
-export const loadWalletPublicSafes = () => {
+export const useWalletPublicSafes = () => {
   const { address } = useAccount()
-  const appendSafeAddresses = useStore((s) => s.appendSafeAddresses)
+  const [walletSafes, setWalletSafes] = useState<State['safeAddresses']>([])
 
   useEffect(() => {
     const fetchSafes = async () => {
@@ -195,16 +206,18 @@ export const loadWalletPublicSafes = () => {
       const safeAddresses = safes.flatMap((entry) => {
         const chainSafes = entry?.safes || []
         return chainSafes.map((address) => ({
-          address: address as `0x${string}`,
           chainId: entry.chainId,
+          address: address as `0x${string}`,
         }))
       })
 
-      appendSafeAddresses(safeAddresses)
+      setWalletSafes(safeAddresses)
     }
 
     fetchSafes()
   }, [address])
+
+  return walletSafes
 }
 
 export function useSafeAddress() {
