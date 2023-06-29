@@ -6,6 +6,7 @@ import {
   Address,
   Hex,
   TransactionRequestBase,
+  encodeAbiParameters,
   encodePacked,
   getFunctionSelector,
   isAddress,
@@ -66,7 +67,7 @@ export function RunCustom() {
           [
             {
               to: zeroAddress,
-              data: encodePacked(['string'], [cannonInfo.pkgUrl || '']),
+              data: encodeAbiParameters([{ type: 'string[]'}], [['invoke', cannonInfo.pkgUrl || '']]),
             } as Partial<TransactionRequestBase>,
           ].concat(queuedTxns)
         )

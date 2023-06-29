@@ -18,7 +18,7 @@ import {
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
 import { useEffect, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { UseMutationOptions, useMutation, useQuery } from '@tanstack/react-query'
 
 import { IPFSBrowserLoader } from '../utils/ipfs'
 import {
@@ -89,129 +89,141 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   const [buildStatus, setBuildStatus] = useState('')
   const [builtStepCount, setBuiltStepCount] = useState(0)
 
-  const buildQuery = useQuery(['cannon', 'build', def, upgradeFrom], {
-    queryFn: async () => {
-      setBuildStatus('Creating fork...')
-      const fork: EthereumProvider = await createFork({
-        url: settings.forkProviderUrl,
-        chainId,
-        impersonate: [currentSafe.address],
+  const [buildResult, setBuildResult] = useState<{
+    runtime: ChainBuilderRuntime, 
+    state: any, 
+    steps: { name: string, gas: ethers.BigNumber, tx: BaseTransaction }[] 
+  } | null>(null)
+
+  const [buildError, setBuildError] = useState<string|null>(null)
+
+  const buildFn = async () => {
+    setBuildStatus('Creating fork...')
+    const fork: EthereumProvider = await createFork({
+      url: settings.forkProviderUrl,
+      chainId,
+      impersonate: [currentSafe.address],
+    }).catch((err) => {
+      err.message = `Could not create local fork for build: ${err.message}`
+      throw err
+    })
+
+    const registry = new OnChainRegistry({
+      signerOrProvider: settings.registryProviderUrl,
+      address: settings.registryAddress,
+    })
+
+    const ipfsLoader = new IPFSBrowserLoader(settings.ipfsUrl)
+
+    setBuildStatus('Loading deployment data...')
+
+    // Load upgrade from deployment from IPFS
+    const ctx = await createInitialContext(def, {}, chainId, {})
+
+    const upgradeFromUrl: string = await registry.getUrl(
+      upgradeFrom || `${def.getName(ctx)}:latest`,
+      `${chainId}-${settings.preset}`
+    )
+
+    if (!upgradeFromUrl && upgradeFrom) {
+      throw new Error('upgrade from deployment not found')
+    }
+
+    const incompleteDeploy = upgradeFromUrl
+      ? await ipfsLoader.read(upgradeFromUrl)
+      : null
+
+    console.log('upgrade from: ', incompleteDeploy)
+
+    const provider = new CannonWrapperGenericProvider(
+      {},
+      new ethers.providers.Web3Provider(fork),
+      false
+    )
+
+    // Create a regsitry that loads data first from Memory to be able to utilize
+    // the locally built data
+    const fallbackRegistry = new FallbackRegistry([
+      inMemoryRegistry,
+      registry,
+    ])
+
+    const { newState, simulatedTxs, skippedSteps, runtime } = await build({
+      chainId: chainId,
+      provider,
+      def,
+      options: {},
+      defaultSignerAddress: currentSafe.address,
+      incompleteDeploy,
+      registry: fallbackRegistry,
+      loaders: { mem: inMemoryLoader, ipfs: ipfsLoader },
+      onStepExecute: (
+        stepType: string,
+        stepLabel: string,
+        stepOutput: ChainArtifacts
+      ) => {
+        setBuildStatus(`Building ${stepType}.${stepLabel}...`)
+      },
+    })
+
+    if (simulatedTxs.length === 0) {
+      throw new Error(
+        'There are no transactions that can be executed on Safe. Skipped Steps:\n' +
+          skippedSteps.map((s) => `${s.name}: ${s.err.toString()}`).join('\n')
+      )
+    }
+
+    const steps = await Promise.all(
+      simulatedTxs.map(async (executedTx) => {
+        const tx = await provider.getTransaction(executedTx.hash)
+        const receipt = await provider.getTransactionReceipt(executedTx.hash)
+        return {
+          name: executedTx.deployedOn,
+          gas: receipt.gasUsed,
+          tx: {
+            to: tx.to,
+            value: tx.value.toString(),
+            data: tx.data,
+          } as BaseTransaction,
+        }
+      })
+    )
+
+    if (fork) await fork.disconnect()
+
+    return { runtime, state: newState, steps }
+  };
+
+  useEffect(() => {
+    if (def && buildStatus === '') {
+      setBuildResult(null)
+      setBuildError(null)
+      buildFn().then((res) => {
+        setBuildResult(res)
       }).catch((err) => {
-        err.message = `Could not create local fork for build: ${err.message}`
-        throw err
+        setBuildError(err.toString())
+      }).finally(() => {
+        setBuildStatus('')
       })
-
-      const registry = new OnChainRegistry({
-        signerOrProvider: settings.registryProviderUrl,
-        address: settings.registryAddress,
-      })
-
-      const ipfsLoader = new IPFSBrowserLoader(settings.ipfsUrl)
-
-      setBuildStatus('Loading deployment data...')
-
-      // Load upgrade from deployment from IPFS
-      const ctx = await createInitialContext(def, {}, chainId, {})
-
-      const upgradeFromUrl: string = await registry.getUrl(
-        upgradeFrom || `${def.getName(ctx)}:latest`,
-        `${chainId}-${settings.preset}`
-      )
-
-      if (!upgradeFromUrl && upgradeFrom) {
-        throw new Error('upgrade from deployment not found')
-      }
-
-      const incompleteDeploy = upgradeFromUrl
-        ? await ipfsLoader.read(upgradeFromUrl)
-        : null
-
-      console.log('upgrade from: ', incompleteDeploy)
-
-      const provider = new CannonWrapperGenericProvider(
-        {},
-        new ethers.providers.Web3Provider(fork),
-        false
-      )
-
-      // Create a regsitry that loads data first from Memory to be able to utilize
-      // the locally built data
-      const fallbackRegistry = new FallbackRegistry([
-        inMemoryRegistry,
-        registry,
-      ])
-
-      const { newState, simulatedTxs, skippedSteps, runtime } = await build({
-        chainId: chainId,
-        provider,
-        def,
-        options: {},
-        defaultSignerAddress: currentSafe.address,
-        incompleteDeploy,
-        registry: fallbackRegistry,
-        loaders: { mem: inMemoryLoader, ipfs: ipfsLoader },
-        onStepExecute: (
-          stepType: string,
-          stepLabel: string,
-          stepOutput: ChainArtifacts
-        ) => {
-          setBuildStatus(`Building ${stepType}.${stepLabel}...`)
-        },
-      })
-
-      console.log('CANNON BUILD FINISH', {
-        runtime,
-        state: newState,
-        simulatedTxs,
-        skippedSteps,
-      })
-
-      if (simulatedTxs.length === 0) {
-        throw new Error(
-          'There are no transactions that can be executed on Safe. Skipped Steps:\n' +
-            skippedSteps.map((s) => `${s.name}: ${s.err.toString()}`).join('\n')
-        )
-      }
-
-      const steps = await Promise.all(
-        simulatedTxs.map(async (executedTx) => {
-          const tx = await provider.getTransaction(executedTx.hash)
-          return {
-            name: executedTx.deployedOn,
-            tx: {
-              to: tx.to,
-              value: tx.value.toString(),
-              data: tx.data,
-            } as BaseTransaction,
-          }
-        })
-      )
-
-      if (fork) await fork.disconnect()
-
-      return { runtime, state: newState, steps }
-    },
-    enabled: !_.isNil(def),
-    staleTime: Infinity,
-    cacheTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: false,
-  })
+    }
+  }, [def, upgradeFrom])
 
   return {
-    buildQuery,
     buildStatus,
+    buildResult,
+    buildError
   }
 }
 
 export function useCannonWriteDeployToIpfs(
   runtime: ChainBuilderRuntime,
-  deployInfo: DeploymentInfo
+  deployInfo: DeploymentInfo,
+  mutationOptions: Partial<UseMutationOptions> = {}
 ) {
   const settings = useStore((s) => s.settings)
 
   const writeToIpfsMutation = useMutation({
+    ...mutationOptions,
     mutationFn: async () => {
       const def = new ChainDefinition(deployInfo.def)
       const ctx = await createInitialContext(

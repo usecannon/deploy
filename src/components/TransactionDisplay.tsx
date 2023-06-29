@@ -27,13 +27,15 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction }) {
     console.log('didnt parse', err)
   }
 
+  let hintType = ''
   let hintCannonPackage = ''
+  let hintGitRepoHash = ''
   if (
     (decoded.functionName === 'aggregate3' ||
       decoded.functionName === 'aggregate3Value') &&
     decoded.args[0][0].target === zeroAddress
   ) {
-    hintCannonPackage = hexToString(decoded.args[0][0].callData)
+    [hintType, hintCannonPackage, hintGitRepoHash] = decodeAbiParameters([{ type: 'string[]'}], decoded.args[0][0].callData)[0]
   }
 
   console.log('got hint data', hintCannonPackage, decoded)
@@ -44,7 +46,7 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction }) {
 
   console.log('cannon info', cannonInfo)
 
-  if (cannonInfo.contracts) {
+  if (cannonInfo.contracts && decoded.args.length) {
     const txns = (decoded.args[0] as any[])
       .slice(1)
       .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))

@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import 'react-diff-view/style/index.css'
 
 import {
@@ -23,6 +25,7 @@ import { Diff, Hunk, parseDiff } from 'react-diff-view'
 import {
   Hex,
   TransactionRequestBase,
+  encodeAbiParameters,
   encodePacked,
   keccak256,
   stringToBytes,
@@ -33,6 +36,7 @@ import {
 import {
   useContractRead,
   useContractWrite,
+  useFeeData,
   usePrepareSendTransaction,
   useSendTransaction,
 } from 'wagmi'
@@ -40,13 +44,15 @@ import { useEffect, useState } from 'react'
 
 import * as onchainStore from '../utils/onchain-store'
 import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput'
-import { useCannonBuild, useLoadCannonDefinition } from '../hooks/cannon'
+import { useCannonBuild, useCannonPackage, useCannonWriteDeployToIpfs, useLoadCannonDefinition } from '../hooks/cannon'
 import { useGitDiff, useGitFilesList, useGitRefsList } from '../hooks/git'
 import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
 import { makeMultisend } from '../utils/multisend'
 import { SafeTransaction } from '../types'
 import { useNavigate } from 'react-router-dom'
+import { TransactionDisplay } from '../components/TransactionDisplay'
+import { ChainBuilderContext, createInitialContext } from '@usecannon/builder'
 
 export function Deploy() {
   const { colorMode } = useColorMode()
@@ -91,6 +97,35 @@ export function Deploy() {
 
   const cannonDefInfo = useLoadCannonDefinition(gitUrl, gitBranch, gitFile)
 
+  // TODO: is there any way to make a better ocntext? maybe this means we should get rid of name using context?
+  const ctx: ChainBuilderContext = {
+    chainId: 0,
+
+    package: {},
+
+    timestamp: '0',
+
+    settings: {},
+
+    contracts: {},
+
+    txns: {},
+
+    imports: {},
+
+    extras: {},
+  };
+
+  const cannonPkgLatestInfo = useCannonPackage(cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:latest`)
+  const cannonPkgVersionInfo = useCannonPackage(cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:${cannonDefInfo.def.getVersion(ctx)}`)
+
+  const prevDeployLocation = 
+    (partialDeployIpfs ? 'ipfs://' + partialDeployIpfs : null) || 
+    cannonPkgLatestInfo.pkgUrl || 
+    cannonPkgVersionInfo.pkgUrl;
+  
+  const prevCannonDeployInfo = useCannonPackage(prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null)
+
   // get previous deploy info git information
   const prevDeployHashQuery = useContractRead({
     abi: onchainStore.ABI,
@@ -115,37 +150,53 @@ export function Deploy() {
     partialDeployIpfs ? `@ipfs:${partialDeployIpfs}` : null
   )
 
-  const multicallTxn: Partial<TransactionRequestBase> =
-    buildInfo.buildQuery.data &&
-    buildInfo.buildQuery.data.steps.indexOf(null) === -1
+  const multicallTxn: /*Partial<TransactionRequestBase>*/ any =
+    buildInfo.buildResult &&
+    buildInfo.buildResult.steps.indexOf(null) === -1
       ? makeMultisend(
           [
             {
               to: zeroAddress,
-              data: encodePacked(['string'], ['']),
+              data: encodeAbiParameters([{ type: 'string[]'}], [[
+                'deploy', 
+                prevDeployLocation,
+                refsInfo.refs.find(r => r.ref === gitBranch).oid
+              ]
+            ]),
             } as Partial<TransactionRequestBase>,
           ].concat(
-            buildInfo.buildQuery.data.steps.map(
+            buildInfo.buildResult.steps.map(
               (s) => s.tx as unknown as Partial<TransactionRequestBase>
             )
           )
         )
       : { value: 0n }
 
-  const stagedTxn = usePrepareSendTransaction({
-    account: currentSafe.address,
-    ...multicallTxn,
-    value: BigInt(multicallTxn.value),
+  let totalGas = 0n
+
+  for (const step of buildInfo.buildResult?.steps || []) {
+    totalGas += BigInt(step.gas.toString())
+  }
+
+  const uploadToPublishIpfs = useCannonWriteDeployToIpfs(buildInfo.buildResult.runtime, {
+    def: cannonDefInfo.def.toJson(),
+    state: buildInfo.buildResult.state,
+    options: prevCannonDeployInfo.pkg.options,
+    meta: prevCannonDeployInfo.pkg.meta,
+    miscUrl: prevCannonDeployInfo.pkg.miscUrl,
+  }, {
+    onSuccess: () => {
+      stager.sign()
+    }
   })
 
   const stager = useTxnStager(
-    stagedTxn.data
+    multicallTxn.data
       ? {
-          to: stagedTxn.data.to,
-          value: stagedTxn.data.value.toString(),
-          data: stagedTxn.data.data,
-          gasPrice: stagedTxn.data?.gasPrice?.toString(),
-          safeTxGas: stagedTxn.data?.gas?.toString(),
+          to: multicallTxn.to,
+          value: multicallTxn.value.toString(),
+          data: multicallTxn.data,
+          safeTxGas: totalGas.toString(),
         }
       : {},
     {
@@ -277,34 +328,33 @@ export function Deploy() {
         })}
       </Box>
 
-      {buildInfo.buildQuery.isFetching && (
+      {buildInfo.buildStatus && (
         <Box mb="6">{buildInfo.buildStatus}</Box>
       )}
 
-      {buildInfo.buildQuery.isError && (
-        <Box mb="6">{buildInfo.buildQuery.error.toString() as string}</Box>
+      {buildInfo.buildError && (
+        <Box mb="6">{buildInfo.buildError}</Box>
       )}
+
+      {multicallTxn.data && stager.safeTxn && <TransactionDisplay safeTxn={stager.safeTxn} />}
 
       <Box mb="6">
         <HStack>
           <Button
             w="100%"
-            isDisabled={!stagedTxn || !stager.canSign}
-            onClick={() => stager.sign()}
+            isDisabled={!multicallTxn.data || !stager.canSign}
+            onClick={() => uploadToPublishIpfs.writeToIpfsMutation.mutate()}
           >
             Sign
           </Button>
           <Button
             w="100%"
-            isDisabled={!stagedTxn || !stager.canExecute}
+            isDisabled={!multicallTxn.data || !stager.canExecute}
             onClick={() => execTxn.write()}
           >
             Execute
           </Button>
         </HStack>
-        {stagedTxn.isError && (
-          <Text>Transaction Error: {stagedTxn.error.message}</Text>
-        )}
       </Box>
     </Container>
   )

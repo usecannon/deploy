@@ -45,7 +45,7 @@ export function DisplayedTransaction(props: {
         .map((v) => v[0])
     : ''
 
-  let parsedContract = ''
+  let parsedContract = props.txn ? props.txn.to : ''
   let parsedFunction = null
   for (const n of parsedContractNames) {
     try {
@@ -62,10 +62,10 @@ export function DisplayedTransaction(props: {
 
   const [execContract, setExecContract] = useState(parsedContract)
   const [execFunc, setExecFunc] = useState(
-    parsedFunction ? parsedFunction.functionName.split('(')[0] : ''
+    props.txn ? (parsedFunction ? parsedFunction.functionName.split('(')[0] : props.txn.data.slice(0, 10)) : ''
   )
   const [execFuncArgs, setExecFuncArgs] = useState(
-    parsedFunction ? parsedFunction.args.map((v) => v.toString()) : []
+    props.txn ? (parsedFunction?.args?.map((v) => v.toString()) || [props.txn.data.slice(10)]) : []
   )
 
   const execContractInfo = execContract ? props.contracts[execContract] : null
@@ -220,7 +220,7 @@ export function DisplayedTransaction(props: {
         defaultValue={execFunc}
         tabKeys="("
         placeholder="func"
-        items={execContract ? extractFunctionNames(execContractInfo.abi) : []}
+        items={execContractInfo ? extractFunctionNames(execContractInfo.abi) : []}
         onChange={selectExecFunc}
         onPending={selectExecFunc}
         editable={props.editable}

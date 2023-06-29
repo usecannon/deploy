@@ -61,8 +61,7 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
 export function useTxnStager(
   txn: Partial<SafeTransaction>,
   options: {
-    chainId?: string
-    safeAddress?: Address
+    safe?: State['currentSafe']
     onSignComplete?: () => void
   } = {}
 ) {
@@ -72,10 +71,11 @@ export function useTxnStager(
   const walletClient = useWalletClient()
   const safeAddress = useSafeAddress()
 
-  const queryChainId = options.chainId || chainId
+  const queryChainId = options.chainId || chainId.toString()
   const querySafeAddress = options.safeAddress || safeAddress
 
-  const { nonce, staged, stagedQuery } = useSafeTransactions(options)
+  const currentSafe = useStore((s) => s.currentSafe)
+  const { nonce, staged, stagedQuery } = useSafeTransactions(options.safe || currentSafe)
 
   //console.log('staged txns', staged.length, _.last(staged).txn._nonce + 1, nonce)
   const safeTxn: SafeTransaction = {
@@ -155,7 +155,7 @@ export function useTxnStager(
 
   const sigInsertIdx = _.sortedIndex(
     alreadyStagedSigners.map((s) => s.toLowerCase()),
-    account.address.toLowerCase()
+    account.address?.toLowerCase()
   )
 
   const mutation = useMutation({
@@ -235,6 +235,8 @@ export function useTxnStager(
     canSign,
     canExecute,
 
+    safeTxn,
+
     sign: async () => {
       const signature = await walletClient.data.signMessage({
         account: account.address,
@@ -245,7 +247,7 @@ export function useTxnStager(
       const gnosisSignature = ethers.utils.arrayify(signature)
       gnosisSignature[gnosisSignature.length - 1] += 4
 
-      await mutation.mutate({
+      await mutation.mutateAsync({
         txn: safeTxn,
         sig: ethers.utils.hexlify(gnosisSignature),
       })
