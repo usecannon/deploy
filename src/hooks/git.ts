@@ -1,4 +1,4 @@
-import { createPatch } from 'diff'
+import { createTwoFilesPatch } from 'diff'
 import http from 'isomorphic-git/http/web'
 import { ServerRef, listServerRefs } from 'isomorphic-git'
 import { useMemo } from 'react'
@@ -81,10 +81,11 @@ export function useGitDiff(
     const patches = []
     if (fromQuery.data && toQuery.data) {
       const fromFiles = fromQuery.data
-      const toFiles = fromQuery.data
+      const toFiles = toQuery.data
 
       for (let i = 0; i < fromFiles.length; i++) {
-        patches.push(createPatch(files[i], fromFiles[i], toFiles[i]))
+        const p = createTwoFilesPatch('a/' + files[i], 'b/' + files[i], fromFiles[i], toFiles[i])
+        patches.push(p.slice(p.indexOf('\n')))
       }
     }
 

@@ -6,14 +6,17 @@ import {
   CannonWrapperGenericProvider,
   ChainArtifacts,
   ChainBuilderRuntime,
+  build as cannonBuild,
   ChainDefinition,
   DeploymentInfo,
+  Events,
   FallbackRegistry,
   OnChainRegistry,
   copyPackage,
   createInitialContext,
   getOutputs,
   registerAction,
+  InMemoryRegistry,
 } from '@usecannon/builder'
 import { EthereumProvider } from 'ganache'
 import { ethers } from 'ethers'
@@ -61,6 +64,8 @@ export type BuildState =
       skipped: StepExecutionError[]
     }
 
+let currentRuntime: ChainBuilderRuntime|null = null;
+
 export function useLoadCannonDefinition(
   repo: string,
   ref: string,
@@ -85,7 +90,7 @@ export function useLoadCannonDefinition(
   }
 }
 
-export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
+export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo) {
   const chainId = useNetwork().chain?.id
   const currentSafe = useStore((s) => s.currentSafe)
   const settings = useStore((s) => s.settings)
@@ -121,23 +126,7 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
     setBuildStatus('Loading deployment data...')
 
-    // Load upgrade from deployment from IPFS
-    const ctx = await createInitialContext(def, {}, chainId, {})
-
-    const upgradeFromUrl: string = await registry.getUrl(
-      upgradeFrom || `${def.getName(ctx)}:latest`,
-      `${chainId}-${settings.preset}`
-    )
-
-    if (!upgradeFromUrl && upgradeFrom) {
-      throw new Error('upgrade from deployment not found')
-    }
-
-    const incompleteDeploy = upgradeFromUrl
-      ? await ipfsLoader.read(upgradeFromUrl)
-      : null
-
-    console.log('upgrade from: ', incompleteDeploy)
+    console.log('cannon.ts: upgrade from: ', prevDeploy)
 
     const provider = new CannonWrapperGenericProvider(
       {},
@@ -149,7 +138,65 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
     // the locally built data
     const fallbackRegistry = new FallbackRegistry([inMemoryRegistry, registry])
 
-    const { newState, simulatedTxs, skippedSteps, runtime } = await build({
+    const loaders = { mem: inMemoryLoader, ipfs: ipfsLoader };
+
+    currentRuntime = new ChainBuilderRuntime(
+      {
+        provider,
+        chainId,
+        getSigner: async (addr: string) => provider.getSigner(addr),
+        getDefaultSigner: async () => provider.getSigner(currentSafe.address),
+        snapshots: false,
+        allowPartialDeploy: true,
+        publicSourceCode: true,
+      },
+      fallbackRegistry,
+      loaders
+    )
+  
+    const simulatedSteps: ChainArtifacts[] = []
+    const skippedSteps: StepExecutionError[] = []
+  
+  
+  
+    currentRuntime.on(
+      Events.PostStepExecute,
+      (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
+        simulatedSteps.push(stepOutput)
+        setBuildStatus(`Building ${stepType}.${stepLabel}...`)
+      }
+    )
+  
+    currentRuntime.on(Events.SkipDeploy, (stepName: string, err: Error) => {
+      console.log(stepName, err)
+      skippedSteps.push({ name: stepName, err })
+    })
+  
+    if (prevDeploy) {
+      await currentRuntime.restoreMisc(prevDeploy.miscUrl)
+    }
+  
+    const ctx = await createInitialContext(
+      def,
+      prevDeploy?.meta || {},
+      chainId,
+      prevDeploy?.options || {}
+    )
+  
+    const newState = await cannonBuild(
+      currentRuntime,
+      def,
+      prevDeploy?.state ?? {},
+      ctx
+    )
+  
+    const simulatedTxs = simulatedSteps
+      .map((s) => !!s?.txns && Object.values(s.txns))
+      .filter((tx) => !!tx)
+      .flat()
+
+
+    /*const { newState, simulatedTxs, skippedSteps, runtime } = await build({
       chainId: chainId,
       provider,
       def,
@@ -165,7 +212,7 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
       ) => {
         setBuildStatus(`Building ${stepType}.${stepLabel}...`)
       },
-    })
+    })*/
 
     if (simulatedTxs.length === 0) {
       throw new Error(
@@ -192,10 +239,11 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
 
     if (fork) await fork.disconnect()
 
-    return { runtime, state: newState, steps }
+    return { runtime: currentRuntime, state: newState, steps }
   }
 
-  useEffect(() => {
+  function doBuild() {
+    console.log('cannon.ts: do build called', currentRuntime)
     if (def && buildStatus === '') {
       setBuildResult(null)
       setBuildError(null)
@@ -208,9 +256,19 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
         })
         .finally(() => {
           setBuildStatus('')
+          // if we were cancelled it means we have a change queued up. Immediately run a new build
+          if (currentRuntime.isCancelled()) {
+            doBuild()
+          }
         })
+    } else if (currentRuntime) {
+      console.log('cannon.ts: cancel current build')
+      currentRuntime.cancel()
     }
-  }, [def, upgradeFrom])
+  }
+
+  // stringify the def to make it easier to detect equality
+  useEffect(doBuild, [def && JSON.stringify(def.toJson()) , JSON.stringify(prevDeploy)])
 
   return {
     buildStatus,
@@ -219,14 +277,21 @@ export function useCannonBuild(def: ChainDefinition, upgradeFrom?: string) {
   }
 }
 
+type IPFSPackageWriteResult = {
+  packageRef: string,
+  mainUrl: string,
+  publishTxns: string[]
+}
+
 export function useCannonWriteDeployToIpfs(
   runtime: ChainBuilderRuntime,
   deployInfo: DeploymentInfo,
+  metaUrl: string,
   mutationOptions: Partial<UseMutationOptions> = {}
 ) {
   const settings = useStore((s) => s.settings)
 
-  const writeToIpfsMutation = useMutation({
+  const writeToIpfsMutation = useMutation<IPFSPackageWriteResult>({
     ...mutationOptions,
     mutationFn: async () => {
       const def = new ChainDefinition(deployInfo.def)
@@ -237,25 +302,40 @@ export function useCannonWriteDeployToIpfs(
         deployInfo.options
       )
 
-      return await copyPackage({
+      const packageRef = `${def.getName(ctx)}:${def.getVersion(ctx)}`
+      const variant = `${runtime.chainId}-${settings.preset}`
+
+      await runtime.registry.publish([packageRef], variant, await runtime.loaders.mem.put(deployInfo), metaUrl)
+
+      const memoryRegistry = new InMemoryRegistry()
+
+      const publishTxns = await copyPackage({
         fromStorage: runtime,
         toStorage: new CannonStorage(
-          new OnChainRegistry({
-            signerOrProvider: settings.registryProviderUrl,
-            address: settings.registryAddress,
-          }),
+          memoryRegistry,
           { ipfs: new IPFSBrowserLoader(settings.ipfsUrl) },
           'ipfs'
         ),
-        packageRef: `${def.getName(ctx)}-${def.getVersion(ctx)}`,
-        variant: `${runtime.chainId}-${settings.preset}`,
+        packageRef,
+        variant,
         tags: ['latest'],
-      })
+      });
+
+      // load the new ipfs url
+      console.log('MEMORY REGISTRY RESULT', memoryRegistry, packageRef, variant)
+      const mainUrl = await memoryRegistry.getUrl(packageRef, variant)
+
+      return {
+        packageRef,
+        mainUrl,
+        publishTxns
+      }
     },
-  })
+  } as any) // TODO: why is ts having a freak out fit about this
 
   return {
     writeToIpfsMutation,
+    deployedIpfsHash: writeToIpfsMutation.data?.mainUrl
   }
 }
 
@@ -280,16 +360,17 @@ export function useCannonPackage(packageRef: string, variant = '') {
       })
 
       const url = await registry.getUrl(packageRef, variant)
+      const metaUrl = await registry.getMetaUrl(packageRef, variant)
 
       if (url) {
-        return url
+        return { url, metaUrl }
       } else {
         throw new Error(`package not found: ${packageRef} (${variant})`)
       }
     },
   })
 
-  const pkgUrl = registryQuery.data
+  const pkgUrl = registryQuery.data?.url
 
   const ipfsQuery = useQuery(['cannon', 'pkg', pkgUrl], {
     queryFn: async () => {
@@ -312,6 +393,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
     registryQuery,
     ipfsQuery,
     pkgUrl,
+    metaUrl: registryQuery.data?.metaUrl,
     pkg: ipfsQuery.data,
   }
 }

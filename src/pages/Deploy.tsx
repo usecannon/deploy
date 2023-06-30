@@ -26,9 +26,13 @@ import {
   Hex,
   TransactionRequestBase,
   encodeAbiParameters,
+  encodeFunctionData,
   encodePacked,
   keccak256,
+  padHex,
   stringToBytes,
+  stringToHex,
+  toBytes,
   toHex,
   trim,
   zeroAddress,
@@ -126,43 +130,54 @@ export function Deploy() {
   
   const prevCannonDeployInfo = useCannonPackage(prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null)
 
-  // get previous deploy info git information
-  const prevDeployHashQuery = useContractRead({
-    abi: onchainStore.ABI,
-    address: onchainStore.deployAddress,
-    functionName: 'getWithAddress',
-    args: [currentSafe.address, keccak256(stringToBytes(`${gitUrl}`))], // TODO: include preset here
-  })
-
-  const { patches } = useGitDiff(
-    gitUrl,
-    prevDeployHashQuery.isSuccess &&
-      trim(prevDeployHashQuery.data as Hex) != '0x'
-      ? toHex(trim(prevDeployHashQuery.data as Hex))
-      : gitBranch,
-    gitBranch,
-    cannonDefInfo.filesList ? Array.from(cannonDefInfo.filesList) : []
-  )
-
   // run the build and get the list of transactions we need to run
   const buildInfo = useCannonBuild(
     cannonDefInfo.def,
-    partialDeployIpfs ? `@ipfs:${partialDeployIpfs}` : null
+    prevCannonDeployInfo.pkg
   )
+
+  const uploadToPublishIpfs = useCannonWriteDeployToIpfs(buildInfo.buildResult?.runtime, {
+    def: cannonDefInfo.def?.toJson(),
+    state: buildInfo.buildResult?.state,
+    options: prevCannonDeployInfo.pkg?.options,
+    meta: prevCannonDeployInfo.pkg?.meta,
+    miscUrl: prevCannonDeployInfo.pkg?.miscUrl,
+  }, prevCannonDeployInfo.metaUrl)
+
+  console.log('WRITE IPFS RES', uploadToPublishIpfs.writeToIpfsMutation.data || uploadToPublishIpfs.writeToIpfsMutation.error)
+
+  useEffect(() => {
+    if (buildInfo.buildResult) {
+      console.log('HAVE BUILD RESULT. SENDING TO IPFS!')
+      uploadToPublishIpfs.writeToIpfsMutation.mutate()
+    }
+  }, [buildInfo.buildResult?.steps]);
+
+  const gitHash = refsInfo.refs?.find(r => r.ref === gitBranch)?.oid;
 
   const multicallTxn: /*Partial<TransactionRequestBase>*/ any =
     buildInfo.buildResult &&
     buildInfo.buildResult.steps.indexOf(null) === -1
       ? makeMultisend(
           [
+            // supply the hint data
             {
               to: zeroAddress,
               data: encodeAbiParameters([{ type: 'string[]'}], [[
                 'deploy', 
-                prevDeployLocation,
-                refsInfo.refs.find(r => r.ref === gitBranch).oid
+                uploadToPublishIpfs.deployedIpfsHash,
+                `${gitUrl}:${gitFile}`,
+                gitHash
               ]
             ]),
+            } as Partial<TransactionRequestBase>,
+            // write data needed for the subsequent deployment to chain
+            {
+              to: onchainStore.deployAddress,
+              data: encodeFunctionData({ abi: onchainStore.ABI, functionName: 'set', args: [
+                keccak256(toBytes(`${gitUrl}:${gitFile}`)),
+                padHex('0x' + gitHash as Hex, { dir: 'right', size: 32 })
+              ] }),
             } as Partial<TransactionRequestBase>,
           ].concat(
             buildInfo.buildResult.steps.map(
@@ -178,18 +193,6 @@ export function Deploy() {
     totalGas += BigInt(step.gas.toString())
   }
 
-  const uploadToPublishIpfs = useCannonWriteDeployToIpfs(buildInfo.buildResult.runtime, {
-    def: cannonDefInfo.def.toJson(),
-    state: buildInfo.buildResult.state,
-    options: prevCannonDeployInfo.pkg.options,
-    meta: prevCannonDeployInfo.pkg.meta,
-    miscUrl: prevCannonDeployInfo.pkg.miscUrl,
-  }, {
-    onSuccess: () => {
-      stager.sign()
-    }
-  })
-
   const stager = useTxnStager(
     multicallTxn.data
       ? {
@@ -197,6 +200,7 @@ export function Deploy() {
           value: multicallTxn.value.toString(),
           data: multicallTxn.data,
           safeTxGas: totalGas.toString(),
+          operation: '1', // delegate call multicall
         }
       : {},
     {
@@ -307,27 +311,6 @@ export function Deploy() {
         </FormHelperText>
       </FormControl>
 
-      <Box mb="6">
-        {patches.map((p) => {
-          try {
-            const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
-            return (
-              <Diff
-                key={oldRevision + '-' + newRevision}
-                viewType="split"
-                diffType={type}
-                hunks={hunks}
-              />
-            )
-          } catch (err) {
-            console.error('diff didnt work:', err)
-
-            return []
-          }
-
-        })}
-      </Box>
-
       {buildInfo.buildStatus && (
         <Box mb="6">{buildInfo.buildStatus}</Box>
       )}
@@ -336,20 +319,20 @@ export function Deploy() {
         <Box mb="6">{buildInfo.buildError}</Box>
       )}
 
-      {multicallTxn.data && stager.safeTxn && <TransactionDisplay safeTxn={stager.safeTxn} />}
+      {multicallTxn.data && stager.safeTxn && <TransactionDisplay safeAddress={currentSafe.address} safeTxn={stager.safeTxn} />}
 
       <Box mb="6">
         <HStack>
           <Button
             w="100%"
-            isDisabled={!multicallTxn.data || !stager.canSign}
-            onClick={() => uploadToPublishIpfs.writeToIpfsMutation.mutate()}
+            isDisabled={!uploadToPublishIpfs.deployedIpfsHash || !multicallTxn.data || !stager.canSign}
+            onClick={() => stager.sign()}
           >
             Sign
           </Button>
           <Button
             w="100%"
-            isDisabled={!multicallTxn.data || !stager.canExecute}
+            isDisabled={!uploadToPublishIpfs.deployedIpfsHash || !multicallTxn.data || !stager.canExecute}
             onClick={() => execTxn.write()}
           >
             Execute

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { Address, isAddress, zeroAddress } from 'viem'
 import { Button, Container, HStack, Text } from '@chakra-ui/react'
 import { useContractWrite } from 'wagmi'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { SafeTransaction } from '../types'
 import { TransactionDisplay } from '../components/TransactionDisplay'
@@ -11,6 +11,8 @@ import { useSafeTransactions, useTxnStager } from '../hooks/backend'
 export function TransactionDetail() {
   let { safeAddress } = useParams()
   const { chainId, nonce } = useParams()
+
+  const navigate = useNavigate()
 
   if (!isAddress(safeAddress)) {
     safeAddress = zeroAddress
@@ -31,7 +33,9 @@ export function TransactionDetail() {
     safeTxn = staged.find((s) => s.txn._nonce.toString() === nonce)?.txn || null
   }
 
-  const stager = useTxnStager(safeTxn || {})
+  const stager = useTxnStager(safeTxn || {}, { onSignComplete: () => {
+    navigate('/')
+  }})
   const execTxn = useContractWrite(stager.executeTxnConfig)
 
   if (!safeTxn && stagedQuery.isFetched) {
@@ -48,7 +52,7 @@ export function TransactionDetail() {
 
   return (
     <Container maxW="100%" w="container.lg">
-      <TransactionDisplay safeTxn={safeTxn} />
+      <TransactionDisplay safeAddress={safeAddress} safeTxn={safeTxn} />
       <HStack
         marginTop="20px"
         w="container.sm"

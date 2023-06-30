@@ -107,7 +107,12 @@ export function DisplayedTransaction(props: {
 
   function decodeArg(type: string, val: string) {
     if (type.startsWith('bytes') && val.startsWith('0x')) {
-      return hexToString(trim(val as Hex, { dir: 'right' }))
+      try {
+        return hexToString(trim(val as Hex, { dir: 'right' }))
+      } catch (err) {
+        console.warn('could not decode hex', err)
+        return val
+      }
     } else if (type == 'bool') {
       return val ? 'true' : 'false'
     } else {
@@ -167,7 +172,7 @@ export function DisplayedTransaction(props: {
         case 'address':
           return [
             { label: execFuncArgs[arg] || '', secondary: '' },
-            { label: currentSafe.address, secondary: 'Safe Address' },
+            { label: currentSafe?.address ?? '', secondary: 'Safe Address' },
             { label: account.address, secondary: 'Your Address' },
             ...Object.entries(props.contracts).map(([l, c]) => ({
               label: c.address,
