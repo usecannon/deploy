@@ -1,6 +1,15 @@
 import _ from 'lodash'
 import { Address, isAddress, zeroAddress } from 'viem'
-import { Button, Container, HStack, Text } from '@chakra-ui/react'
+import {
+  Button,
+  Container,
+  HStack,
+  Text,
+  Heading,
+  FormControl,
+  FormLabel,
+  Input,
+} from '@chakra-ui/react'
 import { useContractWrite } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -33,9 +42,11 @@ export function TransactionDetail() {
     safeTxn = staged.find((s) => s.txn._nonce.toString() === nonce)?.txn || null
   }
 
-  const stager = useTxnStager(safeTxn || {}, { onSignComplete: () => {
-    navigate('/')
-  }})
+  const stager = useTxnStager(safeTxn || {}, {
+    onSignComplete: () => {
+      navigate('/')
+    },
+  })
   const execTxn = useContractWrite(stager.executeTxnConfig)
 
   if (!safeTxn && stagedQuery.isFetched) {
@@ -51,14 +62,22 @@ export function TransactionDetail() {
   }
 
   return (
-    <Container maxW="100%" w="container.lg">
+    <Container maxW="100%" w="container.lg" pb="12">
+      <Heading size="lg" mb="3">
+        Transaction #{nonce}
+      </Heading>
+
+      <FormControl mb="3">
+        <FormLabel mb="0.5">Safe</FormLabel>
+        <Input
+          variant="unstyled"
+          isReadOnly
+          value={`${safeAddress} (Chain ID: ${chainId})`}
+        />
+      </FormControl>
+
       <TransactionDisplay safeAddress={safeAddress} safeTxn={safeTxn} />
-      <HStack
-        marginTop="20px"
-        w="container.sm"
-        marginLeft={'auto'}
-        marginRight={'auto'}
-      >
+      <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
         <Button
           w="100%"
           isDisabled={safeTxn && !stager.canSign}

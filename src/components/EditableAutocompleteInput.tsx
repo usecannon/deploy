@@ -102,6 +102,7 @@ export function EditableAutocompleteInput(props: { items: { label: string, secon
                         value={inputValue}
                         color={filterInput ? props.color || 'black' : 'gray.500'}
                         fontFamily={'monospace'}
+                        whiteSpace="nowrap"
                     >
                         <EditablePreview />
                         <EditableInput boxShadow={'none !important'} outline={'none !important'} cursor='' width={inputValue.length ? `${inputValue.length}ch` : '1px'} />

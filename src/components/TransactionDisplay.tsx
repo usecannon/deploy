@@ -5,7 +5,11 @@ import {
   Button,
   Container,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
+  Input,
+  Tag,
   Text,
 } from '@chakra-ui/react'
 import {
@@ -122,13 +126,31 @@ export function TransactionDisplay(props: {
 
     return (
       <Box maxW="100%">
-        <Heading size="md">
-          Transaction Type: {hintType} ({hintCannonPackage},{' '}
-          {hintGitRepoUrl ? hintGitRepoUrl + '@' + hintGitRepoHash : 'git n/a'}
-        </Heading>
-        <Heading size="sm">Git Diff</Heading>
+        <FormControl mb="3">
+          <FormLabel mb="0.5">Base Cannon Package</FormLabel>
+          <Input variant="unstyled" isReadOnly value={hintCannonPackage} />
+        </FormControl>
 
-        <Box mb="6">
+        <FormControl mb="3">
+          <FormLabel mb="0.5">Git Target</FormLabel>
+          <Input
+            variant="unstyled"
+            isReadOnly
+            value={
+              hintGitRepoUrl ? hintGitRepoUrl + '@' + hintGitRepoHash : 'N/A'
+            }
+          />
+        </FormControl>
+
+        <FormControl mb="4">
+          <FormLabel mb="1">Transaction Type</FormLabel>
+          <Tag textTransform="uppercase" size="md">
+            {hintType}
+          </Tag>
+        </FormControl>
+
+        <FormLabel mb="1">Git Diff</FormLabel>
+        <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
             try {
               console.log('parse the patch', p)
@@ -149,7 +171,7 @@ export function TransactionDisplay(props: {
             }
           })}
         </Box>
-        <Heading size="sm">Operations</Heading>
+        <Heading size="md">Transactions</Heading>
         {txns.map((txn, i) => (
           <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
         ))}
@@ -157,12 +179,10 @@ export function TransactionDisplay(props: {
     )
   } else {
     return (
-      <Container>
-        <Alert status="info">
-          <AlertIcon />
-          Parsing transaction data...
-        </Alert>
-      </Container>
+      <Alert status="info">
+        <AlertIcon />
+        Parsing transaction data...
+      </Alert>
     )
   }
 

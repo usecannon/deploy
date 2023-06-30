@@ -365,7 +365,7 @@ export function Deploy() {
         />
       )}
 
-      <Box mb="6">
+      <Box my="6">
         <HStack gap="6">
           <Button
             size="lg"
