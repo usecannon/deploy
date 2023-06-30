@@ -4,6 +4,7 @@ import 'react-diff-view/style/index.css'
 
 import {
   Alert,
+  Flex,
   AlertIcon,
   Box,
   Button,
@@ -270,8 +271,8 @@ export function Deploy() {
 
   return (
     <Container maxW="100%" w="container.sm" pb="12">
-      <FormControl mb="4">
-        <FormLabel>Git Repo URL</FormLabel>
+      <FormControl mb="8">
+        <FormLabel>GitOps Repository & Cannonfile</FormLabel>
         <HStack>
           <Input
             type="text"
@@ -279,22 +280,30 @@ export function Deploy() {
             value={gitUrl}
             onChange={(evt) => setGitUrl(evt.target.value)}
           />
-          <EditableAutocompleteInput
-            editable
-            color="black"
-            placeholder="cannonfile.toml"
-            items={(gitDirList.contents || []).map((d) => ({
-              label: gitDir + d,
-              secondary: '',
-            }))}
-            onFilterChange={(v) => setGitFile(v)}
-            onChange={(v) => setGitFile(v)}
-          />
+          <Flex
+            border="1px solid"
+            borderColor="whiteAlpha.300"
+            borderRadius="md"
+            minWidth="220px"
+            px="2"
+            height="40px"
+          >
+            <EditableAutocompleteInput
+              editable
+              color="white"
+              placeholder="cannonfile.toml"
+              items={(gitDirList.contents || []).map((d) => ({
+                label: gitDir + d,
+                secondary: '',
+              }))}
+              onFilterChange={(v) => setGitFile(v)}
+              onChange={(v) => setGitFile(v)}
+            />
+          </Flex>
         </HStack>
         <FormHelperText>
-          Enter the GitHub URL for branch of the GitOps repository to deploy.
-          You will able to execute the transactions you are permitted to and
-          queue the rest.
+          Enter a Git URL and select the Cannonfile that was modified in the
+          branch chosen below.
         </FormHelperText>
       </FormControl>
 
