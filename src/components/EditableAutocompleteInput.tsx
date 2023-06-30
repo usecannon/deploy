@@ -128,7 +128,7 @@ function AutocompleteOption(props: { item: {label: string, secondary: string}, f
     const regEscape = v => v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
     const matched = props.filterInput ? props.item.label.split(new RegExp(regEscape(props.filterInput), 'i')) : [props.item.label]
 
-    return <Box background={props.selected ? 'gray.200' : 'transparent'}>
+    return <Box background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
         <HStack gap={0}>
             {matched.map((p, i) => [<Text>{p}</Text>, i < matched.length - 1 ? <Text as='b'>{props.filterInput}</Text> : []]) }
         </HStack>

@@ -85,11 +85,10 @@ export function SafeAddressInput() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm" pt="4" pb="8">
+    <Container maxW="100%" w="container.sm" pt="4" pb="4">
       <FormControl mb="6">
         <FormLabel>Safe</FormLabel>
         <CreatableSelect
-          isClearable
           value={currentSafe ? _safeToOption(currentSafe) : null}
           options={[
             ...safeOptions,
@@ -115,7 +114,7 @@ export function SafeAddressInput() {
 function _safeToOption(safe: State['currentSafe']) {
   return {
     value: safeToString(safe),
-    label: safeToString(safe) as string,
+    label: `${safe.address} (Chain ID: ${safe.chainId})`,
   }
 }
 

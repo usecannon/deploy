@@ -67,7 +67,10 @@ export function RunCustom() {
           [
             {
               to: zeroAddress,
-              data: encodeAbiParameters([{ type: 'string[]'}], [['invoke', cannonInfo.pkgUrl || '']]),
+              data: encodeAbiParameters(
+                [{ type: 'string[]' }],
+                [['invoke', cannonInfo.pkgUrl || '']]
+              ),
             } as Partial<TransactionRequestBase>,
           ].concat(queuedTxns)
         )
@@ -111,21 +114,16 @@ export function RunCustom() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm">
-      <Text mb="8">
-        Use this tool to specify transactions to queue, either for a Cannon
-        package or any contract address.
-      </Text>
-
-      <FormControl mb="6">
+    <Container maxW="100%" w="container.sm" pb="12">
+      <FormControl mb="8">
         <FormLabel>Cannon Package or Contract Address</FormLabel>
         <Input
           type="text"
           onChange={(event) => setTarget(event.target.value)}
         />
         <FormHelperText>
-          The Cannon package must have deployment data for the network your
-          wallet is connected to.
+          A package must have deployment data for the same network as your
+          connected wallet.
         </FormHelperText>
       </FormControl>
 
@@ -142,8 +140,8 @@ export function RunCustom() {
       )}
 
       {cannonInfo.contracts && (
-        <FormControl mb="4">
-          <Heading size="sm">Transactions to Queue</Heading>
+        <FormControl mb="8">
+          <FormLabel>Transactions</FormLabel>
           {queuedTxns.map((txn, i) => (
             <DisplayedTransaction
               editable
@@ -151,29 +149,28 @@ export function RunCustom() {
               onTxn={(txn) => updateQueuedTxn(i, txn)}
             />
           ))}
-          <HStack>
+          <HStack my="3">
             <Button
+              size="xs"
+              leftIcon={<AddIcon />}
               onClick={() => setQueuedTxns(_.clone(queuedTxns.concat([{}])))}
             >
-              <AddIcon />
+              Add Transaction
             </Button>
             {queuedTxns.length > 1 && (
               <Button
+                size="xs"
+                leftIcon={<MinusIcon />}
                 onClick={() =>
                   setQueuedTxns(
                     _.clone(queuedTxns.slice(0, queuedTxns.length - 1))
                   )
                 }
               >
-                <MinusIcon />
+                Remove Transaction
               </Button>
             )}
           </HStack>
-          <FormHelperText>
-            Type a contract name from the cannon package, followed by a function
-            with args to execute. To execute more than one function, click the
-            plus button.
-          </FormHelperText>
         </FormControl>
       )}
 
@@ -218,15 +215,17 @@ export function RunCustom() {
 
       {(cannonInfo.contracts || isAddress(target)) && (
         <Box mb="6">
-          <HStack>
+          <HStack gap="6">
             <Button
+              size="lg"
               w="100%"
               isDisabled={!stagedTxn.data || !stager.canSign}
               onClick={() => stager.sign()}
             >
-              Sign
+              Queue &amp; Sign
             </Button>
             <Button
+              size="lg"
               w="100%"
               isDisabled={!stagedTxn.data || !stager.canExecute}
               onClick={() => execTxn.write()}
@@ -235,7 +234,10 @@ export function RunCustom() {
             </Button>
           </HStack>
           {stagedTxn.isError && (
-            <Text>Transaction Error: {stagedTxn.error.message}</Text>
+            <Alert status="error" mt="6">
+              <AlertIcon />
+              Transaction Error: {stagedTxn.error.message}
+            </Alert>
           )}
         </Box>
       )}

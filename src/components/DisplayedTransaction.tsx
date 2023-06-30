@@ -62,10 +62,18 @@ export function DisplayedTransaction(props: {
 
   const [execContract, setExecContract] = useState(parsedContract)
   const [execFunc, setExecFunc] = useState(
-    props.txn ? (parsedFunction ? parsedFunction.functionName.split('(')[0] : props.txn.data.slice(0, 10)) : ''
+    props.txn
+      ? parsedFunction
+        ? parsedFunction.functionName.split('(')[0]
+        : props.txn.data.slice(0, 10)
+      : ''
   )
   const [execFuncArgs, setExecFuncArgs] = useState(
-    props.txn ? (parsedFunction?.args?.map((v) => v.toString()) || [props.txn.data.slice(10)]) : []
+    props.txn
+      ? parsedFunction?.args?.map((v) => v.toString()) || [
+          props.txn.data.slice(10),
+        ]
+      : []
   )
 
   const execContractInfo = execContract ? props.contracts[execContract] : null
@@ -208,7 +216,7 @@ export function DisplayedTransaction(props: {
   return (
     <HStack fontFamily={'monospace'} gap={0} fontSize={24}>
       <EditableAutocompleteInput
-        color="blue"
+        color="gray.200"
         defaultValue={execContract}
         tabKeys="."
         placeholder="Contract"
@@ -221,11 +229,13 @@ export function DisplayedTransaction(props: {
       />
       <Text>.</Text>
       <EditableAutocompleteInput
-        color="red"
+        color="gray.200"
         defaultValue={execFunc}
         tabKeys="("
         placeholder="func"
-        items={execContractInfo ? extractFunctionNames(execContractInfo.abi) : []}
+        items={
+          execContractInfo ? extractFunctionNames(execContractInfo.abi) : []
+        }
         onChange={selectExecFunc}
         onPending={selectExecFunc}
         editable={props.editable}
@@ -233,7 +243,7 @@ export function DisplayedTransaction(props: {
       <Text>(</Text>
       {(execFuncFragment?.inputs || []).map((arg, i) => [
         <EditableAutocompleteInput
-          color="green"
+          color="gray.200"
           defaultValue={execFuncArgs[i]}
           tabKeys=","
           placeholder={arg.name || arg.type || arg.internalType}

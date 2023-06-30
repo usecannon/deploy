@@ -3,6 +3,8 @@ import _ from 'lodash'
 import 'react-diff-view/style/index.css'
 
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   Container,
@@ -48,7 +50,12 @@ import { useEffect, useState } from 'react'
 
 import * as onchainStore from '../utils/onchain-store'
 import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput'
-import { useCannonBuild, useCannonPackage, useCannonWriteDeployToIpfs, useLoadCannonDefinition } from '../hooks/cannon'
+import {
+  useCannonBuild,
+  useCannonPackage,
+  useCannonWriteDeployToIpfs,
+  useLoadCannonDefinition,
+} from '../hooks/cannon'
 import { useGitDiff, useGitFilesList, useGitRefsList } from '../hooks/git'
 import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
@@ -118,66 +125,85 @@ export function Deploy() {
     imports: {},
 
     extras: {},
-  };
+  }
 
-  const cannonPkgLatestInfo = useCannonPackage(cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:latest`)
-  const cannonPkgVersionInfo = useCannonPackage(cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:${cannonDefInfo.def.getVersion(ctx)}`)
-
-  const prevDeployLocation = 
-    (partialDeployIpfs ? 'ipfs://' + partialDeployIpfs : null) || 
-    cannonPkgLatestInfo.pkgUrl || 
-    cannonPkgVersionInfo.pkgUrl;
-  
-  const prevCannonDeployInfo = useCannonPackage(prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null)
-
-  // run the build and get the list of transactions we need to run
-  const buildInfo = useCannonBuild(
-    cannonDefInfo.def,
-    prevCannonDeployInfo.pkg
+  const cannonPkgLatestInfo = useCannonPackage(
+    cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:latest`
+  )
+  const cannonPkgVersionInfo = useCannonPackage(
+    cannonDefInfo.def &&
+      `${cannonDefInfo.def.getName(ctx)}:${cannonDefInfo.def.getVersion(ctx)}`
   )
 
-  const uploadToPublishIpfs = useCannonWriteDeployToIpfs(buildInfo.buildResult?.runtime, {
-    def: cannonDefInfo.def?.toJson(),
-    state: buildInfo.buildResult?.state,
-    options: prevCannonDeployInfo.pkg?.options,
-    meta: prevCannonDeployInfo.pkg?.meta,
-    miscUrl: prevCannonDeployInfo.pkg?.miscUrl,
-  }, prevCannonDeployInfo.metaUrl)
+  const prevDeployLocation =
+    (partialDeployIpfs ? 'ipfs://' + partialDeployIpfs : null) ||
+    cannonPkgLatestInfo.pkgUrl ||
+    cannonPkgVersionInfo.pkgUrl
 
-  console.log('WRITE IPFS RES', uploadToPublishIpfs.writeToIpfsMutation.data || uploadToPublishIpfs.writeToIpfsMutation.error)
+  const prevCannonDeployInfo = useCannonPackage(
+    prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null
+  )
+
+  // run the build and get the list of transactions we need to run
+  const buildInfo = useCannonBuild(cannonDefInfo.def, prevCannonDeployInfo.pkg)
+
+  const uploadToPublishIpfs = useCannonWriteDeployToIpfs(
+    buildInfo.buildResult?.runtime,
+    {
+      def: cannonDefInfo.def?.toJson(),
+      state: buildInfo.buildResult?.state,
+      options: prevCannonDeployInfo.pkg?.options,
+      meta: prevCannonDeployInfo.pkg?.meta,
+      miscUrl: prevCannonDeployInfo.pkg?.miscUrl,
+    },
+    prevCannonDeployInfo.metaUrl
+  )
+
+  console.log(
+    'WRITE IPFS RES',
+    uploadToPublishIpfs.writeToIpfsMutation.data ||
+      uploadToPublishIpfs.writeToIpfsMutation.error
+  )
 
   useEffect(() => {
     if (buildInfo.buildResult) {
       console.log('HAVE BUILD RESULT. SENDING TO IPFS!')
       uploadToPublishIpfs.writeToIpfsMutation.mutate()
     }
-  }, [buildInfo.buildResult?.steps]);
+  }, [buildInfo.buildResult?.steps])
 
-  const gitHash = refsInfo.refs?.find(r => r.ref === gitBranch)?.oid;
+  const gitHash = refsInfo.refs?.find((r) => r.ref === gitBranch)?.oid
 
   const multicallTxn: /*Partial<TransactionRequestBase>*/ any =
-    buildInfo.buildResult &&
-    buildInfo.buildResult.steps.indexOf(null) === -1
+    buildInfo.buildResult && buildInfo.buildResult.steps.indexOf(null) === -1
       ? makeMultisend(
           [
             // supply the hint data
             {
               to: zeroAddress,
-              data: encodeAbiParameters([{ type: 'string[]'}], [[
-                'deploy', 
-                uploadToPublishIpfs.deployedIpfsHash,
-                `${gitUrl}:${gitFile}`,
-                gitHash
-              ]
-            ]),
+              data: encodeAbiParameters(
+                [{ type: 'string[]' }],
+                [
+                  [
+                    'deploy',
+                    uploadToPublishIpfs.deployedIpfsHash,
+                    `${gitUrl}:${gitFile}`,
+                    gitHash,
+                  ],
+                ]
+              ),
             } as Partial<TransactionRequestBase>,
             // write data needed for the subsequent deployment to chain
             {
               to: onchainStore.deployAddress,
-              data: encodeFunctionData({ abi: onchainStore.ABI, functionName: 'set', args: [
-                keccak256(toBytes(`${gitUrl}:${gitFile}`)),
-                padHex('0x' + gitHash as Hex, { dir: 'right', size: 32 })
-              ] }),
+              data: encodeFunctionData({
+                abi: onchainStore.ABI,
+                functionName: 'set',
+                args: [
+                  keccak256(toBytes(`${gitUrl}:${gitFile}`)),
+                  padHex(('0x' + gitHash) as Hex, { dir: 'right', size: 32 }),
+                ],
+              }),
             } as Partial<TransactionRequestBase>,
           ].concat(
             buildInfo.buildResult.steps.map(
@@ -243,7 +269,7 @@ export function Deploy() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm">
+    <Container maxW="100%" w="container.sm" pb="12">
       <FormControl mb="4">
         <FormLabel>Git Repo URL</FormLabel>
         <HStack>
@@ -312,27 +338,46 @@ export function Deploy() {
       </FormControl>
 
       {buildInfo.buildStatus && (
-        <Box mb="6">{buildInfo.buildStatus}</Box>
+        <Alert mb="6" status="info">
+          <AlertIcon />
+          {buildInfo.buildStatus}
+        </Alert>
       )}
 
       {buildInfo.buildError && (
-        <Box mb="6">{buildInfo.buildError}</Box>
+        <Alert mb="6" status="error">
+          <AlertIcon />
+          {buildInfo.buildError}
+        </Alert>
       )}
 
-      {multicallTxn.data && stager.safeTxn && <TransactionDisplay safeAddress={currentSafe.address} safeTxn={stager.safeTxn} />}
+      {multicallTxn.data && stager.safeTxn && (
+        <TransactionDisplay
+          safeAddress={currentSafe.address}
+          safeTxn={stager.safeTxn}
+        />
+      )}
 
       <Box mb="6">
         <HStack>
           <Button
             w="100%"
-            isDisabled={!uploadToPublishIpfs.deployedIpfsHash || !multicallTxn.data || !stager.canSign}
+            isDisabled={
+              !uploadToPublishIpfs.deployedIpfsHash ||
+              !multicallTxn.data ||
+              !stager.canSign
+            }
             onClick={() => stager.sign()}
           >
             Sign
           </Button>
           <Button
             w="100%"
-            isDisabled={!uploadToPublishIpfs.deployedIpfsHash || !multicallTxn.data || !stager.canExecute}
+            isDisabled={
+              !uploadToPublishIpfs.deployedIpfsHash ||
+              !multicallTxn.data ||
+              !stager.canExecute
+            }
             onClick={() => execTxn.write()}
           >
             Execute
