@@ -359,10 +359,13 @@ export function Deploy() {
       )}
 
       {multicallTxn.data && stager.safeTxn && (
-        <TransactionDisplay
-          safeAddress={currentSafe.address}
-          safeTxn={stager.safeTxn}
-        />
+        <>
+          <Heading size="md">Transactions</Heading>
+          <TransactionDisplay
+            safeAddress={currentSafe.address}
+            safeTxn={stager.safeTxn}
+          />
+        </>
       )}
 
       <Box my="6">

@@ -11,12 +11,6 @@ export function Transactions() {
   return (
     <Container maxW="100%" w="container.sm">
       <Box mb="6">
-        <Text mb="8">
-          The following transactions have been queued for execution by the
-          selected Safe. Signatures submitted for these transaction are stored
-          on a seperate microservice from the official Gnosis Safe web
-          application.
-        </Text>
         <Heading size="md" mb="2">
           Pending Transactions ({staged.length})
         </Heading>

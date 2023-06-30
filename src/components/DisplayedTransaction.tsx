@@ -214,7 +214,7 @@ export function DisplayedTransaction(props: {
   }
 
   return (
-    <HStack fontFamily={'monospace'} gap={0} fontSize={24}>
+    <HStack fontFamily={'monospace'} gap={0} fontSize={20}>
       <EditableAutocompleteInput
         color="gray.200"
         defaultValue={execContract}

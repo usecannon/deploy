@@ -42,17 +42,21 @@ export function Transaction({
       my="3"
       p="3"
       border="1px solid"
-      borderColor="gray.500"
+      borderColor="gray.600"
       borderRadius="md"
       alignItems="center"
     >
       <Box alignContent={'center'}>
-        <Text>{chainId}</Text>
-        <Heading size="md">Transaction #{tx._nonce}</Heading>
+        <Heading size="sm" mb="1">
+          Transaction #{tx._nonce}
+        </Heading>
+        <Text fontSize="xs" opacity="0.66">
+          Safe: {safeAddress} (Chain ID: {chainId})
+        </Text>
       </Box>
       {modalDisplay ? (
         <>
-          <Button onClick={onOpen} ml="auto">
+          <Button size="sm" onClick={onOpen} ml="auto">
             Review & {canExecute ? 'Execute' : 'Queue'}
           </Button>
 
@@ -70,10 +74,7 @@ export function Transaction({
       ) : (
         <Box ml="auto">
           <Link to={`/txn/${chainId}/${safeAddress}/${tx._nonce}`}>
-            <Button>
-              Details
-              {/* Should link to pages/Transaction at /txn/chainId/txId */}
-            </Button>
+            <Button size="sm">Review & Sign</Button>
           </Link>
         </Box>
       )}
