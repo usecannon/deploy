@@ -272,7 +272,7 @@ export function Deploy() {
   return (
     <Container maxW="100%" w="container.sm" pb="12">
       <FormControl mb="8">
-        <FormLabel>GitOps Repository & Cannonfile</FormLabel>
+        <FormLabel>GitOps Repository</FormLabel>
         <HStack>
           <Input
             type="text"
@@ -302,12 +302,12 @@ export function Deploy() {
           </Flex>
         </HStack>
         <FormHelperText>
-          Enter a Git URL and select the Cannonfile that was modified in the
-          branch chosen below.
+          Enter a Git URL and then select the Cannonfile that was modified in
+          the branch chosen below.
         </FormHelperText>
       </FormControl>
 
-      <FormControl mb="4">
+      <FormControl mb="8">
         <FormLabel>Branch</FormLabel>
         <HStack>
           <Select
@@ -319,17 +319,14 @@ export function Deploy() {
             ))}
           </Select>
         </HStack>
-        <FormHelperText>
-          If you don't want to deploy from the default branch. Cannon will
-          automatically detect the previous release.
-        </FormHelperText>
       </FormControl>
 
       {/* TODO: insert/load override settings here */}
 
-      <FormControl mb="4">
-        <FormLabel>Optional Partial Deploy</FormLabel>
+      <FormControl mb="8">
+        <FormLabel>Partial Deployment Data (Optional)</FormLabel>
         <Input
+          placeholder="@ipfs:Qm..."
           type="text"
           value={partialDeployIpfs}
           onChange={
@@ -340,9 +337,10 @@ export function Deploy() {
           }
         />
         <FormHelperText>
-          If the deployment you are executing required executing some
-          transactions outside the safe (ex. contract deployments, transactions
-          requiring permission of EOA), please supply the IPFS hash here.
+          If this deployment requires transactions executed in other contexts
+          (e.g. contract deployments or function calls using other signers),
+          provide the IPFS hash generated from executing that partial deployment
+          using the build command in the CLI.
         </FormHelperText>
       </FormControl>
 
@@ -368,8 +366,9 @@ export function Deploy() {
       )}
 
       <Box mb="6">
-        <HStack>
+        <HStack gap="6">
           <Button
+            size="lg"
             w="100%"
             isDisabled={
               !uploadToPublishIpfs.deployedIpfsHash ||
@@ -378,9 +377,10 @@ export function Deploy() {
             }
             onClick={() => stager.sign()}
           >
-            Sign
+            Queue & Sign
           </Button>
           <Button
+            size="lg"
             w="100%"
             isDisabled={
               !uploadToPublishIpfs.deployedIpfsHash ||
