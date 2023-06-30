@@ -60,8 +60,7 @@ const initialState = {
     publishTags: 'latest',
     preset: 'main',
     registryAddress: '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba',
-    registryProviderUrl:
-      'https://mainnet.infura.io/v3/4791c1745a1f44ce831e94be7f9e8bd7',
+    registryProviderUrl: '',
     forkProviderUrl: '',
   },
 } satisfies State
