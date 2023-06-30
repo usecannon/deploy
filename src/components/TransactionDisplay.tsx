@@ -1,4 +1,13 @@
-import { Box, Button, Container, Flex, Heading, Text } from '@chakra-ui/react'
+import {
+  Alert,
+  AlertIcon,
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Text,
+} from '@chakra-ui/react'
 import {
   Hex,
   decodeAbiParameters,
@@ -14,7 +23,10 @@ import {
 import MulticallABI from '../../backend/src/abi/Multicall.json'
 import { DisplayedTransaction } from './DisplayedTransaction'
 import { SafeTransaction } from '../types'
-import { useCannonPackageContracts, useLoadCannonDefinition } from '../hooks/cannon'
+import {
+  useCannonPackageContracts,
+  useLoadCannonDefinition,
+} from '../hooks/cannon'
 import { useContractRead } from 'wagmi'
 
 import * as onchainStore from '../utils/onchain-store'
@@ -22,7 +34,10 @@ import { useStore } from '../store'
 import { useGitDiff } from '../hooks/git'
 import { Diff, parseDiff } from 'react-diff-view'
 
-export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddress: string }) {
+export function TransactionDisplay(props: {
+  safeTxn: SafeTransaction
+  safeAddress: string
+}) {
   const currentSafe = useStore((s) => s.currentSafe)
   // see waht we can parse out of the data
   let decoded: { args: readonly unknown[]; functionName: string } = {
@@ -47,7 +62,11 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
       decoded.functionName === 'aggregate3Value') &&
     decoded.args[0][0].target === zeroAddress
   ) {
-    [hintType, hintCannonPackage, hintGitRepoUrl, hintGitRepoHash] = decodeAbiParameters([{ type: 'string[]'}], decoded.args[0][0].callData)[0]
+    ;[hintType, hintCannonPackage, hintGitRepoUrl, hintGitRepoHash] =
+      decodeAbiParameters(
+        [{ type: 'string[]' }],
+        decoded.args[0][0].callData
+      )[0]
   }
 
   console.log('got hint data', hintCannonPackage, decoded)
@@ -67,7 +86,7 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
   console.log('use contract read', {
     functionName: 'getWithAddress',
     args: [props.safeAddress, keccak256(stringToBytes(hintGitRepoUrl))],
-  });
+  })
   const prevDeployHashQuery = useContractRead({
     abi: onchainStore.ABI,
     address: onchainStore.deployAddress,
@@ -75,11 +94,18 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
     args: [props.safeAddress, keccak256(stringToBytes(hintGitRepoUrl))],
   })
 
-  const prevDeployHash = trim(prevDeployHashQuery.data as Hex) != '0x00' ? (prevDeployHashQuery.data as Hex).slice(2, 42) : hintGitRepoHash
+  const prevDeployHash =
+    prevDeployHashQuery?.data && trim(prevDeployHashQuery.data as Hex) != '0x00'
+      ? (prevDeployHashQuery.data as Hex).slice(2, 42)
+      : hintGitRepoHash
 
   console.log('prev deploy info', prevDeployHash)
 
-  const cannonDefInfo = useLoadCannonDefinition(gitUrl, hintGitRepoHash, gitFile)
+  const cannonDefInfo = useLoadCannonDefinition(
+    gitUrl,
+    hintGitRepoHash,
+    gitFile
+  )
   console.log('git cannon def info', cannonDefInfo)
 
   const { patches } = useGitDiff(
@@ -96,14 +122,17 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
 
     return (
       <Box maxW="100%">
-        <Heading size="md">Transaction Type: {hintType} ({hintCannonPackage}, {hintGitRepoUrl ? hintGitRepoUrl + '@' + hintGitRepoHash : 'git n/a'}</Heading>
+        <Heading size="md">
+          Transaction Type: {hintType} ({hintCannonPackage},{' '}
+          {hintGitRepoUrl ? hintGitRepoUrl + '@' + hintGitRepoHash : 'git n/a'}
+        </Heading>
         <Heading size="sm">Git Diff</Heading>
 
         <Box mb="6">
           {patches.map((p) => {
             try {
               console.log('parse the patch', p)
-              console.log('got parsed diff', parseDiff(p));
+              console.log('got parsed diff', parseDiff(p))
               const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
               return (
                 <Diff
@@ -118,7 +147,6 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
 
               return []
             }
-
           })}
         </Box>
         <Heading size="sm">Operations</Heading>
@@ -130,7 +158,10 @@ export function TransactionDisplay(props: { safeTxn: SafeTransaction, safeAddres
   } else {
     return (
       <Container>
-        <Text>Parsing Transaction Data...</Text>
+        <Alert status="info">
+          <AlertIcon />
+          Parsing transaction data...
+        </Alert>
       </Container>
     )
   }

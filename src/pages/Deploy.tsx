@@ -326,7 +326,7 @@ export function Deploy() {
       <FormControl mb="8">
         <FormLabel>Partial Deployment Data (Optional)</FormLabel>
         <Input
-          placeholder="@ipfs:Qm..."
+          placeholder="Qm..."
           type="text"
           value={partialDeployIpfs}
           onChange={
