@@ -90,13 +90,13 @@ export function useLoadCannonDefinition(
   }
 }
 
-export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo) {
+export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo, enabled?: boolean) {
   const chainId = useNetwork().chain?.id
   const currentSafe = useStore((s) => s.currentSafe)
   const settings = useStore((s) => s.settings)
 
   const [buildStatus, setBuildStatus] = useState('')
-  const [builtStepCount, setBuiltStepCount] = useState(0)
+  const [buildCount, setBuildCount] = useState(0)
 
   const [buildResult, setBuildResult] = useState<{
     runtime: ChainBuilderRuntime
@@ -186,7 +186,7 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo)
     const newState = await cannonBuild(
       currentRuntime,
       def,
-      prevDeploy?.state ?? {},
+      _.cloneDeep(prevDeploy?.state) ?? {},
       ctx
     )
   
@@ -194,25 +194,6 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo)
       .map((s) => !!s?.txns && Object.values(s.txns))
       .filter((tx) => !!tx)
       .flat()
-
-
-    /*const { newState, simulatedTxs, skippedSteps, runtime } = await build({
-      chainId: chainId,
-      provider,
-      def,
-      options: {},
-      defaultSignerAddress: currentSafe.address,
-      incompleteDeploy,
-      registry: fallbackRegistry,
-      loaders: { mem: inMemoryLoader, ipfs: ipfsLoader },
-      onStepExecute: (
-        stepType: string,
-        stepLabel: string,
-        stepOutput: ChainArtifacts
-      ) => {
-        setBuildStatus(`Building ${stepType}.${stepLabel}...`)
-      },
-    })*/
 
     if (simulatedTxs.length === 0) {
       throw new Error(
@@ -244,7 +225,7 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo)
 
   function doBuild() {
     console.log('cannon.ts: do build called', currentRuntime)
-    if (def && buildStatus === '') {
+    if (enabled && def && buildStatus === '') {
       setBuildResult(null)
       setBuildError(null)
       buildFn()
@@ -256,9 +237,9 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo)
         })
         .finally(() => {
           setBuildStatus('')
-          // if we were cancelled it means we have a change queued up. Immediately run a new build
           if (currentRuntime.isCancelled()) {
-            doBuild()
+            // adjust state to trigger a new immediate build
+            setBuildCount(buildCount + 1)
           }
         })
     } else if (currentRuntime) {
@@ -268,7 +249,12 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo)
   }
 
   // stringify the def to make it easier to detect equality
-  useEffect(doBuild, [def && JSON.stringify(def.toJson()) , JSON.stringify(prevDeploy)])
+  useEffect(doBuild, [
+    def && JSON.stringify(def.toJson()), 
+    JSON.stringify(prevDeploy), 
+    enabled,
+    buildCount
+  ])
 
   return {
     buildStatus,
@@ -374,6 +360,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
 
   const ipfsQuery = useQuery(['cannon', 'pkg', pkgUrl], {
     queryFn: async () => {
+      console.log('LOADING PKG URL', pkgUrl)
       const loader = new IPFSBrowserLoader(
         settings.ipfsUrl || 'https://ipfs.io/ipfs/'
       )
@@ -381,6 +368,7 @@ export function useCannonPackage(packageRef: string, variant = '') {
       const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
       if (deployInfo) {
+        console.log('LOADED')
         return deployInfo
       } else {
         throw new Error('failed to download package data')

@@ -76,7 +76,7 @@ export function TransactionDetail() {
         />
       </FormControl>
 
-      <TransactionDisplay safeAddress={safeAddress} safeTxn={safeTxn} />
+      <TransactionDisplay safeAddress={safeAddress} safeTxn={safeTxn} verify={true} />
       <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
         <Button
           w="100%"

@@ -141,12 +141,16 @@ export function Deploy() {
     cannonPkgLatestInfo.pkgUrl ||
     cannonPkgVersionInfo.pkgUrl
 
+  console.log('determined prev deploy location:', prevDeployLocation)
+
   const prevCannonDeployInfo = useCannonPackage(
     prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null
   )
 
+  console.log('loaded prev deploy info from', prevCannonDeployInfo.pkgUrl)
+
   // run the build and get the list of transactions we need to run
-  const buildInfo = useCannonBuild(cannonDefInfo.def, prevCannonDeployInfo.pkg)
+  const buildInfo = useCannonBuild(cannonDefInfo.def, prevCannonDeployInfo.pkg, !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched)
 
   const uploadToPublishIpfs = useCannonWriteDeployToIpfs(
     buildInfo.buildResult?.runtime,
@@ -188,6 +192,7 @@ export function Deploy() {
                   [
                     'deploy',
                     uploadToPublishIpfs.deployedIpfsHash,
+                    prevDeployLocation || '',
                     `${gitUrl}:${gitFile}`,
                     gitHash,
                   ],
@@ -201,8 +206,19 @@ export function Deploy() {
                 abi: onchainStore.ABI,
                 functionName: 'set',
                 args: [
-                  keccak256(toBytes(`${gitUrl}:${gitFile}`)),
-                  padHex(('0x' + gitHash) as Hex, { dir: 'right', size: 32 }),
+                  keccak256(toBytes(`${gitUrl}:${gitFile}gitHash`)),
+                  '0x' + gitHash,
+                ],
+              }),
+            } as Partial<TransactionRequestBase>,
+            {
+              to: onchainStore.deployAddress,
+              data: encodeFunctionData({
+                abi: onchainStore.ABI,
+                functionName: 'set',
+                args: [
+                  keccak256(toBytes(`${gitUrl}:${gitFile}cannonPackage`)),
+                  stringToHex(uploadToPublishIpfs.deployedIpfsHash),
                 ],
               }),
             } as Partial<TransactionRequestBase>,
@@ -290,7 +306,7 @@ export function Deploy() {
           >
             <EditableAutocompleteInput
               editable
-              color="white"
+              color={colorMode === 'dark' ? 'white' : 'black'}
               placeholder="cannonfile.toml"
               items={(gitDirList.contents || []).map((d) => ({
                 label: gitDir + d,

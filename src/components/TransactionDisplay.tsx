@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {
   Alert,
   AlertIcon,
@@ -14,6 +16,8 @@ import {
 } from '@chakra-ui/react'
 import {
   Hex,
+  TransactionRequestBase,
+  bytesToString,
   decodeAbiParameters,
   decodeFunctionData,
   hexToString,
@@ -28,19 +32,23 @@ import MulticallABI from '../../backend/src/abi/Multicall.json'
 import { DisplayedTransaction } from './DisplayedTransaction'
 import { SafeTransaction } from '../types'
 import {
+  useCannonBuild,
+  useCannonPackage,
   useCannonPackageContracts,
   useLoadCannonDefinition,
 } from '../hooks/cannon'
-import { useContractRead } from 'wagmi'
+import { useContractRead, useContractReads } from 'wagmi'
 
 import * as onchainStore from '../utils/onchain-store'
 import { useStore } from '../store'
 import { useGitDiff } from '../hooks/git'
 import { Diff, parseDiff } from 'react-diff-view'
+import { CheckIcon, WarningIcon } from '@chakra-ui/icons'
 
 export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
   safeAddress: string
+  verify?: boolean
 }) {
   const currentSafe = useStore((s) => s.currentSafe)
   // see waht we can parse out of the data
@@ -59,6 +67,7 @@ export function TransactionDisplay(props: {
 
   let hintType = ''
   let hintCannonPackage = ''
+  let hintCannonUpgradeFromPackage = ''
   let hintGitRepoUrl = ''
   let hintGitRepoHash = ''
   if (
@@ -66,7 +75,7 @@ export function TransactionDisplay(props: {
       decoded.functionName === 'aggregate3Value') &&
     decoded.args[0][0].target === zeroAddress
   ) {
-    ;[hintType, hintCannonPackage, hintGitRepoUrl, hintGitRepoHash] =
+    ;[hintType, hintCannonPackage, hintCannonUpgradeFromPackage, hintGitRepoUrl, hintGitRepoHash] =
       decodeAbiParameters(
         [{ type: 'string[]' }],
         decoded.args[0][0].callData
@@ -87,42 +96,72 @@ export function TransactionDisplay(props: {
   const gitFile = hintGitRepoUrl?.slice(denom + 1)
 
   // get previous deploy info git information
-  console.log('use contract read', {
-    functionName: 'getWithAddress',
-    args: [props.safeAddress, keccak256(stringToBytes(hintGitRepoUrl))],
-  })
-  const prevDeployHashQuery = useContractRead({
-    abi: onchainStore.ABI,
-    address: onchainStore.deployAddress,
-    functionName: 'getWithAddress',
-    args: [props.safeAddress, keccak256(stringToBytes(hintGitRepoUrl))],
-  })
+  const prevDeployHashQuery = useContractReads({ contracts: [
+    {
+      abi: onchainStore.ABI as any,
+      address: onchainStore.deployAddress,
+      functionName: 'getWithAddress',
+      args: [props.safeAddress, keccak256(stringToBytes((hintGitRepoUrl || '') + 'gitHash'))],
+    },
+    {
+      abi: onchainStore.ABI as any,
+      address: onchainStore.deployAddress,
+      functionName: 'getWithAddress',
+      args: [props.safeAddress, keccak256(stringToBytes((hintGitRepoUrl || '') + 'cannonPackage'))],
+    },
+  ] })
 
-  const prevDeployHash =
-    prevDeployHashQuery?.data && trim(prevDeployHashQuery.data as Hex) != '0x00'
-      ? (prevDeployHashQuery.data as Hex).slice(2, 42)
+  const prevDeployGitHash: string =
+    prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
+      ? prevDeployHashQuery.data[0].result.slice(2) as any
       : hintGitRepoHash
 
-  console.log('prev deploy info', prevDeployHash)
+  const prevDeployPackageUrl = prevDeployHashQuery.data ? hexToString(prevDeployHashQuery.data[1].result as any) : ''
+  
+  console.log('got prev cannon hint', hintCannonUpgradeFromPackage)
+
+  const prevCannonDeployInfo = useCannonPackage(
+    hintCannonUpgradeFromPackage || prevDeployPackageUrl ? `@ipfs:${_.last((hintCannonUpgradeFromPackage || prevDeployPackageUrl).split('/'))}` : null
+  )
+
+  console.log('got prev cannon deploy info', prevDeployPackageUrl, prevCannonDeployInfo)
 
   const cannonDefInfo = useLoadCannonDefinition(
     gitUrl,
     hintGitRepoHash,
     gitFile
   )
-  console.log('git cannon def info', cannonDefInfo)
 
   const { patches } = useGitDiff(
     gitUrl,
-    prevDeployHash,
+    prevDeployGitHash,
     hintGitRepoHash,
     cannonDefInfo.filesList ? Array.from(cannonDefInfo.filesList) : []
+  )
+  
+  const buildInfo = useCannonBuild(
+    cannonDefInfo.def, 
+    prevCannonDeployInfo.pkg, 
+    props.verify && (!prevDeployGitHash || prevCannonDeployInfo.ipfsQuery.isFetched)
   )
 
   if (cannonInfo.contracts && decoded.args.length) {
     const txns = (decoded.args[0] as any[])
-      .slice(hintType === 'deploy' ? 2 : 1)
+      .slice(hintType === 'deploy' ? 3 : 1)
       .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))
+
+    // compare proposed build info with expected transaction batch
+    const expectedTxns = buildInfo.buildResult?.steps?.map(
+      (s) => s.tx as unknown as Partial<TransactionRequestBase>
+    );
+
+    console.log('txns', txns, 'expected', expectedTxns)
+
+    const unequalTransaction = expectedTxns && txns.find((t, i) => {
+      return t.to.toLowerCase() !== expectedTxns[i].to.toLowerCase() ||
+          t.data !== expectedTxns[i].data || 
+          t.value.toString() !== expectedTxns[i].value.toString()
+    })
 
     return (
       <Box maxW="100%">
@@ -175,6 +214,17 @@ export function TransactionDisplay(props: {
         {txns.map((txn, i) => (
           <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
         ))}
+        {props.verify &&
+          <Box>
+            <Heading size="md">Verification</Heading>
+            {buildInfo.buildStatus && <Text>{buildInfo.buildStatus}</Text>}
+            {buildInfo.buildError && <Text color='red'><WarningIcon />Proposed Changes have error: {}</Text>}
+            {buildInfo.buildResult && !unequalTransaction && <Text color='green'><CheckIcon />&nbsp;Proposed Transactions Match Diff</Text>}
+            {buildInfo.buildResult && unequalTransaction && <Text color='red' as='b'><WarningIcon />&nbsp;Proposed Transactions Do not Match Git Diff. Could be an attack.</Text>}
+            {prevDeployPackageUrl && hintCannonUpgradeFromPackage !== prevDeployPackageUrl && <Text color='orange'><WarningIcon />&nbsp;Previous Deploy Hash does not derive from on-chain record</Text>}
+          </Box>
+        }
+        
       </Box>
     )
   } else {
