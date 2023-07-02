@@ -4,9 +4,7 @@ import {
   Alert,
   AlertIcon,
   Box,
-  Button,
   Container,
-  Flex,
   FormControl,
   FormLabel,
   Heading,
@@ -17,18 +15,11 @@ import {
 import {
   Hex,
   TransactionRequestBase,
-  bytesToString,
-  decodeAbiParameters,
-  decodeFunctionData,
   hexToString,
   keccak256,
   stringToBytes,
-  toHex,
-  trim,
-  zeroAddress,
 } from 'viem'
 
-import MulticallABI from '../../backend/src/abi/Multicall.json'
 import { DisplayedTransaction } from './DisplayedTransaction'
 import { SafeTransaction } from '../types'
 import {
@@ -39,6 +30,7 @@ import {
 } from '../hooks/cannon'
 import { useContractRead, useContractReads } from 'wagmi'
 
+import { parseHintedMulticall } from '../utils/cannon'
 import * as onchainStore from '../utils/onchain-store'
 import { useStore } from '../store'
 import { useGitDiff } from '../hooks/git'
@@ -50,50 +42,17 @@ export function TransactionDisplay(props: {
   safeAddress: string
   verify?: boolean
 }) {
-  const currentSafe = useStore((s) => s.currentSafe)
-  // see waht we can parse out of the data
-  let decoded: { args: readonly unknown[]; functionName: string } = {
-    args: [],
-    functionName: '',
-  }
-  try {
-    decoded = decodeFunctionData({
-      abi: MulticallABI,
-      data: props.safeTxn.data as Hex,
-    })
-  } catch (err) {
-    console.log('didnt parse', err)
-  }
 
-  let hintType = ''
-  let hintCannonPackage = ''
-  let hintCannonUpgradeFromPackage = ''
-  let hintGitRepoUrl = ''
-  let hintGitRepoHash = ''
-  if (
-    (decoded.functionName === 'aggregate3' ||
-      decoded.functionName === 'aggregate3Value') &&
-    decoded.args[0][0].target === zeroAddress
-  ) {
-    ;[hintType, hintCannonPackage, hintCannonUpgradeFromPackage, hintGitRepoUrl, hintGitRepoHash] =
-      decodeAbiParameters(
-        [{ type: 'string[]' }],
-        decoded.args[0][0].callData
-      )[0]
-  }
-
-  console.log('got hint data', hintCannonPackage, decoded)
+  const hintData = parseHintedMulticall(props.safeTxn.data)
 
   const cannonInfo = useCannonPackageContracts(
-    hintCannonPackage ? '@' + hintCannonPackage.replace('://', ':') : ''
+    hintData.cannonPackage ? '@' + hintData.cannonPackage.replace('://', ':') : ''
   )
 
-  console.log('cannon info', cannonInfo)
-
   // git stuff
-  const denom = hintGitRepoUrl?.lastIndexOf(':')
-  const gitUrl = hintGitRepoUrl?.slice(0, denom)
-  const gitFile = hintGitRepoUrl?.slice(denom + 1)
+  const denom = hintData.gitRepoUrl?.lastIndexOf(':')
+  const gitUrl = hintData.gitRepoUrl?.slice(0, denom)
+  const gitFile = hintData.gitRepoUrl?.slice(denom + 1)
 
   // get previous deploy info git information
   const prevDeployHashQuery = useContractReads({ contracts: [
@@ -101,41 +60,41 @@ export function TransactionDisplay(props: {
       abi: onchainStore.ABI as any,
       address: onchainStore.deployAddress,
       functionName: 'getWithAddress',
-      args: [props.safeAddress, keccak256(stringToBytes((hintGitRepoUrl || '') + 'gitHash'))],
+      args: [props.safeAddress, keccak256(stringToBytes((hintData.gitRepoUrl || '') + 'gitHash'))],
     },
     {
       abi: onchainStore.ABI as any,
       address: onchainStore.deployAddress,
       functionName: 'getWithAddress',
-      args: [props.safeAddress, keccak256(stringToBytes((hintGitRepoUrl || '') + 'cannonPackage'))],
+      args: [props.safeAddress, keccak256(stringToBytes((hintData.gitRepoUrl || '') + 'cannonPackage'))],
     },
   ] })
 
   const prevDeployGitHash: string =
     prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
       ? prevDeployHashQuery.data[0].result.slice(2) as any
-      : hintGitRepoHash
+      : hintData.gitRepoHash
 
   const prevDeployPackageUrl = prevDeployHashQuery.data ? hexToString(prevDeployHashQuery.data[1].result as any) : ''
   
-  console.log('got prev cannon hint', hintCannonUpgradeFromPackage)
+  console.log('got prev cannon hint', hintData.cannonUpgradeFromPackage)
 
   const prevCannonDeployInfo = useCannonPackage(
-    hintCannonUpgradeFromPackage || prevDeployPackageUrl ? `@ipfs:${_.last((hintCannonUpgradeFromPackage || prevDeployPackageUrl).split('/'))}` : null
+    hintData.cannonUpgradeFromPackage || prevDeployPackageUrl ? `@ipfs:${_.last((hintData.cannonUpgradeFromPackage || prevDeployPackageUrl).split('/'))}` : null
   )
 
   console.log('got prev cannon deploy info', prevDeployPackageUrl, prevCannonDeployInfo)
 
   const cannonDefInfo = useLoadCannonDefinition(
     gitUrl,
-    hintGitRepoHash,
+    hintData.gitRepoHash,
     gitFile
   )
 
   const { patches } = useGitDiff(
     gitUrl,
     prevDeployGitHash,
-    hintGitRepoHash,
+    hintData.gitRepoHash,
     cannonDefInfo.filesList ? Array.from(cannonDefInfo.filesList) : []
   )
   
@@ -145,19 +104,16 @@ export function TransactionDisplay(props: {
     props.verify && (!prevDeployGitHash || prevCannonDeployInfo.ipfsQuery.isFetched)
   )
 
-  if (cannonInfo.contracts && decoded.args.length) {
-    const txns = (decoded.args[0] as any[])
-      .slice(hintType === 'deploy' ? 3 : 1)
-      .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))
+  if (cannonInfo.contracts) {
 
     // compare proposed build info with expected transaction batch
     const expectedTxns = buildInfo.buildResult?.steps?.map(
       (s) => s.tx as unknown as Partial<TransactionRequestBase>
     );
 
-    console.log('txns', txns, 'expected', expectedTxns)
+    console.log('txns', hintData.txns, 'expected', expectedTxns)
 
-    const unequalTransaction = expectedTxns && txns.find((t, i) => {
+    const unequalTransaction = expectedTxns && hintData.txns.find((t, i) => {
       return t.to.toLowerCase() !== expectedTxns[i].to.toLowerCase() ||
           t.data !== expectedTxns[i].data || 
           t.value.toString() !== expectedTxns[i].value.toString()
@@ -167,7 +123,7 @@ export function TransactionDisplay(props: {
       <Box maxW="100%">
         <FormControl mb="3">
           <FormLabel mb="0.5">Base Cannon Package</FormLabel>
-          <Input variant="unstyled" isReadOnly value={hintCannonPackage} />
+          <Input variant="unstyled" isReadOnly value={hintData.cannonPackage} />
         </FormControl>
 
         <FormControl mb="3">
@@ -176,16 +132,14 @@ export function TransactionDisplay(props: {
             variant="unstyled"
             isReadOnly
             value={
-              hintGitRepoUrl ? hintGitRepoUrl + '@' + hintGitRepoHash : 'N/A'
+              hintData.gitRepoUrl ? hintData.gitRepoUrl + '@' + hintData.gitRepoHash : 'N/A'
             }
           />
         </FormControl>
 
         <FormControl mb="4">
           <FormLabel mb="1">Transaction Type</FormLabel>
-          <Tag textTransform="uppercase" size="md">
-            {hintType}
-          </Tag>
+          <Tag textTransform="uppercase" size="md"><Text as="b">{hintData.type}</Text></Tag>
         </FormControl>
 
         <FormLabel mb="1">Git Diff</FormLabel>
@@ -211,7 +165,7 @@ export function TransactionDisplay(props: {
           })}
         </Box>
         <Heading size="md">Transactions</Heading>
-        {txns.map((txn, i) => (
+        {hintData.txns.map((txn, i) => (
           <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
         ))}
         {props.verify &&
@@ -221,7 +175,7 @@ export function TransactionDisplay(props: {
             {buildInfo.buildError && <Text color='red'><WarningIcon />Proposed Changes have error: {}</Text>}
             {buildInfo.buildResult && !unequalTransaction && <Text color='green'><CheckIcon />&nbsp;Proposed Transactions Match Diff</Text>}
             {buildInfo.buildResult && unequalTransaction && <Text color='red' as='b'><WarningIcon />&nbsp;Proposed Transactions Do not Match Git Diff. Could be an attack.</Text>}
-            {prevDeployPackageUrl && hintCannonUpgradeFromPackage !== prevDeployPackageUrl && <Text color='orange'><WarningIcon />&nbsp;Previous Deploy Hash does not derive from on-chain record</Text>}
+            {prevDeployPackageUrl && hintData.cannonUpgradeFromPackage !== prevDeployPackageUrl && <Text color='orange'><WarningIcon />&nbsp;Previous Deploy Hash does not derive from on-chain record</Text>}
           </Box>
         }
         

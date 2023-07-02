@@ -23,6 +23,7 @@ import {
   registerAction,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
+import MulticallABI from '../../backend/src/abi/Multicall.json'
 
 // cannon plugins supported by the web interface
 //import cannonRouterPlugin from 'cannon-plugin-router'
@@ -31,6 +32,7 @@ import { ethers } from 'ethers'
 //registerAction(cannonRouterPlugin)
 
 import * as git from './git'
+import { Address, Hex, decodeAbiParameters, decodeFunctionData, zeroAddress } from 'viem'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
@@ -283,4 +285,53 @@ async function loadChainDefinitionToml(
   _.mergeWith(assembledDef, _.omit(rawDef, 'include'), customMerge)
 
   return [assembledDef, buf]
+}
+
+export function parseHintedMulticall(data: Hex) {
+  // see waht we can parse out of the data
+  let decoded: { args: readonly unknown[]; functionName: string } = {
+    args: [],
+    functionName: '',
+  }
+  try {
+    decoded = decodeFunctionData({
+      abi: MulticallABI,
+      data: data,
+    })
+  } catch (err) {
+    console.log('didnt parse', err)
+  }
+
+  let type = ''
+  let cannonPackage = ''
+  let cannonUpgradeFromPackage = ''
+  let gitRepoUrl = ''
+  let gitRepoHash = ''
+  if (
+    (decoded.functionName === 'aggregate3' ||
+      decoded.functionName === 'aggregate3Value') &&
+    decoded.args[0][0].target === zeroAddress
+  ) {
+    ;[type, cannonPackage, cannonUpgradeFromPackage, gitRepoUrl, gitRepoHash] =
+      decodeAbiParameters(
+        [{ type: 'string[]' }],
+        decoded.args[0][0].callData
+      )[0]
+  }
+
+  let txns: { to: Address, data: Hex, value: bigint }[] = []
+  if (decoded.args.length) {
+    txns = (decoded.args[0] as any[])
+      .slice(type === 'deploy' ? 3 : 1)
+      .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))
+  }
+
+  return {
+    txns,
+    type,
+    cannonPackage,
+    cannonUpgradeFromPackage,
+    gitRepoHash,
+    gitRepoUrl
+  }
 }

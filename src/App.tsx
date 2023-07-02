@@ -51,6 +51,10 @@ const router = createBrowserRouter([
         path: '/txn/:chainId/:safeAddress/:nonce',
         element: <TransactionDetail />,
       },
+      {
+        path: '/txn/:chainId/:safeAddress/:nonce/:sigHash',
+        element: <TransactionDetail />,
+      },
     ],
   },
 ])

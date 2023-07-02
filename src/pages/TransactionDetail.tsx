@@ -16,10 +16,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { SafeTransaction } from '../types'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { useSafeTransactions, useTxnStager } from '../hooks/backend'
+import { getSafeTransactionHash } from '../utils/safe'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
-  const { chainId, nonce } = useParams()
+  const { chainId, nonce, sigHash } = useParams()
 
   const navigate = useNavigate()
 
@@ -32,14 +33,17 @@ export function TransactionDetail() {
     staged,
     stagedQuery,
   } = useSafeTransactions({
-    chainId: Number.parseInt(chainId),
+    chainId: Number.parseInt(chainId) as any,
     address: safeAddress as Address,
   })
 
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
   if (parseInt(nonce) >= safeNonce && staged) {
-    safeTxn = staged.find((s) => s.txn._nonce.toString() === nonce)?.txn || null
+    safeTxn = staged.find(
+      (s) => s.txn._nonce.toString() === nonce && 
+      (!sigHash || sigHash === getSafeTransactionHash({ address: safeAddress as Address, chainId: chainId as any }, s.txn)
+    ))?.txn || null
   }
 
   const stager = useTxnStager(safeTxn || {}, {

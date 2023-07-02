@@ -47,6 +47,7 @@ import { makeMultisend } from '../utils/multisend'
 import { useCannonPackageContracts } from '../hooks/cannon'
 import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
+import NoncePicker from '../components/NoncePicker'
 
 export function RunCustom() {
   const currentSafe = useStore((s) => s.currentSafe)
@@ -56,6 +57,8 @@ export function RunCustom() {
   const [queuedTxns, setQueuedTxns] = useState<
     Omit<TransactionRequestBase, 'from'>[]
   >([null])
+
+  const [pickedNonce, setPickedNonce] = useState<number | null>(null)
 
   console.log('qd txns', queuedTxns)
 
@@ -91,6 +94,7 @@ export function RunCustom() {
           data: stagedTxn.data.data,
           gasPrice: stagedTxn.data?.gasPrice?.toString(),
           safeTxGas: stagedTxn.data?.gas?.toString(),
+          _nonce: pickedNonce
         }
       : {},
     {
@@ -211,10 +215,9 @@ export function RunCustom() {
         </FormControl>
       )}
 
-      {/* todo: nonce override */}
-
       {(cannonInfo.contracts || isAddress(target)) && (
         <Box mb="6">
+          <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
             <Button
               size="lg"

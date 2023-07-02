@@ -65,6 +65,7 @@ import { SafeTransaction } from '../types'
 import { useNavigate } from 'react-router-dom'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { ChainBuilderContext, createInitialContext } from '@usecannon/builder'
+import NoncePicker from '../components/NoncePicker'
 
 export function Deploy() {
   const { colorMode } = useColorMode()
@@ -85,6 +86,7 @@ export function Deploy() {
   const [gitFile, setGitFile] = useState('')
   const [gitBranch, setGitBranch] = useState('')
   const [partialDeployIpfs, setPartialDeployIpfs] = useState('')
+  const [pickedNonce, setPickedNonce] = useState<number | null>(null)
 
   const gitDir = gitFile.includes('/')
     ? gitFile.slice(gitFile.lastIndexOf('/'))[0]
@@ -141,13 +143,9 @@ export function Deploy() {
     cannonPkgLatestInfo.pkgUrl ||
     cannonPkgVersionInfo.pkgUrl
 
-  console.log('determined prev deploy location:', prevDeployLocation)
-
   const prevCannonDeployInfo = useCannonPackage(
     prevDeployLocation ? `@ipfs:${_.last(prevDeployLocation.split('/'))}` : null
   )
-
-  console.log('loaded prev deploy info from', prevCannonDeployInfo.pkgUrl)
 
   // run the build and get the list of transactions we need to run
   const buildInfo = useCannonBuild(cannonDefInfo.def, prevCannonDeployInfo.pkg, !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched)
@@ -172,7 +170,6 @@ export function Deploy() {
 
   useEffect(() => {
     if (buildInfo.buildResult) {
-      console.log('HAVE BUILD RESULT. SENDING TO IPFS!')
       uploadToPublishIpfs.writeToIpfsMutation.mutate()
     }
   }, [buildInfo.buildResult?.steps])
@@ -244,6 +241,7 @@ export function Deploy() {
           data: multicallTxn.data,
           safeTxGas: totalGas.toString(),
           operation: '1', // delegate call multicall
+          _nonce: pickedNonce
         }
       : {},
     {
@@ -385,6 +383,7 @@ export function Deploy() {
       )}
 
       <Box my="6">
+        <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
         <HStack gap="6">
           <Button
             size="lg"

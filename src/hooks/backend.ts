@@ -19,8 +19,7 @@ import SafeABIJSON from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
 import { State, useStore } from '../store'
 import { useSafeAddress } from './safe'
-
-const BACKEND_URL = 'http://127.0.0.1:3000'
+import { getSafeTransactionHash } from '../utils/safe'
 
 const SafeABI = SafeABIJSON as Abi
 
@@ -71,8 +70,10 @@ export function useTxnStager(
   const walletClient = useWalletClient()
   const safeAddress = useSafeAddress()
 
-  const queryChainId = options.chainId || chainId.toString()
-  const querySafeAddress = options.safeAddress || safeAddress
+  const queryChainId = options.safe?.chainId || chainId.toString()
+  const querySafeAddress = options.safe?.address || safeAddress
+
+  const stagingUrl = useStore((s) => s.settings.stagingUrl)
 
   const currentSafe = useStore((s) => s.currentSafe)
   const { nonce, staged, stagedQuery } = useSafeTransactions(options.safe || currentSafe)
@@ -169,7 +170,7 @@ export function useTxnStager(
       newStaged.sigs.splice(sigInsertIdx, 0, sig)
 
       return await axios.post(
-        `${BACKEND_URL}/${queryChainId}/${querySafeAddress}`,
+        `${stagingUrl}/${queryChainId}/${querySafeAddress}`,
         newStaged
       )
     },
