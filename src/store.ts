@@ -56,11 +56,11 @@ const initialState = {
   },
   settings: {
     ipfsUrl: '',
-    stagingUrl: 'http://127.0.0.1:3000',
+    stagingUrl: 'https://cannon-safe-app.external.dbeal.dev',
     publishTags: 'latest',
     preset: 'main',
     registryAddress: '0x8E5C7EFC9636A6A0408A46BB7F617094B81e5dba',
-    registryProviderUrl: '',
+    registryProviderUrl: 'https://ethereum.publicnode.com',
     forkProviderUrl: '',
   },
 } satisfies State
