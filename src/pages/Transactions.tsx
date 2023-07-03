@@ -8,6 +8,8 @@ export function Transactions() {
   const currentSafe = useStore((s) => s.currentSafe)
   const { staged } = useSafeTransactions(currentSafe)
 
+  console.log('got staged', currentSafe, staged)
+
   return (
     <Container maxW="100%" w="container.sm">
       <Box mb="6">

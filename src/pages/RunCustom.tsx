@@ -3,9 +3,11 @@ import 'react-diff-view/style/index.css'
 import _ from 'lodash'
 import { AddIcon, ChevronDownIcon, MinusIcon } from '@chakra-ui/icons'
 import {
+  Abi,
   Address,
   Hex,
   TransactionRequestBase,
+  decodeErrorResult,
   encodeAbiParameters,
   encodePacked,
   getFunctionSelector,
@@ -48,6 +50,7 @@ import { useCannonPackageContracts } from '../hooks/cannon'
 import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
 import NoncePicker from '../components/NoncePicker'
+import { useSimulatedTxns } from '../hooks/fork'
 
 export function RunCustom() {
   const currentSafe = useStore((s) => s.currentSafe)
@@ -76,24 +79,21 @@ export function RunCustom() {
               ),
             } as Partial<TransactionRequestBase>,
           ].concat(queuedTxns)
-        )
-      : { value: 0n }
+        ) : null
 
-  const stagedTxn = usePrepareSendTransaction({
-    account: currentSafe.address,
-    ...multisendTxn,
-    value: BigInt(multisendTxn.value),
-  })
+  const txnInfo = useSimulatedTxns(currentSafe, queuedTxns)
+
+  console.log('txnresults', txnInfo.txnResults)
 
   // TODO: check types
   const stager = useTxnStager(
-    stagedTxn.data
+    multisendTxn
       ? {
-          to: stagedTxn.data.to,
-          value: stagedTxn.data.value.toString(),
-          data: stagedTxn.data.data,
-          gasPrice: stagedTxn.data?.gasPrice?.toString(),
-          safeTxGas: stagedTxn.data?.gas?.toString(),
+          to: multisendTxn.to,
+          value: multisendTxn.value.toString(),
+          data: multisendTxn.data,
+          safeTxGas: txnInfo.txnResults.length ? txnInfo.txnResults.reduce((prev, cur) => ({ gasUsed: (prev?.gasUsed || 0n) + (cur?.gasUsed || 0n), callResult: '0x' })).gasUsed.toString() : undefined,
+          operation: '1',
           _nonce: pickedNonce
         }
       : {},
@@ -115,6 +115,23 @@ export function RunCustom() {
   ) {
     queuedTxns[i] = txn
     setQueuedTxns(_.clone(queuedTxns))
+  }
+
+  const txnHasError = !!txnInfo.txnResults.filter(r => r?.error).length
+
+  console.log('TXN HAS ERROR', txnHasError)
+  console.log('sign status', stager)
+
+  function decodeError(err: Hex) {
+    for (const contract in cannonInfo.contracts) {
+      try {
+        const parsedError = decodeErrorResult({ abi: cannonInfo.contracts[contract].abi as Abi, data: err })
+
+        return `failure in contract ${contract}: ${parsedError.errorName}(${parsedError.args.join(', ')})`
+      } catch (err) {}
+    }
+
+    return 'unknown error'
   }
 
   return (
@@ -147,11 +164,19 @@ export function RunCustom() {
         <FormControl mb="8">
           <FormLabel>Transactions</FormLabel>
           {queuedTxns.map((txn, i) => (
-            <DisplayedTransaction
-              editable
-              contracts={cannonInfo.contracts}
-              onTxn={(txn) => updateQueuedTxn(i, txn)}
-            />
+            <Box>
+              <DisplayedTransaction
+                editable
+                contracts={cannonInfo.contracts}
+                onTxn={(txn) => updateQueuedTxn(i, txn)}
+              />
+              {txnInfo.txnResults && txnInfo.txnResults.length === queuedTxns.length && txnInfo.txnResults[i].error && (
+                <Alert status="error" mt="6">
+                  <AlertIcon />
+                  Transaction Error: {txnInfo.txnResults[i].callResult ? decodeError(txnInfo.txnResults[i].callResult) : txnInfo.txnResults[i].error}
+                </Alert>
+              )}
+            </Box>
           ))}
           <HStack my="3">
             <Button
@@ -222,7 +247,7 @@ export function RunCustom() {
             <Button
               size="lg"
               w="100%"
-              isDisabled={!stagedTxn.data || !stager.canSign}
+              isDisabled={txnHasError || !stager.canSign}
               onClick={() => stager.sign()}
             >
               Queue &amp; Sign
@@ -230,18 +255,12 @@ export function RunCustom() {
             <Button
               size="lg"
               w="100%"
-              isDisabled={!stagedTxn.data || !stager.canExecute}
+              isDisabled={txnHasError || !stager.canExecute}
               onClick={() => execTxn.write()}
             >
               Execute
             </Button>
           </HStack>
-          {stagedTxn.isError && (
-            <Alert status="error" mt="6">
-              <AlertIcon />
-              Transaction Error: {stagedTxn.error.message}
-            </Alert>
-          )}
         </Box>
       )}
     </Container>
