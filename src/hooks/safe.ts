@@ -1,10 +1,10 @@
 import Web3 from 'web3'
-import Safe, { Web3Adapter } from '@safe-global/protocol-kit'
 import SafeApiKit, {
   SafeInfoResponse,
   SafeMultisigTransactionListResponse,
 } from '@safe-global/api-kit'
 import { Address, getAddress, isAddress } from 'viem'
+import { Web3Adapter } from '@safe-global/protocol-kit'
 import { useAccount, useChainId, useNetwork } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -51,7 +51,7 @@ export function getSafeFromString(
   if (!isValidSafeString(safeString)) return null
   const [chainId, address] = safeString.split(':')
   return {
-    chainId: Number.parseInt(chainId),
+    chainId: Number.parseInt(chainId) as ChainId,
     address: getAddress(address),
   }
 }
