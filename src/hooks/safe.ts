@@ -1,7 +1,8 @@
 import Web3 from 'web3'
 import SafeApiKit, {
+  AllTransactionsListResponse,
   SafeInfoResponse,
-  SafeMultisigTransactionListResponse,
+  SafeMultisigTransactionWithTransfersResponse,
 } from '@safe-global/api-kit'
 import { Address, getAddress, isAddress } from 'viem'
 import { Web3Adapter } from '@safe-global/protocol-kit'
@@ -156,33 +157,42 @@ export function useSafeInfo(safeAddress: string) {
   return safeInfo
 }
 
-export function usePendingTransactions(safeAddress: string) {
-  const safeApi = useSafeReadApi(safeAddress)
-  const [pendingTransactions, setPendingTransactions] = useState<
-    SafeMultisigTransactionListResponse['results']
+export function useExecutedTransactions(safe?: State['currentSafe']) {
+  const [txs, setTransactions] = useState<
+    SafeMultisigTransactionWithTransfersResponse[]
   >([])
 
   useEffect(() => {
-    if (!safeApi || !safeAddress) return setPendingTransactions([])
+    if (!safe) return setTransactions([])
 
-    async function loadPendingTransactions() {
-      const [, address] = safeAddress.split(':')
+    async function load() {
+      const safeService = _createSafeApiKit(safe.chainId, safe.address)
       try {
-        const res = await safeApi.getPendingTransactions(address)
-        setPendingTransactions(res.results)
+        const res = await safeService.getAllTransactions(safe.address)
+        const txs = res.results
+          .filter(_isMultisigTx)
+          .filter((tx) => tx.isExecuted)
+
+        setTransactions(txs)
       } catch (err) {
         console.error(err)
-        setPendingTransactions([])
+        setTransactions([])
       }
     }
 
-    loadPendingTransactions()
-  }, [safeApi, safeAddress])
+    load()
+  }, [safe])
 
-  return pendingTransactions
+  return txs
 }
 
-export const useWalletPublicSafes = () => {
+// TS Type Guard to correctly filter txs
+const _isMultisigTx = (
+  tx: SafeMultisigTransactionWithTransfersResponse
+): tx is SafeMultisigTransactionWithTransfersResponse =>
+  tx.txType === 'MULTISIG_TRANSACTION'
+
+export function useWalletPublicSafes() {
   const { address } = useAccount()
   const [walletSafes, setWalletSafes] = useState<State['safeAddresses']>([])
 
@@ -206,7 +216,7 @@ export const useWalletPublicSafes = () => {
       const safeAddresses = safes.flatMap((entry) => {
         const chainSafes = entry?.safes || []
         return chainSafes.map((address) => ({
-          chainId: entry.chainId,
+          chainId: entry.chainId as ChainId,
           address: address as `0x${string}`,
         }))
       })

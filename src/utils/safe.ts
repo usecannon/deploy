@@ -1,6 +1,7 @@
 import { encodeAbiParameters, encodePacked, keccak256 } from 'viem'
-import { SafeTransaction } from '../types'
+
 import { SafeDefinition } from '../store'
+import { SafeTransaction } from '../types'
 
 const SAFE_DOMAIN_SEPARATOR_TYPEHASH =
   '0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218'
