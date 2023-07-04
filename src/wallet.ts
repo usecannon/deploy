@@ -16,7 +16,7 @@ export const supportedChains = [
   polygon,
   goerli,
   optimismGoerli,
-  sepolia
+  sepolia,
 ]
 
 const { chains, publicClient } = configureChains(supportedChains, [
@@ -28,6 +28,8 @@ const { connectors } = getDefaultWallets({
   projectId: 'f12a3d8e2d2194a62dd6b349a474cc85',
   chains,
 })
+
+console.log('connectors', connectors)
 
 const wagmiConfig = createConfig({
   queryClient: new QueryClient({

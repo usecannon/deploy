@@ -64,7 +64,7 @@ export type BuildState =
       skipped: StepExecutionError[]
     }
 
-let currentRuntime: ChainBuilderRuntime|null = null;
+let currentRuntime: ChainBuilderRuntime | null = null
 
 export function useLoadCannonDefinition(
   repo: string,
@@ -90,7 +90,11 @@ export function useLoadCannonDefinition(
   }
 }
 
-export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo, enabled?: boolean) {
+export function useCannonBuild(
+  def: ChainDefinition,
+  prevDeploy: DeploymentInfo,
+  enabled?: boolean
+) {
   const chainId = useNetwork().chain?.id
   const currentSafe = useStore((s) => s.currentSafe)
   const settings = useStore((s) => s.settings)
@@ -138,7 +142,7 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo,
     // the locally built data
     const fallbackRegistry = new FallbackRegistry([inMemoryRegistry, registry])
 
-    const loaders = { mem: inMemoryLoader, ipfs: ipfsLoader };
+    const loaders = { mem: inMemoryLoader, ipfs: ipfsLoader }
 
     currentRuntime = new ChainBuilderRuntime(
       {
@@ -153,12 +157,10 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo,
       fallbackRegistry,
       loaders
     )
-  
+
     const simulatedSteps: ChainArtifacts[] = []
     const skippedSteps: StepExecutionError[] = []
-  
-  
-  
+
     currentRuntime.on(
       Events.PostStepExecute,
       (stepType: string, stepLabel: string, stepOutput: ChainArtifacts) => {
@@ -166,30 +168,30 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo,
         setBuildStatus(`Building ${stepType}.${stepLabel}...`)
       }
     )
-  
+
     currentRuntime.on(Events.SkipDeploy, (stepName: string, err: Error) => {
       console.log(stepName, err)
       skippedSteps.push({ name: stepName, err })
     })
-  
+
     if (prevDeploy) {
       await currentRuntime.restoreMisc(prevDeploy.miscUrl)
     }
-  
+
     const ctx = await createInitialContext(
       def,
       prevDeploy?.meta || {},
       chainId,
       prevDeploy?.options || {}
     )
-  
+
     const newState = await cannonBuild(
       currentRuntime,
       def,
       _.cloneDeep(prevDeploy?.state) ?? {},
       ctx
     )
-  
+
     const simulatedTxs = simulatedSteps
       .map((s) => !!s?.txns && Object.values(s.txns))
       .filter((tx) => !!tx)
@@ -250,10 +252,10 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo,
 
   // stringify the def to make it easier to detect equality
   useEffect(doBuild, [
-    def && JSON.stringify(def.toJson()), 
-    JSON.stringify(prevDeploy), 
+    def && JSON.stringify(def.toJson()),
+    JSON.stringify(prevDeploy),
     enabled,
-    buildCount
+    buildCount,
   ])
 
   return {
@@ -264,8 +266,8 @@ export function useCannonBuild(def: ChainDefinition, prevDeploy: DeploymentInfo,
 }
 
 type IPFSPackageWriteResult = {
-  packageRef: string,
-  mainUrl: string,
+  packageRef: string
+  mainUrl: string
   publishTxns: string[]
 }
 
@@ -291,7 +293,12 @@ export function useCannonWriteDeployToIpfs(
       const packageRef = `${def.getName(ctx)}:${def.getVersion(ctx)}`
       const variant = `${runtime.chainId}-${settings.preset}`
 
-      await runtime.registry.publish([packageRef], variant, await runtime.loaders.mem.put(deployInfo), metaUrl)
+      await runtime.registry.publish(
+        [packageRef],
+        variant,
+        await runtime.loaders.mem.put(deployInfo),
+        metaUrl
+      )
 
       const memoryRegistry = new InMemoryRegistry()
 
@@ -305,7 +312,7 @@ export function useCannonWriteDeployToIpfs(
         packageRef,
         variant,
         tags: ['latest'],
-      });
+      })
 
       // load the new ipfs url
       console.log('MEMORY REGISTRY RESULT', memoryRegistry, packageRef, variant)
@@ -314,14 +321,14 @@ export function useCannonWriteDeployToIpfs(
       return {
         packageRef,
         mainUrl,
-        publishTxns
+        publishTxns,
       }
     },
   } as any) // TODO: why is ts having a freak out fit about this
 
   return {
     writeToIpfsMutation,
-    deployedIpfsHash: writeToIpfsMutation.data?.mainUrl
+    deployedIpfsHash: writeToIpfsMutation.data?.mainUrl,
   }
 }
 

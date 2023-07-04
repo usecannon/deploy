@@ -24,7 +24,7 @@ import { getSafeTransactionHash } from '../utils/safe'
 import { SafeDefinition } from '../store'
 
 interface Params {
-  safe: SafeDefinition,
+  safe: SafeDefinition
   tx: SafeTransaction
   modalDisplay?: boolean
   canSign?: boolean
@@ -40,8 +40,7 @@ export function Transaction({
 }: Params) {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
-
-  let hintData: ReturnType<typeof parseHintedMulticall>|null = null
+  let hintData: ReturnType<typeof parseHintedMulticall> | null = null
   try {
     hintData = parseHintedMulticall(tx.data)
   } catch (err) {
@@ -61,20 +60,24 @@ export function Transaction({
     >
       <Box alignContent={'center'} minWidth={0}>
         <HStack mb={1}>
-          <Tag textTransform="uppercase" size="md"><Text as="b">{hintData.type}</Text></Tag>
-          <Heading size="sm">
-            Transaction #{tx._nonce} 
-          </Heading>
+          <Tag textTransform="uppercase" size="md">
+            <Text as="b">{hintData.type}</Text>
+          </Tag>
+          <Heading size="sm">Transaction #{tx._nonce}</Heading>
         </HStack>
         <Text fontSize="xs" opacity="0.66">
           Safe: {safe.address} (Chain ID: {safe.chainId})
         </Text>
-        <Text fontSize="xs" opacity="0.66" noOfLines={1}>{sigHash}</Text>
+        <Text fontSize="xs" opacity="0.66" noOfLines={1}>
+          {sigHash}
+        </Text>
       </Box>
       {modalDisplay ? (
         <>
           <Button size="sm" onClick={onOpen} ml="auto">
-            {canSign ? `Review & ${canExecute ? 'Execute' : 'Queue'}` : 'View Details'}
+            {canSign
+              ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
+              : 'View Details'}
           </Button>
 
           <Modal isOpen={isOpen} onClose={onClose}>
@@ -90,7 +93,9 @@ export function Transaction({
         </>
       ) : (
         <Box ml="auto">
-          <Link to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}>
+          <Link
+            to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
+          >
             <Button size="sm">Review & Sign</Button>
           </Link>
         </Box>

@@ -40,13 +40,24 @@ export function TransactionDetail() {
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
   if (parseInt(nonce) >= safeNonce && staged) {
-    safeTxn = staged.find(
-      (s) => s.txn._nonce.toString() === nonce && 
-      (!sigHash || sigHash === getSafeTransactionHash({ address: safeAddress as Address, chainId: chainId as any }, s.txn)
-    ))?.txn || null
+    safeTxn =
+      staged.find(
+        (s) =>
+          s.txn._nonce.toString() === nonce &&
+          (!sigHash ||
+            sigHash ===
+              getSafeTransactionHash(
+                { address: safeAddress as Address, chainId: chainId as any },
+                s.txn
+              ))
+      )?.txn || null
   }
 
   const stager = useTxnStager(safeTxn || {}, {
+    safe: {
+      chainId: parseInt(chainId) as any,
+      address: safeAddress as Address,
+    },
     onSignComplete: () => {
       navigate('/')
     },
@@ -80,7 +91,11 @@ export function TransactionDetail() {
         />
       </FormControl>
 
-      <TransactionDisplay safeAddress={safeAddress} safeTxn={safeTxn} verify={true} />
+      <TransactionDisplay
+        safeAddress={safeAddress}
+        safeTxn={safeTxn}
+        verify={true}
+      />
       <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
         <Button
           w="100%"

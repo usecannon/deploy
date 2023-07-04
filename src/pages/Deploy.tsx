@@ -148,7 +148,11 @@ export function Deploy() {
   )
 
   // run the build and get the list of transactions we need to run
-  const buildInfo = useCannonBuild(cannonDefInfo.def, prevCannonDeployInfo.pkg, !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched)
+  const buildInfo = useCannonBuild(
+    cannonDefInfo.def,
+    prevCannonDeployInfo.pkg,
+    !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched
+  )
 
   const uploadToPublishIpfs = useCannonWriteDeployToIpfs(
     buildInfo.buildResult?.runtime,
@@ -241,7 +245,7 @@ export function Deploy() {
           data: multicallTxn.data,
           safeTxGas: totalGas.toString(),
           operation: '1', // delegate call multicall
-          _nonce: pickedNonce
+          _nonce: pickedNonce,
         }
       : {},
     {

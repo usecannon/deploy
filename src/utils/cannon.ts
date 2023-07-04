@@ -32,7 +32,13 @@ import MulticallABI from '../../backend/src/abi/Multicall.json'
 //registerAction(cannonRouterPlugin)
 
 import * as git from './git'
-import { Address, Hex, decodeAbiParameters, decodeFunctionData, zeroAddress } from 'viem'
+import {
+  Address,
+  Hex,
+  decodeAbiParameters,
+  decodeFunctionData,
+  zeroAddress,
+} from 'viem'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
@@ -89,7 +95,11 @@ export async function build({
   incompleteDeploy: DeploymentInfo
   registry: CannonRegistry
   loaders: { [k: string]: CannonLoader }
-  onStepExecute: (stepType: string, stepName: string, outputs: ChainArtifacts) => void
+  onStepExecute: (
+    stepType: string,
+    stepName: string,
+    outputs: ChainArtifacts
+  ) => void
 }) {
   const runtime = new ChainBuilderRuntime(
     {
@@ -107,8 +117,6 @@ export async function build({
 
   const simulatedSteps: ChainArtifacts[] = []
   const skippedSteps: StepExecutionError[] = []
-
-
 
   runtime.on(
     Events.PostStepExecute,
@@ -319,7 +327,7 @@ export function parseHintedMulticall(data: Hex) {
       )[0]
   }
 
-  let txns: { to: Address, data: Hex, value: bigint }[] = []
+  let txns: { to: Address; data: Hex; value: bigint }[] = []
   if (decoded.args.length) {
     txns = (decoded.args[0] as any[])
       .slice(type === 'deploy' ? 3 : 1)
@@ -332,6 +340,6 @@ export function parseHintedMulticall(data: Hex) {
     cannonPackage,
     cannonUpgradeFromPackage,
     gitRepoHash,
-    gitRepoUrl
+    gitRepoUrl,
   }
 }

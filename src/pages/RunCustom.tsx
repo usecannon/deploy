@@ -79,7 +79,8 @@ export function RunCustom() {
               ),
             } as Partial<TransactionRequestBase>,
           ].concat(queuedTxns)
-        ) : null
+        )
+      : null
 
   const txnInfo = useSimulatedTxns(currentSafe, queuedTxns)
 
@@ -92,9 +93,16 @@ export function RunCustom() {
           to: multisendTxn.to,
           value: multisendTxn.value.toString(),
           data: multisendTxn.data,
-          safeTxGas: txnInfo.txnResults.length ? txnInfo.txnResults.reduce((prev, cur) => ({ gasUsed: (prev?.gasUsed || 0n) + (cur?.gasUsed || 0n), callResult: '0x' })).gasUsed.toString() : undefined,
+          safeTxGas: txnInfo.txnResults.length
+            ? txnInfo.txnResults
+                .reduce((prev, cur) => ({
+                  gasUsed: (prev?.gasUsed || 0n) + (cur?.gasUsed || 0n),
+                  callResult: '0x',
+                }))
+                .gasUsed.toString()
+            : undefined,
           operation: '1',
-          _nonce: pickedNonce
+          _nonce: pickedNonce,
         }
       : {},
     {
@@ -117,7 +125,7 @@ export function RunCustom() {
     setQueuedTxns(_.clone(queuedTxns))
   }
 
-  const txnHasError = !!txnInfo.txnResults.filter(r => r?.error).length
+  const txnHasError = !!txnInfo.txnResults.filter((r) => r?.error).length
 
   console.log('TXN HAS ERROR', txnHasError)
   console.log('sign status', stager)
@@ -125,9 +133,14 @@ export function RunCustom() {
   function decodeError(err: Hex) {
     for (const contract in cannonInfo.contracts) {
       try {
-        const parsedError = decodeErrorResult({ abi: cannonInfo.contracts[contract].abi as Abi, data: err })
+        const parsedError = decodeErrorResult({
+          abi: cannonInfo.contracts[contract].abi as Abi,
+          data: err,
+        })
 
-        return `failure in contract ${contract}: ${parsedError.errorName}(${parsedError.args.join(', ')})`
+        return `failure in contract ${contract}: ${
+          parsedError.errorName
+        }(${parsedError.args.join(', ')})`
       } catch (err) {}
     }
 
@@ -170,12 +183,17 @@ export function RunCustom() {
                 contracts={cannonInfo.contracts}
                 onTxn={(txn) => updateQueuedTxn(i, txn)}
               />
-              {txnInfo.txnResults && txnInfo.txnResults.length === queuedTxns.length && txnInfo.txnResults[i].error && (
-                <Alert status="error" mt="6">
-                  <AlertIcon />
-                  Transaction Error: {txnInfo.txnResults[i].callResult ? decodeError(txnInfo.txnResults[i].callResult) : txnInfo.txnResults[i].error}
-                </Alert>
-              )}
+              {txnInfo.txnResults &&
+                txnInfo.txnResults.length === queuedTxns.length &&
+                txnInfo.txnResults[i].error && (
+                  <Alert status="error" mt="6">
+                    <AlertIcon />
+                    Transaction Error:{' '}
+                    {txnInfo.txnResults[i].callResult
+                      ? decodeError(txnInfo.txnResults[i].callResult)
+                      : txnInfo.txnResults[i].error}
+                  </Alert>
+                )}
             </Box>
           ))}
           <HStack my="3">

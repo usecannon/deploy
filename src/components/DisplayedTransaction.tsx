@@ -5,8 +5,11 @@ import {
   TransactionRequestBase,
   decodeFunctionData,
   encodeFunctionData,
+  formatEther,
   getFunctionSelector,
+  hexToBytes,
   hexToString,
+  parseEther,
   stringToHex,
   trim,
 } from 'viem'
@@ -116,6 +119,17 @@ export function DisplayedTransaction(props: {
   function decodeArg(type: string, val: string) {
     if (type.startsWith('bytes') && val.startsWith('0x')) {
       try {
+        const b = hexToBytes(val as Hex)
+        const t = b.findIndex((v) => v < 0x20)
+        if (b[t] != 0 || b.slice(2 + t * 2).find((v) => v != 0)) {
+          // this doesn't look like a terminated ascii hex string. leave it as hex
+          return val
+        }
+
+        if (t === 0) {
+          return ''
+        }
+
         return hexToString(trim(val as Hex, { dir: 'right' }))
       } catch (err) {
         console.warn('could not decode hex', err)
@@ -165,10 +179,16 @@ export function DisplayedTransaction(props: {
       ) {
         // offer both the nubmer they are typing, and also the bigint version
         const num = execFuncArgs[arg] || '0'
-        return [
-          { label: num, secondary: 'literal' },
-          { label: num + '000000000000000000', secondary: '18-decimal fixed' },
+
+        const res = [
+          { label: parseEther(num).toString(), secondary: '18-decimal fixed' },
         ]
+
+        if (!num.includes('.')) {
+          res.unshift({ label: num, secondary: 'literal' })
+        }
+
+        return res
       }
 
       switch (execFuncFragment.inputs[arg].type) {
@@ -254,6 +274,7 @@ export function DisplayedTransaction(props: {
           }}
           onChange={(v) => console.log('on change', updateFuncArg(i, v))}
           editable={props.editable}
+          unfilteredResults
         />,
         <Text>{i < execFuncFragment.inputs.length - 1 ? ',' : ''}</Text>,
       ])}
