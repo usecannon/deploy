@@ -16,34 +16,20 @@ import {
   Heading,
   Input,
   Select,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
   Text,
   useColorMode,
 } from '@chakra-ui/react'
-import { Diff, Hunk, parseDiff } from 'react-diff-view'
 import {
-  Hex,
   TransactionRequestBase,
   encodeAbiParameters,
   encodeFunctionData,
-  encodePacked,
   keccak256,
-  padHex,
-  stringToBytes,
   stringToHex,
   toBytes,
-  toHex,
-  trim,
   zeroAddress,
 } from 'viem'
 import {
-  useContractRead,
   useContractWrite,
-  useFeeData,
   usePrepareSendTransaction,
   useSendTransaction,
 } from 'wagmi'
@@ -57,14 +43,13 @@ import {
   useCannonWriteDeployToIpfs,
   useLoadCannonDefinition,
 } from '../hooks/cannon'
-import { useGitDiff, useGitFilesList, useGitRefsList } from '../hooks/git'
+import { useGitFilesList, useGitRefsList } from '../hooks/git'
 import { useStore } from '../store'
 import { useTxnStager } from '../hooks/backend'
 import { makeMultisend } from '../utils/multisend'
-import { SafeTransaction } from '../types'
 import { useNavigate } from 'react-router-dom'
 import { TransactionDisplay } from '../components/TransactionDisplay'
-import { ChainBuilderContext, createInitialContext } from '@usecannon/builder'
+import { ChainBuilderContext } from '@usecannon/builder'
 import NoncePicker from '../components/NoncePicker'
 
 export function Deploy() {

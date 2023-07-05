@@ -92,7 +92,7 @@ export function TransactionDetail() {
       </FormControl>
 
       <TransactionDisplay
-        safeAddress={safeAddress}
+        safe={{address: safeAddress as Address, chainId}}
         safeTxn={safeTxn}
         verify={true}
       />

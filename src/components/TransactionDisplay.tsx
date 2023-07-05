@@ -13,8 +13,9 @@ import {
   Text,
 } from '@chakra-ui/react'
 import {
-  Hex,
+  Address,
   TransactionRequestBase,
+  encodeFunctionData,
   hexToString,
   keccak256,
   stringToBytes,
@@ -28,21 +29,23 @@ import {
   useCannonPackageContracts,
   useLoadCannonDefinition,
 } from '../hooks/cannon'
-import { useContractRead, useContractReads } from 'wagmi'
+import { useContractReads } from 'wagmi'
 
 import { parseHintedMulticall } from '../utils/cannon'
 import * as onchainStore from '../utils/onchain-store'
-import { useStore } from '../store'
+import { SafeDefinition } from '../store'
 import { useGitDiff } from '../hooks/git'
 import { Diff, parseDiff } from 'react-diff-view'
-import { CheckIcon, WarningIcon } from '@chakra-ui/icons'
+import { ArrowForwardIcon, CheckIcon, WarningIcon } from '@chakra-ui/icons'
+import { Link } from 'react-router-dom'
+import { createSimulationData } from '../utils/safe'
 
 export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
-  safeAddress: string
+  safe: SafeDefinition
   verify?: boolean
 }) {
-  const hintData = parseHintedMulticall(props.safeTxn.data)
+  const hintData = parseHintedMulticall(props.safeTxn?.data)
 
   const cannonInfo = useCannonPackageContracts(
     hintData.cannonPackage
@@ -63,7 +66,7 @@ export function TransactionDisplay(props: {
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
         args: [
-          props.safeAddress,
+          props.safe.address,
           keccak256(stringToBytes((hintData.gitRepoUrl || '') + 'gitHash')),
         ],
       },
@@ -72,7 +75,7 @@ export function TransactionDisplay(props: {
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
         args: [
-          props.safeAddress,
+          props.safe.address,,
           keccak256(
             stringToBytes((hintData.gitRepoUrl || '') + 'cannonPackage')
           ),
@@ -193,11 +196,15 @@ export function TransactionDisplay(props: {
             }
           })}
         </Box>
-        <Heading size="md">Transactions</Heading>
-        {hintData.txns.map((txn, i) => (
-          <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
-        ))}
-        {props.verify && (
+        <Box>
+          <Heading size="md">Transactions</Heading>
+          {hintData.txns.map((txn, i) => (
+            <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
+          ))}
+          <Link to={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${props.safe.address}&gas=${8000000}&gasPrice=0&value=${props.safeTxn?.value}&contractAddress=${props.safe?.address}&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${props.safe.chainId}&headerBlockNumber=&headerTimestamp=`}>Simulate on Tenderly <ArrowForwardIcon /></Link>
+          
+        </Box>
+        {props.verify && hintData.type === 'deploy' && (
           <Box>
             <Heading size="md">Verification</Heading>
             {buildInfo.buildStatus && <Text>{buildInfo.buildStatus}</Text>}
