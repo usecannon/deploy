@@ -43,7 +43,7 @@ export function Transaction({
   const hintData = parseHintedMulticall(tx.data)
 
   const sigHash = useMemo(
-    () => hintData?.type && getSafeTransactionHash(safe, tx),
+    () => hintData && getSafeTransactionHash(safe, tx),
     [safe, tx]
   )
 
@@ -93,7 +93,7 @@ export function Transaction({
           <Link
             to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
           >
-            {hintData && (
+            {sigHash && (
               <Button size="sm">
                 {canSign
                   ? `Review & ${canExecute ? 'Execute' : 'Queue'}`

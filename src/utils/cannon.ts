@@ -342,6 +342,8 @@ export function parseHintedMulticall(data: Hex) {
       .map((txn) => ({ to: txn.target, data: txn.callData, value: txn.value }))
   }
 
+  if (!type) return null
+
   return {
     txns,
     type,
