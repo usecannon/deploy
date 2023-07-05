@@ -3,6 +3,7 @@ import {
   Address,
   Hex,
   TransactionRequestBase,
+  bytesToString,
   decodeFunctionData,
   encodeFunctionData,
   formatEther,
@@ -121,7 +122,7 @@ export function DisplayedTransaction(props: {
       try {
         const b = hexToBytes(val as Hex)
         const t = b.findIndex((v) => v < 0x20)
-        if (b[t] != 0 || b.slice(2 + t * 2).find((v) => v != 0)) {
+        if (b[t] != 0 || b.slice(t).find((v) => v != 0)) {
           // this doesn't look like a terminated ascii hex string. leave it as hex
           return val
         }
@@ -130,7 +131,7 @@ export function DisplayedTransaction(props: {
           return ''
         }
 
-        return hexToString(trim(val as Hex, { dir: 'right' }))
+        return bytesToString(trim(b, { dir: 'right' }))
       } catch (err) {
         console.warn('could not decode hex', err)
         return val

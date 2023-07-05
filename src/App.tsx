@@ -20,7 +20,13 @@ import { Transactions } from './pages/Transactions'
 import { chains, wagmiConfig } from './wallet'
 import { useStore } from './store'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+    },
+  },
+})
 
 const router = createBrowserRouter([
   {

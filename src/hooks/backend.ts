@@ -225,22 +225,42 @@ export function useTxnStager(
     reads.isSuccess && !reads.isFetching && !reads.isRefetching
       ? (reads.data[2].result as unknown as boolean)
       : false
+
   console.log('ALREADY STAGED SIGS', alreadyStagedSigners, alreadyStaged)
-  const canSign =
-    isSigner &&
-    walletClient.data &&
-    alreadyStagedSigners.indexOf(account.address) === -1
-  const canExecute =
-    reads.isSuccess && !reads.isFetching && !reads.isRefetching
-      ? ((canSign && existingSigsCount + 1 >= requiredSigs) ||
-          (isSigner && existingSigsCount >= requiredSigs)) &&
-        currentNonce
-      : false
+
+  let signConditionFailed = ''
+  if (!isSigner) {
+    signConditionFailed = `current wallet ${account.address} not signer of this safe`
+  }
+
+  else if (!walletClient.data) {
+    signConditionFailed = `wallet not connected`
+  }
+
+  else if (alreadyStagedSigners.indexOf(account.address) !== -1) {
+    signConditionFailed = `current wallet ${account.address} has already signed the transaction`
+  }
+
+  let execConditionFailed = ''
+  if (!reads.isSuccess || reads.isFetching || reads.isRefetching || !currentNonce) {
+    execConditionFailed = 'loading transaction data, please wait...'
+  }
+
+  else if (!isSigner) {
+    execConditionFailed = `current wallet ${account.address} not signer of this safe`
+  }
+
+  else if (
+    (existingSigsCount < requiredSigs) ||
+    (!signConditionFailed && existingSigsCount + 1 < requiredSigs)
+  ) {
+    execConditionFailed = `insufficient signers to execute (required: ${requiredSigs})`
+  }
 
   return {
     isSigner,
-    canSign,
-    canExecute,
+    signConditionFailed,
+    execConditionFailed,
 
     safeTxn,
 

@@ -30,6 +30,7 @@ import {
   Heading,
   Input,
   Text,
+  Tooltip,
 } from '@chakra-ui/react'
 import { ethers } from 'ethers'
 import { formatAbiItem } from 'viem/dist/cjs/utils/abi/formatAbiItem'
@@ -262,22 +263,26 @@ export function RunCustom() {
         <Box mb="6">
           <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
-            <Button
-              size="lg"
-              w="100%"
-              isDisabled={txnHasError || !stager.canSign}
-              onClick={() => stager.sign()}
-            >
-              Queue &amp; Sign
-            </Button>
-            <Button
-              size="lg"
-              w="100%"
-              isDisabled={txnHasError || !stager.canExecute}
-              onClick={() => execTxn.write()}
-            >
-              Execute
-            </Button>
+            <Tooltip label={stager.signConditionFailed}>
+              <Button
+                size="lg"
+                w="100%"
+                isDisabled={txnHasError || !!stager.signConditionFailed}
+                onClick={() => stager.sign()}
+              >
+                Queue &amp; Sign
+              </Button>
+            </Tooltip>
+            <Tooltip label={stager.execConditionFailed}>
+              <Button
+                size="lg"
+                w="100%"
+                isDisabled={txnHasError || !!stager.execConditionFailed}
+                onClick={() => execTxn.write()}
+              >
+                Execute
+              </Button>
+            </Tooltip>
           </HStack>
         </Box>
       )}

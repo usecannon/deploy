@@ -9,6 +9,7 @@ import {
   FormControl,
   FormLabel,
   Input,
+  Tooltip,
 } from '@chakra-ui/react'
 import { useContractWrite } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -97,20 +98,26 @@ export function TransactionDetail() {
         verify={true}
       />
       <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
-        <Button
-          w="100%"
-          isDisabled={safeTxn && !stager.canSign}
-          onClick={() => stager.sign()}
-        >
-          Sign
-        </Button>
-        <Button
-          w="100%"
-          isDisabled={safeTxn && !stager.canExecute}
-          onClick={() => execTxn.write()}
-        >
-          Execute
-        </Button>
+        <Tooltip label={stager.signConditionFailed}>
+          <Button
+            size="lg"
+            w="100%"
+            isDisabled={safeTxn && !!stager.signConditionFailed}
+            onClick={() => stager.sign()}
+          >
+            Sign
+          </Button>
+        </Tooltip>
+        <Tooltip label={stager.execConditionFailed}>
+          <Button
+            size="lg"
+            w="100%"
+            isDisabled={safeTxn && !!stager.execConditionFailed}
+            onClick={() => execTxn.write()}
+          >
+            Execute
+          </Button>
+        </Tooltip>
       </HStack>
     </Container>
   )

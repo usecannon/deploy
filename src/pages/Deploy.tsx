@@ -18,6 +18,7 @@ import {
   Select,
   Text,
   useColorMode,
+  Tooltip,
 } from '@chakra-ui/react'
 import {
   TransactionRequestBase,
@@ -374,30 +375,34 @@ export function Deploy() {
       <Box my="6">
         <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
         <HStack gap="6">
-          <Button
-            size="lg"
-            w="100%"
-            isDisabled={
-              !uploadToPublishIpfs.deployedIpfsHash ||
-              !multicallTxn.data ||
-              !stager.canSign
-            }
-            onClick={() => stager.sign()}
-          >
-            Queue & Sign
-          </Button>
-          <Button
-            size="lg"
-            w="100%"
-            isDisabled={
-              !uploadToPublishIpfs.deployedIpfsHash ||
-              !multicallTxn.data ||
-              !stager.canExecute
-            }
-            onClick={() => execTxn.write()}
-          >
-            Execute
-          </Button>
+          <Tooltip label={stager.signConditionFailed}>
+            <Button
+              size="lg"
+              w="100%"
+              isDisabled={
+                !uploadToPublishIpfs.deployedIpfsHash ||
+                !multicallTxn.data ||
+                !!stager.signConditionFailed
+              }
+              onClick={() => stager.sign()}
+            >
+              Queue &amp; Sign
+            </Button>
+          </Tooltip>
+          <Tooltip label={stager.execConditionFailed}>
+            <Button
+              size="lg"
+              w="100%"
+              isDisabled={
+                !uploadToPublishIpfs.deployedIpfsHash ||
+                !multicallTxn.data ||
+                !!stager.execConditionFailed
+              }
+              onClick={() => execTxn.write()}
+            >
+              Execute
+            </Button>
+          </Tooltip>
         </HStack>
       </Box>
     </Container>
