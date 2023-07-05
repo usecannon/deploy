@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import express from 'express'
 import morgan from 'morgan'
 import { ethers } from 'ethers'
@@ -144,8 +145,10 @@ async function start() {
 
       txdb.set(
         getSafeKey(chainId, req.params.safeAddress),
-        // briefly clean up any txns that are less than current nonce
-        txs.filter((t) => t.txn._nonce >= currentNonce)
+        // briefly clean up any txns that are less than current nonce, and any transactions with dup hashes to this one
+        txs.filter((t) => 
+        t.txn._nonce >= currentNonce && 
+        (t === signedTransactionInfo || !_.isEqual(t.txn, signedTransactionInfo.txn)))
       )
 
       res.send(txs)

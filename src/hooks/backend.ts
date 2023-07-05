@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import axios from 'axios'
-import type { Abi } from 'viem'
+import { zeroAddress, type Abi } from 'viem'
 import {
   Address,
   useAccount,
@@ -195,7 +195,7 @@ export function useTxnStager(
       0,
       ethers.utils.defaultAbiCoder.encode(
         ['address', 'uint256'],
-        [account.address, 0]
+        [account.address || zeroAddress, 0]
       ) + '01'
     )
   }
@@ -270,8 +270,20 @@ export function useTxnStager(
         message: { raw: hashToSign },
       })
 
-      // gnosis for some reason requires adding 4 to the signature version code
       const gnosisSignature = ethers.utils.arrayify(signature)
+
+
+      // sometimes the signature comes back with a `v` of 0 or 1 when when it should 27 or 28, called a "recid" apparently
+      // Allow a recid to be used as the v
+      if (gnosisSignature[gnosisSignature.length - 1] < 27) {
+        if (gnosisSignature[gnosisSignature.length - 1] === 0 || gnosisSignature[gnosisSignature.length - 1] === 1) {
+          gnosisSignature[gnosisSignature.length - 1] += 27;
+        } else {
+          throw new Error(`signature invalid v byte ${signature}`);
+        }
+      }
+
+      // gnosis for some reason requires adding 4 to the signature version code
       gnosisSignature[gnosisSignature.length - 1] += 4
 
       await mutation.mutateAsync({
@@ -285,6 +297,8 @@ export function useTxnStager(
     signMutation: mutation,
 
     existingSigners: alreadyStagedSigners,
+
+    requiredSigners: requiredSigs,
 
     executeTxnConfig: stageTxnMutate.config,
   }

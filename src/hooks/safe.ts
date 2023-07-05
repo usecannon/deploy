@@ -6,7 +6,7 @@ import SafeApiKit, {
 } from '@safe-global/api-kit'
 import { Address, getAddress, isAddress } from 'viem'
 import { Web3Adapter } from '@safe-global/protocol-kit'
-import { useAccount, useChainId, useNetwork } from 'wagmi'
+import { useAccount, useChainId, useNetwork, useQuery } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ChainId, State, useStore } from '../store'
@@ -158,32 +158,16 @@ export function useSafeInfo(safeAddress: string) {
 }
 
 export function useExecutedTransactions(safe?: State['currentSafe']) {
-  const [txs, setTransactions] = useState<
-    SafeMultisigTransactionWithTransfersResponse[]
-  >([])
 
-  useEffect(() => {
-    if (!safe) return setTransactions([])
+  const txsQuery = useQuery(['safe-service', 'all-txns', safe.chainId, safe.address], async () => {
+    const safeService = _createSafeApiKit(safe.chainId, safe.address)
+    const res = await safeService.getAllTransactions(safe.address)
+    return res.results
+      .filter(_isMultisigTx)
+      .filter((tx) => tx.isExecuted) as SafeMultisigTransactionWithTransfersResponse[]
+  })
 
-    async function load() {
-      const safeService = _createSafeApiKit(safe.chainId, safe.address)
-      try {
-        const res = await safeService.getAllTransactions(safe.address)
-        const txs = res.results
-          .filter(_isMultisigTx)
-          .filter((tx) => tx.isExecuted)
-
-        setTransactions(txs)
-      } catch (err) {
-        console.error(err)
-        setTransactions([])
-      }
-    }
-
-    load()
-  }, [safe])
-
-  return txs
+  return txsQuery.data || []
 }
 
 // TS Type Guard to correctly filter txs

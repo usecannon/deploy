@@ -39,6 +39,7 @@ import { Diff, parseDiff } from 'react-diff-view'
 import { ArrowForwardIcon, CheckIcon, WarningIcon } from '@chakra-ui/icons'
 import { Link } from 'react-router-dom'
 import { createSimulationData } from '../utils/safe'
+import { useTxnStager } from '../hooks/backend'
 
 export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
@@ -128,6 +129,8 @@ export function TransactionDisplay(props: {
     props.verify &&
       (!prevDeployGitHash || prevCannonDeployInfo.ipfsQuery.isFetched)
   )
+    
+  const stager = useTxnStager(props.safeTxn, { safe: props.safe })
 
   if (cannonInfo.contracts) {
     // compare proposed build info with expected transaction batch
@@ -237,6 +240,13 @@ export function TransactionDisplay(props: {
               )}
           </Box>
         )}
+        <Box>
+          <Heading size="md">Signing Status</Heading>
+          <Text as='b'>{stager.existingSigners.length} / {Number(stager.requiredSigners)}</Text>
+          <ul>
+            {stager.existingSigners.map(s => <li>{s}</li>)}
+          </ul>
+        </Box>
       </Box>
     )
   } else {
