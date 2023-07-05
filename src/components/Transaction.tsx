@@ -65,7 +65,7 @@ export function Transaction({
           )}
           <Heading size="sm">Transaction #{tx._nonce}</Heading>
         </HStack>
-        <Text fontSize="xs" opacity="0.66" noOfLines={1}>
+        <Text fontSize="xs" opacity="0.66" noOfLines={1} fontFamily="mono">
           {sigHash || tx.transactionHash}
         </Text>
       </Box>
