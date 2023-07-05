@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   Flex,
+  HStack,
   Heading,
   Modal,
   ModalBody,
@@ -9,19 +10,18 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
-  Text,
   Tag,
+  Text,
   useDisclosure,
-  HStack,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 
+import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
 import { TransactionDisplay } from '../components/TransactionDisplay'
-import { parseHintedMulticall } from '../utils/cannon'
-import { useMemo } from 'react'
 import { getSafeTransactionHash } from '../utils/safe'
-import { SafeDefinition } from '../store'
+import { parseHintedMulticall } from '../utils/cannon'
 
 interface Params {
   safe: SafeDefinition
@@ -40,14 +40,12 @@ export function Transaction({
 }: Params) {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
-  let hintData: ReturnType<typeof parseHintedMulticall> | null = null
-  try {
-    hintData = parseHintedMulticall(tx.data)
-  } catch (err) {
-    console.log('hint data not parsable', err)
-  }
+  const hintData = parseHintedMulticall(tx.data)
 
-  const sigHash = useMemo(() => getSafeTransactionHash(safe, tx), [safe, tx])
+  const sigHash = useMemo(
+    () => hintData?.type && getSafeTransactionHash(safe, tx),
+    [safe, tx]
+  )
 
   return (
     <Flex
@@ -60,16 +58,15 @@ export function Transaction({
     >
       <Box alignContent={'center'} minWidth={0}>
         <HStack mb={1}>
-          <Tag textTransform="uppercase" size="md">
-            <Text as="b">{hintData.type}</Text>
-          </Tag>
+          {hintData?.type && (
+            <Tag textTransform="uppercase" size="md">
+              <Text as="b">{hintData.type}</Text>
+            </Tag>
+          )}
           <Heading size="sm">Transaction #{tx._nonce}</Heading>
         </HStack>
-        <Text fontSize="xs" opacity="0.66">
-          Safe: {safe.address} (Chain ID: {safe.chainId})
-        </Text>
         <Text fontSize="xs" opacity="0.66" noOfLines={1}>
-          {sigHash}
+          {sigHash || tx.transactionHash}
         </Text>
       </Box>
       {modalDisplay ? (
@@ -96,7 +93,13 @@ export function Transaction({
           <Link
             to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
           >
-            <Button size="sm">Review & Sign</Button>
+            {hintData && (
+              <Button size="sm">
+                {canSign
+                  ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
+                  : 'View Details'}
+              </Button>
+            )}
           </Link>
         </Box>
       )}

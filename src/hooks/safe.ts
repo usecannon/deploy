@@ -1,14 +1,12 @@
 import Web3 from 'web3'
-import SafeApiKit, {
-  SafeInfoResponse,
-  SafeMultisigTransactionWithTransfersResponse,
-} from '@safe-global/api-kit'
+import SafeApiKit, { SafeInfoResponse } from '@safe-global/api-kit'
 import { Address, getAddress, isAddress } from 'viem'
 import { Web3Adapter } from '@safe-global/protocol-kit'
 import { useAccount, useChainId, useNetwork, useQuery } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ChainId, State, useStore } from '../store'
+import { SafeTransaction } from '../types'
 import { chains } from '../constants'
 import { supportedChains } from '../wallet'
 
@@ -168,7 +166,22 @@ export function useExecutedTransactions(safe?: State['currentSafe']) {
           res.count,
         next: res.next,
         previous: res.previous,
-        results: res.results.filter((tx) => tx.isExecuted),
+        results: res.results
+          .filter((tx) => tx.isExecuted)
+          .map((tx) => ({
+            to: tx.to,
+            value: tx.value,
+            data: tx.data,
+            operation: tx.operation,
+            safeTxGas: tx.safeTxGas,
+            baseGas: tx.baseGas,
+            gasPrice: tx.gasPrice,
+            gasToken: tx.gasToken,
+            refundReceiver: tx.refundReceiver,
+            _nonce: tx.nonce,
+            transactionHash: tx.transactionHash,
+            safeTxHash: tx.safeTxHash,
+          })) as unknown as SafeTransaction[],
       }
     }
   )

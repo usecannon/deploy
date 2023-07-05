@@ -1,11 +1,33 @@
-import { encodeAbiParameters, encodeFunctionData, encodePacked, keccak256 } from 'viem'
+import {
+  encodeAbiParameters,
+  encodeFunctionData,
+  encodePacked,
+  keccak256,
+} from 'viem'
 
+import SafeABI from '../../backend/src/abi/Safe.json'
 import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
 
-import SafeABI from '../../backend/src/abi/Safe.json'
-
-const SimulateAccessorABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"},{"internalType":"enum Enum.Operation","name":"operation","type":"uint8"}],"name":"simulate","outputs":[{"internalType":"uint256","name":"estimate","type":"uint256"},{"internalType":"bool","name":"success","type":"bool"},{"internalType":"bytes","name":"returnData","type":"bytes"}],"stateMutability":"nonpayable","type":"function"}];
+const SimulateAccessorABI = [
+  { inputs: [], stateMutability: 'nonpayable', type: 'constructor' },
+  {
+    inputs: [
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'uint256', name: 'value', type: 'uint256' },
+      { internalType: 'bytes', name: 'data', type: 'bytes' },
+      { internalType: 'enum Enum.Operation', name: 'operation', type: 'uint8' },
+    ],
+    name: 'simulate',
+    outputs: [
+      { internalType: 'uint256', name: 'estimate', type: 'uint256' },
+      { internalType: 'bool', name: 'success', type: 'bool' },
+      { internalType: 'bytes', name: 'returnData', type: 'bytes' },
+    ],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+]
 
 const SAFE_DOMAIN_SEPARATOR_TYPEHASH =
   '0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218'
@@ -75,16 +97,15 @@ export function getSafeTransactionHash(
 const SAFE_TXN_ACCESSOR = '0x59AD6735bCd8152B84860Cb256dD9e96b85F69Da'
 
 export function createSimulationData(safeTxn: SafeTransaction) {
-
   const accessorCall = encodeFunctionData({
     abi: SimulateAccessorABI,
     functionName: 'simulate',
-    args: [safeTxn.to, safeTxn.value, safeTxn.data, safeTxn.operation]
+    args: [safeTxn.to, safeTxn.value, safeTxn.data, safeTxn.operation],
   })
 
   return encodeFunctionData({
     abi: SafeABI,
     functionName: 'simulateAndRevert',
-    args: [SAFE_TXN_ACCESSOR, accessorCall]
+    args: [SAFE_TXN_ACCESSOR, accessorCall],
   })
 }

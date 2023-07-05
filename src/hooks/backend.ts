@@ -18,7 +18,7 @@ import { useMemo } from 'react'
 import SafeABIJSON from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
 import { State, useStore } from '../store'
-import { useExecutedTransactions, useSafeAddress } from './safe'
+import { useSafeAddress } from './safe'
 
 const SafeABI = SafeABIJSON as Abi
 
@@ -38,8 +38,6 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
     functionName: 'nonce',
   })
 
-  const history = useExecutedTransactions(safe)
-
   const staged =
     stagedQuery.data && nonceQuery.data
       ? _.sortBy(
@@ -53,7 +51,6 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
     stagedQuery,
     nonce: nonceQuery.data as bigint,
     staged,
-    history,
   }
 }
 

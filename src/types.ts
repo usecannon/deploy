@@ -11,6 +11,8 @@ export type SafeTransaction = {
   gasToken: Address
   refundReceiver: Address
   _nonce: number
+  transactionHash?: string
+  safeTxHash?: string
 }
 
 export type StagedTransaction = {
