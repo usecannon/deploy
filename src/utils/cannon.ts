@@ -3,6 +3,13 @@ import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
 import path from '@isomorphic-git/lightning-fs/src/path'
 import toml from '@iarna/toml'
 import {
+  Address,
+  Hex,
+  decodeAbiParameters,
+  decodeFunctionData,
+  zeroAddress,
+} from 'viem'
+import {
   BuildOptions,
   CANNON_CHAIN_ID,
   CannonLoader,
@@ -23,6 +30,8 @@ import {
   registerAction,
 } from '@usecannon/builder'
 import { ethers } from 'ethers'
+
+import * as git from './git'
 import MulticallABI from '../../backend/src/abi/Multicall.json'
 
 // cannon plugins supported by the web interface
@@ -30,15 +39,6 @@ import MulticallABI from '../../backend/src/abi/Multicall.json'
 
 // registration of the cannon plugins
 //registerAction(cannonRouterPlugin)
-
-import * as git from './git'
-import {
-  Address,
-  Hex,
-  decodeAbiParameters,
-  decodeFunctionData,
-  zeroAddress,
-} from 'viem'
 
 export type CannonTransaction = TransactionMap[keyof TransactionMap]
 
@@ -296,18 +296,16 @@ async function loadChainDefinitionToml(
 }
 
 export function parseHintedMulticall(data: Hex) {
-  // see waht we can parse out of the data
-  let decoded: { args: readonly unknown[]; functionName: string } = {
-    args: [],
-    functionName: '',
-  }
+  let decoded: ReturnType<typeof decodeFunctionData> | null = null
+
+  // see what we can parse out of the data
   try {
     decoded = decodeFunctionData({
       abi: MulticallABI,
       data: data,
     })
   } catch (err) {
-    console.log('didnt parse', err)
+    return null
   }
 
   let type = ''
@@ -320,11 +318,21 @@ export function parseHintedMulticall(data: Hex) {
       decoded.functionName === 'aggregate3Value') &&
     decoded.args[0][0].target === zeroAddress
   ) {
-    ;[type, cannonPackage, cannonUpgradeFromPackage, gitRepoUrl, gitRepoHash] =
-      decodeAbiParameters(
+    try {
+      ;[
+        type,
+        cannonPackage,
+        cannonUpgradeFromPackage,
+        gitRepoUrl,
+        gitRepoHash,
+      ] = decodeAbiParameters(
         [{ type: 'string[]' }],
         decoded.args[0][0].callData
       )[0]
+    } catch (err) {
+      console.error('Could not parse decoded function', { decoded, err })
+      return null
+    }
   }
 
   let txns: { to: Address; data: Hex; value: bigint }[] = []

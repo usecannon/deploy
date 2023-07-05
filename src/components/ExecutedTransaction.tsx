@@ -1,14 +1,19 @@
 import { Box, Flex, HStack, Heading, Text } from '@chakra-ui/react'
-import { SafeMultisigTransactionWithTransfersResponse } from '@safe-global/api-kit'
+import { SafeMultisigTransactionListResponse } from '@safe-global/api-kit'
 
 import { SafeDefinition } from '../store'
+import { parseHintedMulticall } from '../utils/cannon'
 
 interface Params {
   safe: SafeDefinition
-  tx: SafeMultisigTransactionWithTransfersResponse
+  tx: SafeMultisigTransactionListResponse['results'][0]
 }
 
 export function ExecutedTransaction({ safe, tx }: Params) {
+  const data = parseHintedMulticall(tx.data as `0x${string}`)
+
+  if (data) console.log('data', data)
+
   return (
     <Flex
       my="3"
@@ -22,9 +27,6 @@ export function ExecutedTransaction({ safe, tx }: Params) {
         <HStack mb={1}>
           <Heading size="sm">Transaction #{tx.nonce}</Heading>
         </HStack>
-        <Text fontSize="xs" opacity="0.66">
-          Safe: {safe.address} (Chain ID: {safe.chainId})
-        </Text>
         <Text fontSize="xs" opacity="0.66" noOfLines={1}>
           Hash: {tx.transactionHash}
         </Text>

@@ -38,9 +38,7 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
     functionName: 'nonce',
   })
 
-  const history = useExecutedTransactions(safe).map((tx) => ({
-    ...tx,
-  }))
+  const history = useExecutedTransactions(safe)
 
   const staged =
     stagedQuery.data && nonceQuery.data
@@ -231,27 +229,24 @@ export function useTxnStager(
   let signConditionFailed = ''
   if (!isSigner) {
     signConditionFailed = `current wallet ${account.address} not signer of this safe`
-  }
-
-  else if (!walletClient.data) {
+  } else if (!walletClient.data) {
     signConditionFailed = `wallet not connected`
-  }
-
-  else if (alreadyStagedSigners.indexOf(account.address) !== -1) {
+  } else if (alreadyStagedSigners.indexOf(account.address) !== -1) {
     signConditionFailed = `current wallet ${account.address} has already signed the transaction`
   }
 
   let execConditionFailed = ''
-  if (!reads.isSuccess || reads.isFetching || reads.isRefetching || !currentNonce) {
+  if (
+    !reads.isSuccess ||
+    reads.isFetching ||
+    reads.isRefetching ||
+    !currentNonce
+  ) {
     execConditionFailed = 'loading transaction data, please wait...'
-  }
-
-  else if (!isSigner) {
+  } else if (!isSigner) {
     execConditionFailed = `current wallet ${account.address} not signer of this safe`
-  }
-
-  else if (
-    (existingSigsCount < requiredSigs) ||
+  } else if (
+    existingSigsCount < requiredSigs ||
     (!signConditionFailed && existingSigsCount + 1 < requiredSigs)
   ) {
     execConditionFailed = `insufficient signers to execute (required: ${requiredSigs})`
@@ -272,14 +267,16 @@ export function useTxnStager(
 
       const gnosisSignature = ethers.utils.arrayify(signature)
 
-
       // sometimes the signature comes back with a `v` of 0 or 1 when when it should 27 or 28, called a "recid" apparently
       // Allow a recid to be used as the v
       if (gnosisSignature[gnosisSignature.length - 1] < 27) {
-        if (gnosisSignature[gnosisSignature.length - 1] === 0 || gnosisSignature[gnosisSignature.length - 1] === 1) {
-          gnosisSignature[gnosisSignature.length - 1] += 27;
+        if (
+          gnosisSignature[gnosisSignature.length - 1] === 0 ||
+          gnosisSignature[gnosisSignature.length - 1] === 1
+        ) {
+          gnosisSignature[gnosisSignature.length - 1] += 27
         } else {
-          throw new Error(`signature invalid v byte ${signature}`);
+          throw new Error(`signature invalid v byte ${signature}`)
         }
       }
 

@@ -1,10 +1,8 @@
 import _ from 'lodash'
-
 import {
   Alert,
   AlertIcon,
   Box,
-  Container,
   FormControl,
   FormLabel,
   Heading,
@@ -12,33 +10,30 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
+import { ArrowForwardIcon, CheckIcon, WarningIcon } from '@chakra-ui/icons'
+import { Diff, parseDiff } from 'react-diff-view'
+import { Link } from 'react-router-dom'
 import {
-  Address,
   TransactionRequestBase,
-  encodeFunctionData,
   hexToString,
   keccak256,
   stringToBytes,
 } from 'viem'
+import { useContractReads } from 'wagmi'
 
+import * as onchainStore from '../utils/onchain-store'
 import { DisplayedTransaction } from './DisplayedTransaction'
+import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
+import { createSimulationData } from '../utils/safe'
+import { parseHintedMulticall } from '../utils/cannon'
 import {
   useCannonBuild,
   useCannonPackage,
   useCannonPackageContracts,
   useLoadCannonDefinition,
 } from '../hooks/cannon'
-import { useContractReads } from 'wagmi'
-
-import { parseHintedMulticall } from '../utils/cannon'
-import * as onchainStore from '../utils/onchain-store'
-import { SafeDefinition } from '../store'
 import { useGitDiff } from '../hooks/git'
-import { Diff, parseDiff } from 'react-diff-view'
-import { ArrowForwardIcon, CheckIcon, WarningIcon } from '@chakra-ui/icons'
-import { Link } from 'react-router-dom'
-import { createSimulationData } from '../utils/safe'
 import { useTxnStager } from '../hooks/backend'
 
 export function TransactionDisplay(props: {
@@ -47,6 +42,11 @@ export function TransactionDisplay(props: {
   verify?: boolean
 }) {
   const hintData = parseHintedMulticall(props.safeTxn?.data)
+
+  // TODO: print raw
+  if (!hintData) {
+    return <Alert status="info">Could not parse the transaction.</Alert>
+  }
 
   const cannonInfo = useCannonPackageContracts(
     hintData.cannonPackage
@@ -76,7 +76,7 @@ export function TransactionDisplay(props: {
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
         args: [
-          props.safe.address,,
+          props.safe.address,
           keccak256(
             stringToBytes((hintData.gitRepoUrl || '') + 'cannonPackage')
           ),
@@ -129,7 +129,7 @@ export function TransactionDisplay(props: {
     props.verify &&
       (!prevDeployGitHash || prevCannonDeployInfo.ipfsQuery.isFetched)
   )
-    
+
   const stager = useTxnStager(props.safeTxn, { safe: props.safe })
 
   if (cannonInfo.contracts) {
@@ -204,8 +204,19 @@ export function TransactionDisplay(props: {
           {hintData.txns.map((txn, i) => (
             <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
           ))}
-          <Link to={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${props.safe.address}&gas=${8000000}&gasPrice=0&value=${props.safeTxn?.value}&contractAddress=${props.safe?.address}&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${props.safe.chainId}&headerBlockNumber=&headerTimestamp=`}>Simulate on Tenderly <ArrowForwardIcon /></Link>
-          
+          <Link
+            to={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
+              props.safe.address
+            }&gas=${8000000}&gasPrice=0&value=${
+              props.safeTxn?.value
+            }&contractAddress=${
+              props.safe?.address
+            }&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${
+              props.safe.chainId
+            }&headerBlockNumber=&headerTimestamp=`}
+          >
+            Simulate on Tenderly <ArrowForwardIcon />
+          </Link>
         </Box>
         {props.verify && hintData.type === 'deploy' && (
           <Box>
@@ -242,9 +253,13 @@ export function TransactionDisplay(props: {
         )}
         <Box>
           <Heading size="md">Signing Status</Heading>
-          <Text as='b'>{stager.existingSigners.length} / {Number(stager.requiredSigners)}</Text>
+          <Text as="b">
+            {stager.existingSigners.length} / {Number(stager.requiredSigners)}
+          </Text>
           <ul>
-            {stager.existingSigners.map(s => <li>{s}</li>)}
+            {stager.existingSigners.map((s) => (
+              <li>{s}</li>
+            ))}
           </ul>
         </Box>
       </Box>
@@ -257,11 +272,4 @@ export function TransactionDisplay(props: {
       </Alert>
     )
   }
-
-  // TODO: print raw
-  return (
-    <Container>
-      <Text>Unable to parse data!</Text>
-    </Container>
-  )
 }

@@ -12,7 +12,7 @@ import { includes } from './utils/array'
 export type ChainId = (typeof chains)[number]['id']
 
 export type SafeDefinition = {
-  chainId: number
+  chainId: ChainId
   address: Address
 }
 

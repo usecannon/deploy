@@ -1,8 +1,7 @@
-import { Box, Container, Heading, Text } from '@chakra-ui/react'
+import { Box, Container, Heading } from '@chakra-ui/react'
 
 import { Alert } from '../components/Alert'
 import { ExecutedTransaction } from '../components/ExecutedTransaction'
-import { SafeTransaction } from '../types'
 import { Transaction } from '../components/Transaction'
 import { useSafeTransactions } from '../hooks/backend'
 import { useStore } from '../store'
@@ -34,12 +33,12 @@ export function Transactions() {
           </Alert>
         )}
       </Box>
-      {currentSafe && history.length > 0 && (
+      {currentSafe && history.count > 0 && (
         <Box mb="6">
-          <Heading size="md">Executed Transactions ({history.length})</Heading>
-          {history.map((tx) => (
+          <Heading size="md">Executed Transactions ({history.count})</Heading>
+          {history.results.map((tx) => (
             <ExecutedTransaction
-              key={tx.transactionHash}
+              key={tx.safeTxHash}
               safe={currentSafe}
               tx={tx}
             />

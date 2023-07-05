@@ -119,7 +119,7 @@ export function SafeAddressInput() {
           options={[
             ...safeOptions,
             {
-              label: 'Fetched Wallet Safes',
+              label: 'Connected Wallet Safes',
               options: walletSafeOptions,
             },
           ]}

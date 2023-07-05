@@ -1,6 +1,5 @@
 import Web3 from 'web3'
 import SafeApiKit, {
-  AllTransactionsListResponse,
   SafeInfoResponse,
   SafeMultisigTransactionWithTransfersResponse,
 } from '@safe-global/api-kit'
@@ -158,23 +157,24 @@ export function useSafeInfo(safeAddress: string) {
 }
 
 export function useExecutedTransactions(safe?: State['currentSafe']) {
+  const txsQuery = useQuery(
+    ['safe-service', 'all-txns', safe.chainId, safe.address],
+    async () => {
+      const safeService = _createSafeApiKit(safe.chainId, safe.address)
+      const res = await safeService.getMultisigTransactions(safe.address)
+      return {
+        count:
+          (res as unknown as { countUniqueNonce: number }).countUniqueNonce ||
+          res.count,
+        next: res.next,
+        previous: res.previous,
+        results: res.results.filter((tx) => tx.isExecuted),
+      }
+    }
+  )
 
-  const txsQuery = useQuery(['safe-service', 'all-txns', safe.chainId, safe.address], async () => {
-    const safeService = _createSafeApiKit(safe.chainId, safe.address)
-    const res = await safeService.getAllTransactions(safe.address)
-    return res.results
-      .filter(_isMultisigTx)
-      .filter((tx) => tx.isExecuted) as SafeMultisigTransactionWithTransfersResponse[]
-  })
-
-  return txsQuery.data || []
+  return txsQuery.data || { count: 0, next: null, previous: null, results: [] }
 }
-
-// TS Type Guard to correctly filter txs
-const _isMultisigTx = (
-  tx: SafeMultisigTransactionWithTransfersResponse
-): tx is SafeMultisigTransactionWithTransfersResponse =>
-  tx.txType === 'MULTISIG_TRANSACTION'
 
 export function useWalletPublicSafes() {
   const { address } = useAccount()
