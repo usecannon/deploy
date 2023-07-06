@@ -1,7 +1,6 @@
 import { Box, Container, Heading } from '@chakra-ui/react'
 
 import { Alert } from '../components/Alert'
-import { SafeTransaction } from '../types'
 import { Transaction } from '../components/Transaction'
 import { useExecutedTransactions } from '../hooks/safe'
 import { useSafeTransactions } from '../hooks/backend'
