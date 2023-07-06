@@ -4382,9 +4382,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@usecannon/cannon-safe-app@workspace:.":
+"@usecannon/deploy@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@usecannon/cannon-safe-app@workspace:."
+  resolution: "@usecannon/deploy@workspace:."
   dependencies:
     "@chakra-ui/icons": ^2.0.19
     "@chakra-ui/react": ^2.7.0
