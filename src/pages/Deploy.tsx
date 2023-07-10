@@ -366,7 +366,7 @@ export function Deploy() {
         <>
           <Heading size="md">Transactions</Heading>
           <TransactionDisplay
-            safeAddress={currentSafe.address}
+            safe={currentSafe}
             safeTxn={stager.safeTxn}
           />
         </>
