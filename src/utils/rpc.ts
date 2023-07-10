@@ -1,6 +1,7 @@
 import * as chains from '@wagmi/core/chains'
 import Ganache from 'ganache'
 import { ethers } from 'ethers'
+import { infuraProvider } from '@wagmi/core/dist/providers/infura'
 
 function findChainUrl(chainId: number) {
   if (typeof chainId !== 'number') {
@@ -10,7 +11,9 @@ function findChainUrl(chainId: number) {
   const chain = Object.values(chains).find((c) => c.id === chainId)
   if (!chain) throw new Error(`Unknown chainId: ${chainId}`)
 
-  const url = chain.rpcUrls?.default?.http?.[0]
+  const providerConfig = infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' })(chain);
+  const url = providerConfig.rpcUrls.http[0];
+
   if (!url) throw new Error(`Chaind ${chain.name} dos not have a default url`)
 
   return url

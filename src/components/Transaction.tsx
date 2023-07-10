@@ -69,40 +69,19 @@ export function Transaction({
           {sigHash || tx.transactionHash}
         </Text>
       </Box>
-      {modalDisplay ? (
-        <>
-          <Button size="sm" onClick={onOpen} ml="auto">
-            {canSign
-              ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
-              : 'View Details'}
-          </Button>
-
-          <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalOverlay />
-            <ModalContent>
-              <ModalHeader>Transaction Info</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                <TransactionDisplay />
-              </ModalBody>
-            </ModalContent>
-          </Modal>
-        </>
-      ) : (
-        <Box ml="auto">
-          <Link
-            to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
-          >
-            {sigHash && (
-              <Button size="sm">
-                {canSign
-                  ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
-                  : 'View Details'}
-              </Button>
-            )}
-          </Link>
-        </Box>
-      )}
+      <Box ml="auto">
+        <Link
+          to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
+        >
+          {sigHash && (
+            <Button size="sm">
+              {canSign
+                ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
+                : 'View Details'}
+            </Button>
+          )}
+        </Link>
+      </Box>
     </Flex>
   )
 }

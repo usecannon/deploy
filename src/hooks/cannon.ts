@@ -37,7 +37,7 @@ import {
 } from '../utils/cannon'
 import { createFork } from '../utils/rpc'
 import { useGitRepo } from './git'
-import { useStore } from '../store'
+import { SafeDefinition, useStore } from '../store'
 
 // TODO: in the future register actions that are found in a cannon definition automatically with stubs
 import cannonPluginRouter from 'cannon-plugin-router'
@@ -91,12 +91,11 @@ export function useLoadCannonDefinition(
 }
 
 export function useCannonBuild(
+  safe: SafeDefinition,
   def: ChainDefinition,
   prevDeploy: DeploymentInfo,
   enabled?: boolean
 ) {
-  const chainId = useNetwork().chain?.id
-  const currentSafe = useStore((s) => s.currentSafe)
   const settings = useStore((s) => s.settings)
 
   const [buildStatus, setBuildStatus] = useState('')
@@ -105,6 +104,7 @@ export function useCannonBuild(
   const [buildResult, setBuildResult] = useState<{
     runtime: ChainBuilderRuntime
     state: any
+    skippedSteps: StepExecutionError[]
     steps: { name: string; gas: ethers.BigNumber; tx: BaseTransaction }[]
   } | null>(null)
 
@@ -114,8 +114,8 @@ export function useCannonBuild(
     setBuildStatus('Creating fork...')
     const fork: EthereumProvider = await createFork({
       url: settings.forkProviderUrl,
-      chainId,
-      impersonate: [currentSafe.address],
+      chainId: safe.chainId,
+      impersonate: [safe.address],
     }).catch((err) => {
       err.message = `Could not create local fork for build: ${err.message}`
       throw err
@@ -147,9 +147,9 @@ export function useCannonBuild(
     currentRuntime = new ChainBuilderRuntime(
       {
         provider,
-        chainId,
+        chainId: safe.chainId,
         getSigner: async (addr: string) => provider.getSigner(addr),
-        getDefaultSigner: async () => provider.getSigner(currentSafe.address),
+        getDefaultSigner: async () => provider.getSigner(safe.address),
         snapshots: false,
         allowPartialDeploy: true,
         publicSourceCode: true,
@@ -181,7 +181,7 @@ export function useCannonBuild(
     const ctx = await createInitialContext(
       def,
       prevDeploy?.meta || {},
-      chainId,
+      safe.chainId,
       prevDeploy?.options || {}
     )
 
@@ -222,7 +222,7 @@ export function useCannonBuild(
 
     if (fork) await fork.disconnect()
 
-    return { runtime: currentRuntime, state: newState, steps }
+    return { runtime: currentRuntime, state: newState, steps, skippedSteps }
   }
 
   function doBuild() {
@@ -235,11 +235,12 @@ export function useCannonBuild(
           setBuildResult(res)
         })
         .catch((err) => {
+          console.log('full build error', err);
           setBuildError(err.toString())
         })
         .finally(() => {
           setBuildStatus('')
-          if (currentRuntime.isCancelled()) {
+          if (currentRuntime?.isCancelled()) {
             // adjust state to trigger a new immediate build
             setBuildCount(buildCount + 1)
           }

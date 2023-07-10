@@ -124,6 +124,7 @@ export function TransactionDisplay(props: {
   )
 
   const buildInfo = useCannonBuild(
+    props.safe,
     cannonDefInfo.def,
     prevCannonDeployInfo.pkg,
     props.verify &&
@@ -138,17 +139,20 @@ export function TransactionDisplay(props: {
       (s) => s.tx as unknown as Partial<TransactionRequestBase>
     )
 
-    console.log('txns', hintData.txns, 'expected', expectedTxns)
+    console.log('txns', hintData.txns, 'expected', expectedTxns, 'skipped', buildInfo.buildResult?.skippedSteps)
 
     const unequalTransaction =
       expectedTxns &&
-      hintData.txns.find((t, i) => {
-        return (
-          t.to.toLowerCase() !== expectedTxns[i].to.toLowerCase() ||
-          t.data !== expectedTxns[i].data ||
-          t.value.toString() !== expectedTxns[i].value.toString()
-        )
-      })
+      (
+        hintData.txns.length !== expectedTxns.length || 
+        hintData.txns.find((t, i) => {
+          return (
+            t.to.toLowerCase() !== expectedTxns[i].to.toLowerCase() ||
+            t.data !== expectedTxns[i].data ||
+            t.value.toString() !== expectedTxns[i].value.toString()
+          )
+        })
+      )
 
     return (
       <Box maxW="100%">
@@ -180,6 +184,10 @@ export function TransactionDisplay(props: {
         <FormLabel mb="1">Git Diff</FormLabel>
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
+            if (!p) {
+              return []
+            }
+
             try {
               console.log('parse the patch', p)
               console.log('got parsed diff', parseDiff(p))
@@ -225,7 +233,7 @@ export function TransactionDisplay(props: {
             {buildInfo.buildError && (
               <Text color="red">
                 <WarningIcon />
-                Proposed Changes have error: {}
+                Proposed Changes have error: {buildInfo.buildError}
               </Text>
             )}
             {buildInfo.buildResult && !unequalTransaction && (

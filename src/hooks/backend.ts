@@ -17,12 +17,12 @@ import { useMemo } from 'react'
 
 import SafeABIJSON from '../../backend/src/abi/Safe.json'
 import { SafeTransaction } from '../types'
-import { State, useStore } from '../store'
+import { SafeDefinition, State, useStore } from '../store'
 import { useSafeAddress } from './safe'
 
 const SafeABI = SafeABIJSON as Abi
 
-export function useSafeTransactions(safe?: State['currentSafe']) {
+export function useSafeTransactions(safe?: SafeDefinition) {
   const stagingUrl = useStore((s) => s.settings.stagingUrl)
 
   const stagedQuery = useQuery(['staged', safe?.chainId, safe?.address], {
@@ -34,6 +34,7 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
 
   const nonceQuery = useContractRead({
     address: safe?.address,
+    chainId: safe?.chainId,
     abi: SafeABI,
     functionName: 'nonce',
   })
@@ -57,7 +58,7 @@ export function useSafeTransactions(safe?: State['currentSafe']) {
 export function useTxnStager(
   txn: Partial<SafeTransaction>,
   options: {
-    safe?: State['currentSafe']
+    safe?: SafeDefinition,
     onSignComplete?: () => void
   } = {}
 ) {
@@ -102,6 +103,7 @@ export function useTxnStager(
       {
         abi: SafeABI,
         address: querySafeAddress,
+        chainId: options.safe?.chainId,
         functionName: 'getTransactionHash',
         args: [
           safeTxn.to,
@@ -119,11 +121,13 @@ export function useTxnStager(
       {
         abi: SafeABI,
         address: querySafeAddress,
+        chainId: options.safe?.chainId,
         functionName: 'getThreshold',
       },
       {
         abi: SafeABI,
         address: querySafeAddress,
+        chainId: options.safe?.chainId,
         functionName: 'isOwner',
         args: [account.address],
       },
