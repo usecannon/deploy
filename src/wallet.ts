@@ -9,6 +9,7 @@ import {
   optimismGoerli,
 } from 'wagmi/chains'
 import { publicProvider } from 'wagmi/providers/public'
+import { infuraProvider } from 'wagmi/providers/infura'
 
 export const supportedChains = [
   mainnet,
@@ -20,6 +21,7 @@ export const supportedChains = [
 ]
 
 const { chains, publicClient } = configureChains(supportedChains, [
+  infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' }),
   publicProvider(),
 ])
 
