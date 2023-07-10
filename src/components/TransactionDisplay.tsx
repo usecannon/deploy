@@ -76,7 +76,7 @@ export function TransactionDisplay(props: {
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
         args: [
-          props.safe.address,,
+          props.safe.address,
           keccak256(
             stringToBytes((hintData.gitRepoUrl || '') + 'cannonPackage')
           ),

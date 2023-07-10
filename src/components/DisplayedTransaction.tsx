@@ -181,15 +181,21 @@ export function DisplayedTransaction(props: {
         // offer both the nubmer they are typing, and also the bigint version
         const num = execFuncArgs[arg] || '0'
 
-        const res = [
-          { label: parseEther(num).toString(), secondary: '18-decimal fixed' },
-        ]
+        try {
+          const res = [
+            { label: parseEther(num).toString(), secondary: '18-decimal fixed' },
+          ]
 
-        if (!num.includes('.')) {
-          res.unshift({ label: num, secondary: 'literal' })
+          if (!num.includes('.')) {
+            res.unshift({ label: num, secondary: 'literal' })
+          }
+
+          return res
+        } catch (e) {
+          return [
+            { label: num, secondary: 'literal' },
+          ]
         }
-
-        return res
       }
 
       switch (execFuncFragment.inputs[arg].type) {
