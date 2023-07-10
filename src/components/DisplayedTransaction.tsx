@@ -208,7 +208,7 @@ export function DisplayedTransaction(props: {
           return [
             { label: execFuncArgs[arg] || '', secondary: '' },
             { label: currentSafe?.address ?? '', secondary: 'Safe Address' },
-            { label: account.address, secondary: 'Your Address' },
+            { label: account.address ?? '', secondary: 'Your Address' },
             ...Object.entries(props.contracts).map(([l, c]) => ({
               label: c.address,
               secondary: l,

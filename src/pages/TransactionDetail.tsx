@@ -11,7 +11,7 @@ import {
   Input,
   Tooltip,
 } from '@chakra-ui/react'
-import { useContractWrite } from 'wagmi'
+import { useContractWrite, useChainId, useAccount } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { SafeTransaction } from '../types'
@@ -22,6 +22,15 @@ import { getSafeTransactionHash } from '../utils/safe'
 export function TransactionDetail() {
   let { safeAddress } = useParams()
   const { chainId, nonce, sigHash } = useParams()
+
+  let parsedChainId = 0;
+
+  try {
+    parsedChainId = parseInt(chainId)
+  } catch (e) {}
+
+  const walletChainId = useChainId()
+  const account = useAccount()
 
   const navigate = useNavigate()
 
@@ -34,7 +43,7 @@ export function TransactionDetail() {
     staged,
     stagedQuery,
   } = useSafeTransactions({
-    chainId: Number.parseInt(chainId) as any,
+    chainId: parsedChainId,
     address: safeAddress as Address,
   })
 
@@ -97,7 +106,7 @@ export function TransactionDetail() {
         safeTxn={safeTxn}
         verify={true}
       />
-      <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
+      {account.isConnected && walletChainId === parsedChainId ? <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
         <Tooltip label={stager.signConditionFailed}>
           <Button
             size="lg"
@@ -118,7 +127,7 @@ export function TransactionDetail() {
             Execute
           </Button>
         </Tooltip>
-      </HStack>
+      </HStack> : <Text align={'center'}>Please connect a wallet and ensure its connected to the correct network to sign!</Text>}
     </Container>
   )
 }
