@@ -150,8 +150,7 @@ export function TransactionDisplay(props: {
             {hintData.gitRepoHash}
           </Text>
         )}
-        THE PATCHES
-        {patches}
+
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
             if (!p) {
