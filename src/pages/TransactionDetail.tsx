@@ -154,29 +154,31 @@ export function TransactionDetail() {
           <Heading size="lg">Transaction #{nonce}</Heading>
         </Box>
         <Flex ml="auto">
-          <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
-            <FormControl>
-              <FormLabel mb="1.5">Transaction&nbsp;Source</FormLabel>
+          {hintData && (
+            <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
+              <FormControl>
+                <FormLabel mb="1.5">Transaction&nbsp;Source</FormLabel>
 
-              {hintData.type === 'deploy' && (
-                <Tag textTransform="uppercase" size="md">
-                  <Text as="b">GitOps</Text>
-                </Tag>
-              )}
+                {hintData.type === 'deploy' && (
+                  <Tag textTransform="uppercase" size="md">
+                    <Text as="b">GitOps</Text>
+                  </Tag>
+                )}
 
-              {hintData.type === 'invoke' && (
-                <Tag textTransform="uppercase" size="md">
-                  <Text as="b">Deployer</Text>
-                </Tag>
-              )}
+                {hintData.type === 'invoke' && (
+                  <Tag textTransform="uppercase" size="md">
+                    <Text as="b">Deployer</Text>
+                  </Tag>
+                )}
 
-              {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
-                <Tag textTransform="uppercase" size="md">
-                  <Text as="b">External</Text>
-                </Tag>
-              )}
-            </FormControl>
-          </Box>
+                {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
+                  <Tag textTransform="uppercase" size="md">
+                    <Text as="b">External</Text>
+                  </Tag>
+                )}
+              </FormControl>
+            </Box>
+          )}
           <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
             <FormControl>
               <FormLabel mb="1.5">Transaction&nbsp;Status</FormLabel>
@@ -189,15 +191,17 @@ export function TransactionDetail() {
               </Tag>
             </FormControl>
           </Box>
-          <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
-            <FormControl>
-              <FormLabel mb="1">Cannon&nbsp;Package</FormLabel>
-              <Link href={createIPLDLink(hintData.cannonPackage)} isExternal>
-                {formatHash(hintData.cannonPackage)}
-                <ExternalLinkIcon transform="translate(4px,-2px)" />
-              </Link>
-            </FormControl>
-          </Box>
+          {hintData && (
+            <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
+              <FormControl>
+                <FormLabel mb="1">Cannon&nbsp;Package</FormLabel>
+                <Link href={createIPLDLink(hintData.cannonPackage)} isExternal>
+                  {formatHash(hintData.cannonPackage)}
+                  <ExternalLinkIcon transform="translate(4px,-2px)" />
+                </Link>
+              </FormControl>
+            </Box>
+          )}
         </Flex>
       </Flex>
       <TransactionDisplay
