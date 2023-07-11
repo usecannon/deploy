@@ -37,7 +37,7 @@ const router = createBrowserRouter([
         element: <Transactions />,
       },
       {
-        path: '/transactions',
+        path: '/queue',
         element: <RunCustom />,
       },
       {

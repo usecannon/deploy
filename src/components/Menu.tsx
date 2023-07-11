@@ -20,7 +20,7 @@ import { useStore } from '../store'
 
 const pages = [
   { to: '/', title: 'Sign Transactions' },
-  { to: '/transactions', title: 'Queue Transactions' },
+  { to: '/queue', title: 'Queue Transactions' },
   { to: '/gitops', title: 'Queue From GitOps' },
 ] as const
 
@@ -72,7 +72,9 @@ export function Menu() {
         bg={colorMode === 'dark' ? 'blackAlpha.400' : 'blackAlpha.100'}
       >
         <Text fontSize="26.5px" fontWeight="semibold">
-          Cannon Deployer
+          <Link as={NavLink} to="/" _hover={{ textDecoration: 'none' }}>
+            Cannon Deployer
+          </Link>
         </Text>
         <Tag
           ml="3"

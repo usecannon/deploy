@@ -162,12 +162,7 @@ export function TransactionDisplay(props: {
         }))
 
     return (
-      <Box maxW="100%">
-        <FormControl mb="3">
-          <FormLabel mb="0.5">Base Cannon Package</FormLabel>
-          <Input variant="unstyled" isReadOnly value={hintData.cannonPackage} />
-        </FormControl>
-
+      <Box maxW="100%" overflowX="scroll">
         <FormControl mb="3">
           <FormLabel mb="0.5">Git Target</FormLabel>
           <Input
@@ -179,13 +174,6 @@ export function TransactionDisplay(props: {
                 : 'N/A'
             }
           />
-        </FormControl>
-
-        <FormControl mb="4">
-          <FormLabel mb="1">Transaction Type</FormLabel>
-          <Tag textTransform="uppercase" size="md">
-            <Text as="b">{hintData.type}</Text>
-          </Tag>
         </FormControl>
 
         <FormLabel mb="1">Git Diff</FormLabel>
@@ -214,8 +202,10 @@ export function TransactionDisplay(props: {
             }
           })}
         </Box>
-        <Box>
-          <Heading size="md">Transactions</Heading>
+        <Box mb="6">
+          <Heading size="md" mb="3">
+            Transactions
+          </Heading>
           {hintData.txns.map((txn, i) => (
             <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
           ))}
@@ -234,7 +224,7 @@ export function TransactionDisplay(props: {
           </Link>
         </Box>
         {props.verify && hintData.type === 'deploy' && (
-          <Box>
+          <Box mb="6">
             <Heading size="md">Verification</Heading>
             {buildInfo.buildStatus && <Text>{buildInfo.buildStatus}</Text>}
             {buildInfo.buildError && (
@@ -268,7 +258,9 @@ export function TransactionDisplay(props: {
         )}
         {props.verify ? (
           <Box>
-            <Heading size="md">Signing Status</Heading>
+            <Heading size="md" mb="3">
+              Signing Status
+            </Heading>
             <Text as="b">
               {stager.existingSigners.length} / {Number(stager.requiredSigners)}
             </Text>
@@ -280,7 +272,9 @@ export function TransactionDisplay(props: {
           </Box>
         ) : (
           <Box>
-            <Heading size="md">Deployment Publish Status</Heading>
+            <Heading size="md" mb="3">
+              Deployment Publish Status
+            </Heading>
             <PublishUtility
               deployUrl={hintData.cannonPackage}
               targetVariant={`${props.safe.chainId}-${settings.preset}`}

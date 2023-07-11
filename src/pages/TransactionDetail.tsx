@@ -11,6 +11,7 @@ import {
   FormLabel,
   Input,
   Tooltip,
+  Tag,
 } from '@chakra-ui/react'
 import { useContractWrite, useChainId, useAccount } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -21,6 +22,7 @@ import { useSafeTransactions, useTxnStager } from '../hooks/backend'
 import { getSafeTransactionHash } from '../utils/safe'
 import { useExecutedTransactions } from '../hooks/safe'
 import { SafeDefinition } from '../store'
+import { parseHintedMulticall } from '../utils/cannon'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
@@ -85,6 +87,8 @@ export function TransactionDetail() {
   })
   const execTxn = useContractWrite(stager.executeTxnConfig)
 
+  const hintData = parseHintedMulticall(safeTxn?.data)
+
   if (!safeTxn && stagedQuery.isFetched) {
     return (
       <Container>
@@ -98,7 +102,7 @@ export function TransactionDetail() {
   }
 
   return (
-    <Container maxW="100%" w="container.lg" pb="12">
+    <Box p="12" pt="2" maxWidth="100%">
       <Heading size="lg" mb="3">
         Transaction #{nonce}
       </Heading>
@@ -110,6 +114,18 @@ export function TransactionDetail() {
           isReadOnly
           value={`${safeAddress} (Chain ID: ${chainId})`}
         />
+      </FormControl>
+
+      <FormControl mb="4">
+        <FormLabel mb="1">Transaction Type</FormLabel>
+        <Tag textTransform="uppercase" size="md">
+          <Text as="b">{hintData.type}</Text>
+        </Tag>
+      </FormControl>
+
+      <FormControl mb="3">
+        <FormLabel mb="0.5">Base Cannon Package</FormLabel>
+        <Input variant="unstyled" isReadOnly value={hintData.cannonPackage} />
       </FormControl>
 
       <TransactionDisplay
@@ -155,6 +171,6 @@ export function TransactionDetail() {
           )}
         </Box>
       )}
-    </Container>
+    </Box>
   )
 }
