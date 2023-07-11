@@ -146,7 +146,7 @@ export function TransactionDisplay(props: {
           </FormControl>
         )}
 
-        <Box mb="6" bg="gray.900" borderRadius="md">
+        <Box mb="6">
           {patches.map((p) => {
             if (!p) {
               return []
@@ -157,12 +157,14 @@ export function TransactionDisplay(props: {
               console.log('got parsed diff', parseDiff(p))
               const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
               return (
-                <Diff
-                  key={oldRevision + '-' + newRevision}
-                  viewType="split"
-                  diffType={type}
-                  hunks={hunks}
-                />
+                <Box bg="gray.900" borderRadius="md" fontSize="xs" mb={4}>
+                  <Diff
+                    key={oldRevision + '-' + newRevision}
+                    viewType="split"
+                    diffType={type}
+                    hunks={hunks}
+                  />
+                </Box>
               )
             } catch (err) {
               console.error('diff didnt work:', err)
@@ -172,9 +174,7 @@ export function TransactionDisplay(props: {
           })}
         </Box>
         <Box mb="6">
-          <Heading size="md" mb="1">
-            Transactions
-          </Heading>
+          <Heading size="md">Transactions</Heading>
           <Box maxW="100%" overflowX="scroll">
             {hintData.txns.map((txn, i) => (
               <DisplayedTransaction
