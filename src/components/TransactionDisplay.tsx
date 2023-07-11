@@ -23,7 +23,7 @@ import { useContractReads } from 'wagmi'
 
 import * as onchainStore from '../utils/onchain-store'
 import { DisplayedTransaction } from './DisplayedTransaction'
-import { SafeDefinition } from '../store'
+import { SafeDefinition, useStore } from '../store'
 import { SafeTransaction } from '../types'
 import { createSimulationData } from '../utils/safe'
 import { parseHintedMulticall } from '../utils/cannon'
@@ -35,12 +35,14 @@ import {
 } from '../hooks/cannon'
 import { useGitDiff } from '../hooks/git'
 import { useTxnStager } from '../hooks/backend'
+import PublishUtility from './PublishUtility'
 
 export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
   safe: SafeDefinition
   verify?: boolean
 }) {
+  const settings = useStore((s) => s.settings)
   const hintData = parseHintedMulticall(props.safeTxn?.data)
 
   // TODO: print raw
@@ -139,20 +141,25 @@ export function TransactionDisplay(props: {
       (s) => s.tx as unknown as Partial<TransactionRequestBase>
     )
 
-    console.log('txns', hintData.txns, 'expected', expectedTxns, 'skipped', buildInfo.buildResult?.skippedSteps)
+    console.log(
+      'txns',
+      hintData.txns,
+      'expected',
+      expectedTxns,
+      'skipped',
+      buildInfo.buildResult?.skippedSteps
+    )
 
     const unequalTransaction =
       expectedTxns &&
-      (
-        hintData.txns.length !== expectedTxns.length || 
+      (hintData.txns.length !== expectedTxns.length ||
         hintData.txns.find((t, i) => {
           return (
             t.to.toLowerCase() !== expectedTxns[i].to.toLowerCase() ||
             t.data !== expectedTxns[i].data ||
             t.value.toString() !== expectedTxns[i].value.toString()
           )
-        })
-      )
+        }))
 
     return (
       <Box maxW="100%">
@@ -259,17 +266,27 @@ export function TransactionDisplay(props: {
               )}
           </Box>
         )}
-        {props.verify && <Box>
-          <Heading size="md">Signing Status</Heading>
-          <Text as="b">
-            {stager.existingSigners.length} / {Number(stager.requiredSigners)}
-          </Text>
-          <ul>
-            {stager.existingSigners.map((s) => (
-              <li>{s}</li>
-            ))}
-          </ul>
-        </Box>}
+        {props.verify ? (
+          <Box>
+            <Heading size="md">Signing Status</Heading>
+            <Text as="b">
+              {stager.existingSigners.length} / {Number(stager.requiredSigners)}
+            </Text>
+            <ul>
+              {stager.existingSigners.map((s) => (
+                <li>{s}</li>
+              ))}
+            </ul>
+          </Box>
+        ) : (
+          <Box>
+            <Heading size="md">Deployment Publish Status</Heading>
+            <PublishUtility
+              deployUrl={hintData.cannonPackage}
+              targetVariant={`${props.safe.chainId}-${settings.preset}`}
+            />
+          </Box>
+        )}
       </Box>
     )
   } else {

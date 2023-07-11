@@ -58,7 +58,7 @@ export function useSafeTransactions(safe?: SafeDefinition) {
 export function useTxnStager(
   txn: Partial<SafeTransaction>,
   options: {
-    safe?: SafeDefinition,
+    safe?: SafeDefinition
     onSignComplete?: () => void
   } = {}
 ) {

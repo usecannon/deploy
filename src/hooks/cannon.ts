@@ -235,7 +235,7 @@ export function useCannonBuild(
           setBuildResult(res)
         })
         .catch((err) => {
-          console.log('full build error', err);
+          console.log('full build error', err)
           setBuildError(err.toString())
         })
         .finally(() => {
@@ -375,9 +375,21 @@ export function useCannonPackage(packageRef: string, variant = '') {
 
       const deployInfo: DeploymentInfo = await loader.read(pkgUrl)
 
+      const def = new ChainDefinition(deployInfo.def)
+
+      const ctx = await createInitialContext(
+        def,
+        deployInfo.meta,
+        0,
+        deployInfo.options
+      )
+
+      const resolvedName = def.getName(ctx)
+      const resolvedVersion = def.getVersion(ctx)
+
       if (deployInfo) {
         console.log('LOADED')
-        return deployInfo
+        return { deployInfo, ctx, resolvedName, resolvedVersion }
       } else {
         throw new Error('failed to download package data')
       }
@@ -390,7 +402,9 @@ export function useCannonPackage(packageRef: string, variant = '') {
     ipfsQuery,
     pkgUrl,
     metaUrl: registryQuery.data?.metaUrl,
-    pkg: ipfsQuery.data,
+    pkg: ipfsQuery.data?.deployInfo,
+    resolvedName: ipfsQuery.data?.resolvedName,
+    resolvedVersion: ipfsQuery.data?.resolvedVersion,
   }
 }
 

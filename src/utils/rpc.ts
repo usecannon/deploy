@@ -11,8 +11,10 @@ function findChainUrl(chainId: number) {
   const chain = Object.values(chains).find((c) => c.id === chainId)
   if (!chain) throw new Error(`Unknown chainId: ${chainId}`)
 
-  const providerConfig = infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' })(chain);
-  const url = providerConfig.rpcUrls.http[0];
+  const providerConfig = infuraProvider({
+    apiKey: '6b369abb43f44b83a7fb34f6eacb8683',
+  })(chain)
+  const url = providerConfig.rpcUrls.http[0]
 
   if (!url) throw new Error(`Chaind ${chain.name} dos not have a default url`)
 

@@ -183,7 +183,10 @@ export function DisplayedTransaction(props: {
 
         try {
           const res = [
-            { label: parseEther(num).toString(), secondary: '18-decimal fixed' },
+            {
+              label: parseEther(num).toString(),
+              secondary: '18-decimal fixed',
+            },
           ]
 
           if (!num.includes('.')) {
@@ -192,9 +195,7 @@ export function DisplayedTransaction(props: {
 
           return res
         } catch (e) {
-          return [
-            { label: num, secondary: 'literal' },
-          ]
+          return [{ label: num, secondary: 'literal' }]
         }
       }
 

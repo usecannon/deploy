@@ -365,10 +365,7 @@ export function Deploy() {
       {multicallTxn.data && stager.safeTxn && (
         <>
           <Heading size="md">Transactions</Heading>
-          <TransactionDisplay
-            safe={currentSafe}
-            safeTxn={stager.safeTxn}
-          />
+          <TransactionDisplay safe={currentSafe} safeTxn={stager.safeTxn} />
         </>
       )}
 
