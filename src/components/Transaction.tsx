@@ -1,25 +1,18 @@
 import {
   Box,
-  Button,
   Flex,
-  HStack,
   Heading,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Tag,
-  Text,
   useDisclosure,
+  LinkBox,
+  LinkOverlay,
 } from '@chakra-ui/react'
+import { ChevronRightIcon } from '@chakra-ui/icons'
+
 import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 
 import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
-import { TransactionDisplay } from '../components/TransactionDisplay'
 import { getSafeTransactionHash } from '../utils/safe'
 import { parseHintedMulticall } from '../utils/cannon'
 
@@ -47,41 +40,35 @@ export function Transaction({
     [safe, tx]
   )
 
+  const isLink = sigHash != null
+
   return (
-    <Flex
-      my="3"
-      p="3"
+    <LinkBox
+      as={Flex}
+      mb="4"
+      p="5"
       border="1px solid"
-      borderColor="gray.600"
+      bg="blackAlpha.300"
+      borderColor={isLink ? 'gray.600' : 'gray.700'}
       borderRadius="md"
       alignItems="center"
+      shadow={isLink ? 'lg' : ''}
+      transition="all 0.2s"
+      _hover={isLink ? { shadow: 'xl', bg: 'blackAlpha.400' } : {}}
     >
       <Box alignContent={'center'} minWidth={0}>
-        <HStack mb={1}>
-          {hintData?.type && (
-            <Tag textTransform="uppercase" size="md">
-              <Text as="b">{hintData.type}</Text>
-            </Tag>
-          )}
-          <Heading size="sm">Transaction #{tx._nonce}</Heading>
-        </HStack>
-        <Text fontSize="xs" opacity="0.66" noOfLines={1} fontFamily="mono">
-          {sigHash || tx.transactionHash}
-        </Text>
+        <Heading size="md">Transaction #{tx._nonce}</Heading>
       </Box>
-      <Box ml="auto">
-        <Link
-          to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
-        >
-          {sigHash && (
-            <Button size="sm">
-              {canSign
-                ? `Review & ${canExecute ? 'Execute' : 'Queue'}`
-                : 'View Details'}
-            </Button>
-          )}
-        </Link>
+      <Box ml="auto" pl="2">
+        {isLink && (
+          <LinkOverlay
+            as={Link}
+            to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
+          >
+            <ChevronRightIcon boxSize={6} />
+          </LinkOverlay>
+        )}
       </Box>
-    </Flex>
+    </LinkBox>
   )
 }

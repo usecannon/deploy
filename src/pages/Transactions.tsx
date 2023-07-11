@@ -1,4 +1,4 @@
-import { Box, Container, Heading } from '@chakra-ui/react'
+import { Box, Container, FormLabel } from '@chakra-ui/react'
 
 import { Alert } from '../components/Alert'
 import { Transaction } from '../components/Transaction'
@@ -16,10 +16,8 @@ export function Transactions() {
 
   return (
     <Container maxW="100%" w="container.sm">
-      <Box mb="6">
-        <Heading size="md" mb="2">
-          Pending Transactions ({staged.length})
-        </Heading>
+      <Box mb="10">
+        <FormLabel mb="3">Queued Transactions</FormLabel>
         {currentSafe &&
           staged.map((tx) => (
             <Transaction
@@ -32,13 +30,13 @@ export function Transactions() {
           ))}
         {currentSafe && staged.length === 0 && (
           <Alert status="info">
-            There are no transactions to be executed on the selected safe
+            There are no transactions queued on the selected safe.
           </Alert>
         )}
       </Box>
       {currentSafe && history.count > 0 && (
         <Box mb="6">
-          <Heading size="md">Executed Transactions ({history.count})</Heading>
+          <FormLabel mb="3">Executed Transactions</FormLabel>
           {history.results.map((tx) => (
             <Transaction key={tx.safeTxHash} safe={currentSafe} tx={tx} />
           ))}

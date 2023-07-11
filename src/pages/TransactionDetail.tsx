@@ -117,9 +117,19 @@ export function TransactionDetail() {
       </FormControl>
 
       <FormControl mb="4">
-        <FormLabel mb="1">Transaction Type</FormLabel>
+        <FormLabel mb="1">Transaction Source</FormLabel>
         <Tag textTransform="uppercase" size="md">
           <Text as="b">{hintData.type}</Text>
+        </Tag>
+
+        <Tag textTransform="uppercase" size="md">
+          <Text as="b">GitOps</Text>
+        </Tag>
+        <Tag textTransform="uppercase" size="md">
+          <Text as="b">Transaction</Text>
+        </Tag>
+        <Tag textTransform="uppercase" size="md">
+          <Text as="b">External</Text>
         </Tag>
       </FormControl>
 
