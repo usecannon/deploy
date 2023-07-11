@@ -145,8 +145,12 @@ export function Deploy() {
     currentSafe,
     cannonDefInfo.def,
     prevCannonDeployInfo.pkg,
-    !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched
+    false
   )
+
+  const buildTransactions = () => {
+    buildInfo.doBuild()
+  }
 
   const uploadToPublishIpfs = useCannonWriteDeployToIpfs(
     buildInfo.buildResult?.runtime,
@@ -360,6 +364,12 @@ export function Deploy() {
         </FormHelperText>
       </FormControl>
 
+      {buildInfo.buildStatus == '' && (
+        <Button width="100%" mb={4} onClick={() => buildTransactions()}>
+          Preview Transactions to Queue
+        </Button>
+      )}
+
       {buildInfo.buildStatus && (
         <Alert mb="6" status="info">
           <AlertIcon />
@@ -375,45 +385,28 @@ export function Deploy() {
       )}
 
       {multicallTxn.data && stager.safeTxn && (
-        <>
-          <Heading size="md">Transactions</Heading>
-          <TransactionDisplay safe={currentSafe} safeTxn={stager.safeTxn} />
-        </>
+        <TransactionDisplay safe={currentSafe} safeTxn={stager.safeTxn} />
       )}
 
-      <Box my="6">
-        <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
-        <HStack gap="6">
-          <Tooltip label={stager.signConditionFailed}>
-            <Button
-              size="lg"
-              w="100%"
-              isDisabled={
-                !uploadToPublishIpfs.deployedIpfsHash ||
-                !multicallTxn.data ||
-                !!stager.signConditionFailed
-              }
-              onClick={() => stager.sign()}
-            >
-              Queue &amp; Sign
-            </Button>
-          </Tooltip>
-          <Tooltip label={stager.execConditionFailed}>
-            <Button
-              size="lg"
-              w="100%"
-              isDisabled={
-                !uploadToPublishIpfs.deployedIpfsHash ||
-                !multicallTxn.data ||
-                !!stager.execConditionFailed
-              }
-              onClick={() => execTxn.write()}
-            >
-              Execute
-            </Button>
-          </Tooltip>
-        </HStack>
-      </Box>
+      {uploadToPublishIpfs.deployedIpfsHash &&
+        multicallTxn.data &&
+        !stager.signConditionFailed && (
+          <Box my="6">
+            <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
+            <HStack gap="6">
+              <Tooltip label={stager.signConditionFailed}>
+                <Button size="lg" w="100%" onClick={() => stager.sign()}>
+                  Queue &amp; Sign
+                </Button>
+              </Tooltip>
+              <Tooltip label={stager.execConditionFailed}>
+                <Button size="lg" w="100%" onClick={() => execTxn.write()}>
+                  Execute
+                </Button>
+              </Tooltip>
+            </HStack>
+          </Box>
+        )}
     </Container>
   )
 }

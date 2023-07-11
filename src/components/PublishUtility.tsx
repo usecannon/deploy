@@ -2,7 +2,14 @@ import _ from 'lodash'
 
 import { ethers } from 'ethers'
 
-import { Box, Button, FormControl, Spinner, Text } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  FormControl,
+  FormHelperText,
+  Spinner,
+  Text,
+} from '@chakra-ui/react'
 import { useCannonPackage } from '../hooks/cannon'
 
 import { useAccount, useChainId, useMutation, useWalletClient } from 'wagmi'
@@ -128,6 +135,12 @@ export default function PublishUtility(props: {
             ? [<Spinner />, ' Publish in Progress...']
             : 'Publish to Registry'}
         </Button>
+        {wc.data?.chain?.id !== 1 && (
+          <FormHelperText>
+            You must set your wallet to Ethereum Mainnet to publish this
+            package.
+          </FormHelperText>
+        )}
       </FormControl>
     )
   } else {

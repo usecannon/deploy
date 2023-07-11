@@ -222,37 +222,44 @@ export function useCannonBuild(
 
     if (fork) await fork.disconnect()
 
-    return { runtime: currentRuntime, state: newState, steps, skippedSteps }
+    return {
+      runtime: currentRuntime,
+      state: newState,
+      steps,
+      skippedSteps,
+    }
   }
 
   function doBuild() {
     console.log('cannon.ts: do build called', currentRuntime)
+    setBuildResult(null)
+    setBuildError(null)
+    buildFn()
+      .then((res) => {
+        setBuildResult(res)
+      })
+      .catch((err) => {
+        console.log('full build error', err)
+        setBuildError(err.toString())
+      })
+      .finally(() => {
+        setBuildStatus('')
+        if (currentRuntime?.isCancelled()) {
+          // adjust state to trigger a new immediate build
+          setBuildCount(buildCount + 1)
+        }
+      })
+  }
+
+  // stringify the def to make it easier to detect equality
+  useEffect(() => {
     if (enabled && def && buildStatus === '') {
-      setBuildResult(null)
-      setBuildError(null)
-      buildFn()
-        .then((res) => {
-          setBuildResult(res)
-        })
-        .catch((err) => {
-          console.log('full build error', err)
-          setBuildError(err.toString())
-        })
-        .finally(() => {
-          setBuildStatus('')
-          if (currentRuntime?.isCancelled()) {
-            // adjust state to trigger a new immediate build
-            setBuildCount(buildCount + 1)
-          }
-        })
+      doBuild()
     } else if (currentRuntime) {
       console.log('cannon.ts: cancel current build')
       currentRuntime.cancel()
     }
-  }
-
-  // stringify the def to make it easier to detect equality
-  useEffect(doBuild, [
+  }, [
     def && JSON.stringify(def.toJson()),
     JSON.stringify(prevDeploy),
     enabled,
@@ -263,6 +270,7 @@ export function useCannonBuild(
     buildStatus,
     buildResult,
     buildError,
+    doBuild,
   }
 }
 
