@@ -6,28 +6,13 @@ import {
   bytesToString,
   decodeFunctionData,
   encodeFunctionData,
-  formatEther,
   getFunctionSelector,
   hexToBytes,
-  hexToString,
   parseEther,
   stringToHex,
   trim,
 } from 'viem'
-import {
-  Box,
-  Editable,
-  EditableInput,
-  EditablePreview,
-  HStack,
-  Popover,
-  PopoverAnchor,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
-  Text,
-  VStack,
-} from '@chakra-ui/react'
+import { HStack, Text } from '@chakra-ui/react'
 import { useAccount } from 'wagmi'
 import { useState } from 'react'
 

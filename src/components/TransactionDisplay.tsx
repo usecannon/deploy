@@ -3,14 +3,21 @@ import {
   Alert,
   AlertIcon,
   Box,
+  Button,
   FormControl,
   FormLabel,
   Heading,
+  IconButton,
   Input,
   Tag,
   Text,
 } from '@chakra-ui/react'
-import { ArrowForwardIcon, CheckIcon, WarningIcon } from '@chakra-ui/icons'
+import {
+  ArrowForwardIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  WarningIcon,
+} from '@chakra-ui/icons'
 import { Diff, parseDiff } from 'react-diff-view'
 import { Link } from 'react-router-dom'
 import {
@@ -176,7 +183,8 @@ export function TransactionDisplay(props: {
           />
         </FormControl>
 
-        <FormLabel mb="1">Git Diff</FormLabel>
+        {patches.length > 0 && <FormLabel mb="2">Git Diff</FormLabel>}
+
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
             if (!p) {
@@ -203,14 +211,17 @@ export function TransactionDisplay(props: {
           })}
         </Box>
         <Box mb="6">
-          <Heading size="md" mb="3">
+          <Heading size="md" mb="1">
             Transactions
           </Heading>
           {hintData.txns.map((txn, i) => (
             <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
           ))}
-          <Link
-            to={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
+          <Button
+            size="xs"
+            as="a"
+            mt={2}
+            href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
               props.safe.address
             }&gas=${8000000}&gasPrice=0&value=${
               props.safeTxn?.value
@@ -219,9 +230,13 @@ export function TransactionDisplay(props: {
             }&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${
               props.safe.chainId
             }&headerBlockNumber=&headerTimestamp=`}
+            colorScheme="purple"
+            rightIcon={<ExternalLinkIcon />}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            Simulate on Tenderly <ArrowForwardIcon />
-          </Link>
+            Simulate on Tenderly
+          </Button>
         </Box>
         {props.verify && hintData.type === 'deploy' && (
           <Box mb="6">

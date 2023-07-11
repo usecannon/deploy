@@ -105,9 +105,11 @@ export default function PublishUtility(props: {
     return (
       <FormControl mb="8">
         {!existingRegistryUrl ? (
-          <Text color={'red'}>Not Deployed to Registry</Text>
+          <Text color={'red'} mb={3}>
+            Not Deployed to Registry
+          </Text>
         ) : (
-          <Text color={'yellow'}>
+          <Text color={'yellow'} mb={3}>
             Different Deployment Published to this version on the Registry
           </Text>
         )}
