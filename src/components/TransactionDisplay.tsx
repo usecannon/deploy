@@ -4,8 +4,8 @@ import {
   AlertIcon,
   Box,
   Button,
-  FormControl,
-  FormLabel,
+  Flex,
+  Spinner,
   Heading,
   ListItem,
   OrderedList,
@@ -137,16 +137,28 @@ export function TransactionDisplay(props: {
           )
         }))
 
+    const parseDiffFileNames = (diffString: string): string[] => {
+      let regExp = /[-|+]{3}\s[ab]\/\.(.*?)\n/g
+      let match
+      let fileNames: string[] = []
+      while ((match = regExp.exec(diffString)) !== null) {
+        fileNames.push(match[1])
+      }
+      return fileNames
+    }
+
     return (
       <Box>
         {hintData.gitRepoUrl && (
-          <FormControl mb={3} opacity={0.9}>
-            <FormLabel mb={0}>Git Target</FormLabel>
+          <Box mb="6">
+            <Heading size="md" mb={1}>
+              Git Target
+            </Heading>
             {hintData.gitRepoUrl}@{hintData.gitRepoHash}
-          </FormControl>
+          </Box>
         )}
 
-        <Box mb="6">
+        <Box mb="8">
           {patches.map((p) => {
             if (!p) {
               return []
@@ -157,7 +169,26 @@ export function TransactionDisplay(props: {
               console.log('got parsed diff', parseDiff(p))
               const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
               return (
-                <Box bg="gray.900" borderRadius="md" fontSize="xs" mb={4}>
+                <Box
+                  bg="gray.900"
+                  borderRadius="sm"
+                  overflow="hidden"
+                  fontSize="xs"
+                  mb={4}
+                >
+                  <Flex
+                    bg="blackAlpha.300"
+                    direction="row"
+                    py="1"
+                    fontWeight="semibold"
+                  >
+                    <Box w="50%" px={2} py={1}>
+                      {parseDiffFileNames(p)[0]}
+                    </Box>
+                    <Box w="50%" px={2} py={1}>
+                      {parseDiffFileNames(p)[1]}
+                    </Box>
+                  </Flex>
                   <Diff
                     key={oldRevision + '-' + newRevision}
                     viewType="split"
@@ -185,16 +216,21 @@ export function TransactionDisplay(props: {
           </Box>
         </Box>
         {props.verify && hintData.type === 'deploy' && (
-          <Box mb="6">
-            <Heading size="md" mb="2">
+          <Box mb="4">
+            <Heading size="md" mb="3">
               Verify Queued Transactions
             </Heading>
-            {buildInfo.buildStatus && <Text>{buildInfo.buildStatus}</Text>}
+            {buildInfo.buildStatus && (
+              <Alert status="info">
+                <Spinner mr={3} boxSize={4} />
+                <strong>{buildInfo.buildStatus}</strong>
+              </Alert>
+            )}
             {buildInfo.buildError && (
-              <Text color="red">
-                <WarningIcon />
-                Proposed Changes have error: {buildInfo.buildError}
-              </Text>
+              <Alert status="error">
+                <AlertIcon mr={3} />
+                <strong>{buildInfo.buildError}</strong>
+              </Alert>
             )}
             {buildInfo.buildResult && !unequalTransaction && (
               <Box
@@ -237,37 +273,37 @@ export function TransactionDisplay(props: {
               )}
           </Box>
         )}
-        {props.verify && (
-          <Button
-            size="xs"
-            as="a"
-            mb={4}
-            href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
-              props.safe.address
-            }&gas=${8000000}&gasPrice=0&value=${
-              props.safeTxn?.value
-            }&contractAddress=${
-              props.safe?.address
-            }&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${
-              props.safe.chainId
-            }&headerBlockNumber=&headerTimestamp=`}
-            colorScheme="purple"
-            rightIcon={<ExternalLinkIcon />}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Simulate on Tenderly
-          </Button>
-        )}
         {props.verify ? (
-          <Box>
+          <Box mb={8}>
+            <Button
+              size="xs"
+              as="a"
+              mb={8}
+              href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
+                props.safe.address
+              }&gas=${8000000}&gasPrice=0&value=${
+                props.safeTxn?.value
+              }&contractAddress=${
+                props.safe?.address
+              }&rawFunctionInput=${createSimulationData(
+                props.safeTxn
+              )}&network=${
+                props.safe.chainId
+              }&headerBlockNumber=&headerTimestamp=`}
+              colorScheme="purple"
+              rightIcon={<ExternalLinkIcon />}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Simulate on Tenderly
+            </Button>
             <Heading size="md" mb="2">
               Signatures ({stager.existingSigners.length}/
               {Number(stager.requiredSigners)})
             </Heading>
-            <OrderedList>
+            <OrderedList fontSize="lg">
               {stager.existingSigners.map((s) => (
-                <ListItem>{s}</ListItem>
+                <ListItem mb={1}>{s}</ListItem>
               ))}
             </OrderedList>
           </Box>

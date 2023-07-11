@@ -9,10 +9,10 @@ import {
   Heading,
   FormControl,
   FormLabel,
-  Input,
   Tooltip,
   Tag,
   Flex,
+  Link,
 } from '@chakra-ui/react'
 import { useContractWrite, useChainId, useAccount } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -24,6 +24,7 @@ import { getSafeTransactionHash } from '../utils/safe'
 import { useExecutedTransactions } from '../hooks/safe'
 import { SafeDefinition } from '../store'
 import { parseHintedMulticall } from '../utils/cannon'
+import { ExternalLinkIcon } from '@chakra-ui/icons'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
@@ -102,6 +103,40 @@ export function TransactionDetail() {
     )
   }
 
+  const executed = Number(safeNonce) > Number(nonce)
+  const awaitingExecution = !safeTxn || !stager.execConditionFailed
+  let status = 'awaiting signatures'
+
+  if (awaitingExecution) {
+    status = 'awaiting execution'
+  } else if (executed) {
+    status = 'executed'
+  }
+
+  const formatHash = (hash: string): string => {
+    if (hash.startsWith('ipfs://')) {
+      const parts = hash.split('/')
+      const id = parts[2]
+      if (id.length > 8) {
+        return `${parts[0]}//${parts[1]}/${id.substring(
+          0,
+          4
+        )}....${id.substring(id.length - 4)}`
+      }
+    }
+    return hash
+  }
+
+  // Function to create IPLD link
+  const createIPLDLink = (hash: string): string => {
+    if (hash.startsWith('ipfs://')) {
+      const parts = hash.split('/')
+      const id = parts[2]
+      return `https://explore.ipld.io/#/explore/${id}`
+    }
+    return ''
+  }
+
   return (
     <Box p="12" pt="2" maxWidth="100%">
       <Flex
@@ -110,10 +145,10 @@ export function TransactionDetail() {
         borderBottom="1px solid"
         borderColor="whiteAlpha.300"
         pb="6"
-        mb="8"
+        mb="6"
       >
         <Box>
-          <Text mb="1.5" opacity={0.9}>
+          <Text fontSize="sm" mb="1.5" opacity={0.9}>
             <strong>Safe:</strong> {safeAddress} (Chain ID: {chainId})
           </Text>
           <Heading size="lg">Transaction #{nonce}</Heading>
@@ -121,7 +156,7 @@ export function TransactionDetail() {
         <Flex ml="auto">
           <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
             <FormControl>
-              <FormLabel mb="1.5">Transaction Source</FormLabel>
+              <FormLabel mb="1.5">Transaction&nbsp;Source</FormLabel>
 
               {hintData.type === 'deploy' && (
                 <Tag textTransform="uppercase" size="md">
@@ -144,8 +179,23 @@ export function TransactionDetail() {
           </Box>
           <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
             <FormControl>
+              <FormLabel mb="1.5">Transaction&nbsp;Status</FormLabel>
+              <Tag
+                textTransform="uppercase"
+                size="md"
+                colorScheme={status == 'executed' ? 'green' : 'orange'}
+              >
+                <Text as="b">{status}</Text>
+              </Tag>
+            </FormControl>
+          </Box>
+          <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
+            <FormControl>
               <FormLabel mb="1">Cannon&nbsp;Package</FormLabel>
-              {hintData.cannonPackage}
+              <Link href={createIPLDLink(hintData.cannonPackage)} isExternal>
+                {formatHash(hintData.cannonPackage)}
+                <ExternalLinkIcon transform="translate(4px,-2px)" />
+              </Link>
             </FormControl>
           </Box>
         </Flex>

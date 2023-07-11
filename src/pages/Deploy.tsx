@@ -19,6 +19,7 @@ import {
   Text,
   useColorMode,
   Tooltip,
+  Spinner,
 } from '@chakra-ui/react'
 import {
   TransactionRequestBase,
@@ -369,14 +370,14 @@ export function Deploy() {
       )}
       {buildInfo.buildStatus && (
         <Alert mb="6" status="info">
-          <AlertIcon />
-          {buildInfo.buildStatus}
+          <Spinner mr={3} boxSize={4} />
+          <strong>{buildInfo.buildStatus}</strong>
         </Alert>
       )}
       {buildInfo.buildError && (
         <Alert mb="6" status="error">
-          <AlertIcon />
-          {buildInfo.buildError}
+          <AlertIcon mr={3} />
+          <strong>{buildInfo.buildError}</strong>
         </Alert>
       )}
       {multicallTxn.data && stager.safeTxn && (
