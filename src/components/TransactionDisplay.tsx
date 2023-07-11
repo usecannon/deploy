@@ -4,6 +4,8 @@ import {
   AlertIcon,
   Box,
   Button,
+  FormControl,
+  FormLabel,
   Heading,
   ListItem,
   OrderedList,
@@ -11,15 +13,8 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon, ExternalLinkIcon, WarningIcon } from '@chakra-ui/icons'
 import { Diff, parseDiff } from 'react-diff-view'
-import {
-  TransactionRequestBase,
-  hexToString,
-  keccak256,
-  stringToBytes,
-} from 'viem'
-import { useContractReads } from 'wagmi'
+import { TransactionRequestBase, hexToString } from 'viem'
 
-import * as onchainStore from '../utils/onchain-store'
 import { DisplayedTransaction } from './DisplayedTransaction'
 import { SafeDefinition, useStore } from '../store'
 import { SafeTransaction } from '../types'
@@ -40,6 +35,7 @@ export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
   safe: SafeDefinition
   verify?: boolean
+  allowPublishing?: boolean
 }) {
   const settings = useStore((s) => s.settings)
   const hintData = parseHintedMulticall(props.safeTxn?.data)
@@ -60,7 +56,10 @@ export function TransactionDisplay(props: {
   const gitUrl = hintData.gitRepoUrl?.slice(0, denom)
   const gitFile = hintData.gitRepoUrl?.slice(denom + 1)
 
-  const prevDeployHashQuery = useGetPreviousGitInfoQuery(props.safe, hintData.gitRepoUrl)
+  const prevDeployHashQuery = useGetPreviousGitInfoQuery(
+    props.safe,
+    hintData.gitRepoUrl
+  )
 
   const prevDeployGitHash: string =
     prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
@@ -141,10 +140,10 @@ export function TransactionDisplay(props: {
     return (
       <Box>
         {hintData.gitRepoUrl && (
-          <Text mb="2" opacity={0.9}>
-            <strong>Git Target:</strong> {hintData.gitRepoUrl}@
-            {hintData.gitRepoHash}
-          </Text>
+          <FormControl mb={3} opacity={0.9}>
+            <FormLabel mb={0}>Git Target</FormLabel>
+            {hintData.gitRepoUrl}@{hintData.gitRepoHash}
+          </FormControl>
         )}
 
         <Box mb="6" bg="gray.900" borderRadius="md">
@@ -257,15 +256,17 @@ export function TransactionDisplay(props: {
             </OrderedList>
           </Box>
         ) : (
-          <Box>
-            <Heading size="md" mb="1.5">
-              Cannon Package
-            </Heading>
-            <PublishUtility
-              deployUrl={hintData.cannonPackage}
-              targetVariant={`${props.safe.chainId}-${settings.preset}`}
-            />
-          </Box>
+          props.allowPublishing && (
+            <Box>
+              <Heading size="md" mb="1.5">
+                Cannon Package
+              </Heading>
+              <PublishUtility
+                deployUrl={hintData.cannonPackage}
+                targetVariant={`${props.safe.chainId}-${settings.preset}`}
+              />
+            </Box>
+          )
         )}
       </Box>
     )

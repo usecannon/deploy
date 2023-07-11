@@ -62,7 +62,7 @@ export function Deploy() {
   const prepareDeployOnchainStore = usePrepareSendTransaction(
     onchainStore.deployTxn
   )
-  const deployOnchainStore = useSendTransaction({
+  const deplochainStore = useSendTransaction({
     ...prepareDeployOnchainStore.config,
     onSuccess: () => {
       console.log('on success')
@@ -196,8 +196,10 @@ export function Deploy() {
                     prevDeployLocation || '',
                     `${gitUrl}:${gitFile}`,
                     gitHash,
-                    prevInfoQuery.data && prevInfoQuery.data[0].result?.length > 2
-                    ? (prevInfoQuery.data[0].result.slice(2) as any) : ''
+                    prevInfoQuery.data &&
+                    prevInfoQuery.data[0].result?.length > 2
+                      ? (prevInfoQuery.data[0].result.slice(2) as any)
+                      : '',
                   ],
                 ]
               ),
@@ -265,7 +267,7 @@ export function Deploy() {
     !prepareDeployOnchainStore.isError
   ) {
     return (
-      <Container maxW="100%" w="container.sm">
+      <Container maxWidth="container.md">
         <Text mb="8">
           If your protocol is managed using a GitOps repository (with
           cannonfiles on GitHub), you can use this tool to queue transactions
@@ -290,7 +292,7 @@ export function Deploy() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm" pb="12">
+    <Container maxWidth="container.md" pb="12">
       <FormControl mb="8">
         <FormLabel>GitOps Repository</FormLabel>
         <HStack>
@@ -326,7 +328,6 @@ export function Deploy() {
           the branch chosen below.
         </FormHelperText>
       </FormControl>
-
       <FormControl mb="8">
         <FormLabel>Branch</FormLabel>
         <HStack>
@@ -340,9 +341,7 @@ export function Deploy() {
           </Select>
         </HStack>
       </FormControl>
-
       {/* TODO: insert/load override settings here */}
-
       <FormControl mb="8">
         <FormLabel>Partial Deployment Data (Optional)</FormLabel>
         <Input
@@ -363,50 +362,54 @@ export function Deploy() {
           using the build command in the CLI.
         </FormHelperText>
       </FormControl>
-
       {buildInfo.buildStatus == '' && (
-        <Button width="100%" mb={4} onClick={() => buildTransactions()}>
+        <Button width="100%" mb={6} onClick={() => buildTransactions()}>
           Preview Transactions to Queue
         </Button>
       )}
-
       {buildInfo.buildStatus && (
         <Alert mb="6" status="info">
           <AlertIcon />
           {buildInfo.buildStatus}
         </Alert>
       )}
-
       {buildInfo.buildError && (
         <Alert mb="6" status="error">
           <AlertIcon />
           {buildInfo.buildError}
         </Alert>
       )}
-
       {multicallTxn.data && stager.safeTxn && (
         <TransactionDisplay safe={currentSafe} safeTxn={stager.safeTxn} />
       )}
 
-      {uploadToPublishIpfs.deployedIpfsHash &&
-        multicallTxn.data &&
-        !stager.signConditionFailed && (
-          <Box my="6">
-            <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
-            <HStack gap="6">
-              <Tooltip label={stager.signConditionFailed}>
-                <Button size="lg" w="100%" onClick={() => stager.sign()}>
-                  Queue &amp; Sign
-                </Button>
-              </Tooltip>
-              <Tooltip label={stager.execConditionFailed}>
-                <Button size="lg" w="100%" onClick={() => execTxn.write()}>
-                  Execute
-                </Button>
-              </Tooltip>
-            </HStack>
-          </Box>
-        )}
+      {uploadToPublishIpfs.deployedIpfsHash && multicallTxn.data && (
+        <Box my="6">
+          <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
+          <HStack gap="6">
+            <Tooltip label={stager.signConditionFailed}>
+              <Button
+                isDisabled={stager.signConditionFailed}
+                size="lg"
+                w="100%"
+                onClick={() => stager.sign()}
+              >
+                Queue &amp; Sign
+              </Button>
+            </Tooltip>
+            <Tooltip label={stager.execConditionFailed}>
+              <Button
+                isDisabled={stager.signConditionFailed}
+                size="lg"
+                w="100%"
+                onClick={() => execTxn.write()}
+              >
+                Execute
+              </Button>
+            </Tooltip>
+          </HStack>
+        </Box>
+      )}
     </Container>
   )
 }

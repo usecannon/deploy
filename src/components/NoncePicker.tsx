@@ -48,7 +48,7 @@ export default function NoncePicker(props: {
   }
 
   return (
-    <FormControl mb="8">
+    <FormControl mb={4}>
       <HStack>
         <Checkbox
           disabled={!staged?.length}

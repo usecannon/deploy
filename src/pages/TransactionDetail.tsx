@@ -150,11 +150,11 @@ export function TransactionDetail() {
           </Box>
         </Flex>
       </Flex>
-
       <TransactionDisplay
         safe={safe}
         safeTxn={safeTxn}
         verify={parsedNonce >= safeNonce}
+        allowPublishing
       />
       {parsedNonce >= safeNonce && (
         <Box>

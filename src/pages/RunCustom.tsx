@@ -149,7 +149,7 @@ export function RunCustom() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm" pb="12">
+    <Container maxWidth="container.md" pb="12">
       <FormControl mb="8">
         <FormLabel>Cannon Package or Contract Address</FormLabel>
         <Input

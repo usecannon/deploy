@@ -109,7 +109,7 @@ export function SafeAddressInput() {
   }
 
   return (
-    <Container maxW="100%" w="container.sm" pt="4" pb="4">
+    <Container maxW="100%" w="container.md" pt="4" pb="4">
       <FormControl mb="6">
         <FormLabel>Safe</FormLabel>
         <CreatableSelect

@@ -27,7 +27,7 @@ export function Build() {
 
   if (isDisconnected) {
     return (
-      <Container maxW="100%" w="container.sm">
+      <Container maxWidth="container.md">
         <Alert status="info">You must connect a wallet.</Alert>
       </Container>
     )
@@ -35,14 +35,14 @@ export function Build() {
 
   if (!chainId) {
     return (
-      <Container maxW="100%" w="container.sm">
+      <Container maxWidth="container.md">
         <Alert status="error">Could not connect to chain id {chainId}.</Alert>
       </Container>
     )
   }
 
   return (
-    <Container maxW="100%" w="container.sm">
+    <Container maxWidth="container.md">
       <Text mb="8">
         If you use the Cannon CLI’s <Code>build</Code> command and it is unable
         to complete all of the necessary transactions, it will generate a
