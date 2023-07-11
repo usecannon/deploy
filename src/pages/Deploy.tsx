@@ -30,6 +30,7 @@ import {
   zeroAddress,
 } from 'viem'
 import {
+  useChainId,
   useContractWrite,
   usePrepareSendTransaction,
   useSendTransaction,
@@ -116,12 +117,17 @@ export function Deploy() {
     extras: {},
   }
 
+  const settings = useStore((s) => s.settings)
+  const chainId = useChainId()
+
   const cannonPkgLatestInfo = useCannonPackage(
-    cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:latest`
+    cannonDefInfo.def && `${cannonDefInfo.def.getName(ctx)}:latest`,
+    `${chainId}-${settings.preset}`
   )
   const cannonPkgVersionInfo = useCannonPackage(
     cannonDefInfo.def &&
-      `${cannonDefInfo.def.getName(ctx)}:${cannonDefInfo.def.getVersion(ctx)}`
+      `${cannonDefInfo.def.getName(ctx)}:${cannonDefInfo.def.getVersion(ctx)}`,
+    `${chainId}-${settings.preset}`
   )
 
   const prevDeployLocation =
@@ -135,6 +141,7 @@ export function Deploy() {
 
   // run the build and get the list of transactions we need to run
   const buildInfo = useCannonBuild(
+    currentSafe,
     cannonDefInfo.def,
     prevCannonDeployInfo.pkg,
     !prevDeployLocation || prevCannonDeployInfo.ipfsQuery.isFetched

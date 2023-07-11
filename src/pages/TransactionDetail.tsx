@@ -108,9 +108,9 @@ export function TransactionDetail() {
         direction="row"
         alignItems="center"
         borderBottom="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor="whiteAlpha.300"
         pb="6"
-        mb="6"
+        mb="8"
       >
         <Box>
           <Text mb="1.5" opacity={0.9}>

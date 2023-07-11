@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Alert, AlertIcon, Box, Button, Heading, Text } from '@chakra-ui/react'
-import { CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons'
+import { CheckIcon, ExternalLinkIcon, WarningIcon } from '@chakra-ui/icons'
 import { Diff, parseDiff } from 'react-diff-view'
 import {
   TransactionRequestBase,
@@ -50,6 +50,11 @@ export function TransactionDisplay(props: {
   const gitUrl = hintData.gitRepoUrl?.slice(0, denom)
   const gitFile = hintData.gitRepoUrl?.slice(denom + 1)
 
+  console.log(
+    'hintData.gitRepoUrl',
+    hintData.gitRepoUrl,
+    keccak256(stringToBytes((hintData.gitRepoUrl || '') + 'gitHash'))
+  )
   // get previous deploy info git information
   const prevDeployHashQuery = useContractReads({
     contracts: [
@@ -80,6 +85,8 @@ export function TransactionDisplay(props: {
     prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
       ? (prevDeployHashQuery.data[0].result.slice(2) as any)
       : hintData.gitRepoHash
+  console.log('prevDeployGitHash', prevDeployGitHash)
+  console.log('prevDeployHashQuery', prevDeployHashQuery)
 
   const prevDeployPackageUrl = prevDeployHashQuery.data
     ? hexToString(prevDeployHashQuery.data[1].result || ('' as any))
@@ -158,7 +165,7 @@ export function TransactionDisplay(props: {
             {hintData.gitRepoHash}
           </Text>
         )}
-
+        {patches}
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
             if (!p) {
@@ -196,26 +203,30 @@ export function TransactionDisplay(props: {
               />
             ))}
           </Box>
-          <Button
-            size="xs"
-            as="a"
-            mt={2}
-            href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
-              props.safe.address
-            }&gas=${8000000}&gasPrice=0&value=${
-              props.safeTxn?.value
-            }&contractAddress=${
-              props.safe?.address
-            }&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${
-              props.safe.chainId
-            }&headerBlockNumber=&headerTimestamp=`}
-            colorScheme="purple"
-            rightIcon={<ExternalLinkIcon />}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Simulate on Tenderly
-          </Button>
+          {props.verify && (
+            <Button
+              size="xs"
+              as="a"
+              mt={2}
+              href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
+                props.safe.address
+              }&gas=${8000000}&gasPrice=0&value=${
+                props.safeTxn?.value
+              }&contractAddress=${
+                props.safe?.address
+              }&rawFunctionInput=${createSimulationData(
+                props.safeTxn
+              )}&network=${
+                props.safe.chainId
+              }&headerBlockNumber=&headerTimestamp=`}
+              colorScheme="purple"
+              rightIcon={<ExternalLinkIcon />}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Simulate on Tenderly
+            </Button>
+          )}
         </Box>
         {props.verify && hintData.type === 'deploy' && (
           <Box mb="6">
@@ -253,7 +264,7 @@ export function TransactionDisplay(props: {
         {props.verify ? (
           <Box>
             <Heading size="md" mb="3">
-              Signing Status
+              Signatures
             </Heading>
             <Text as="b">
               {stager.existingSigners.length} / {Number(stager.requiredSigners)}
@@ -267,7 +278,7 @@ export function TransactionDisplay(props: {
         ) : (
           <Box>
             <Heading size="md" mb="3">
-              Deployment Publish Status
+              Cannon Package
             </Heading>
             <PublishUtility
               deployUrl={hintData.cannonPackage}

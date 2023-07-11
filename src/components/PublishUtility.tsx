@@ -2,7 +2,7 @@ import _ from 'lodash'
 
 import { ethers } from 'ethers'
 
-import { Button, FormControl, Spinner, Text } from '@chakra-ui/react'
+import { Box, Button, FormControl, Spinner, Text } from '@chakra-ui/react'
 import { useCannonPackage } from '../hooks/cannon'
 
 import { useAccount, useChainId, useMutation, useWalletClient } from 'wagmi'
@@ -16,6 +16,7 @@ import {
   copyPackage,
 } from '@usecannon/builder'
 import { IPFSBrowserLoader } from '../utils/ipfs'
+import { CheckIcon } from '@chakra-ui/icons'
 
 export default function PublishUtility(props: {
   deployUrl: string
@@ -125,9 +126,28 @@ export default function PublishUtility(props: {
     )
   } else {
     return (
-      <FormControl mb="8">
-        <Text color={'green'}>Deployed to Registry</Text>
-      </FormControl>
+      <Box
+        display="inline-block"
+        borderRadius="lg"
+        bg="blackAlpha.300"
+        px={4}
+        py={3}
+      >
+        <Box
+          backgroundColor="green"
+          borderRadius="full"
+          display="inline-flex"
+          alignItems="center"
+          justifyContent="center"
+          boxSize={5}
+          mr={2.5}
+        >
+          <CheckIcon color="white" boxSize={2.5} />
+        </Box>
+        <Text fontWeight="bold" display="inline">
+          Published to Registry
+        </Text>
+      </Box>
     )
   }
 }
