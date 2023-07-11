@@ -183,34 +183,12 @@ export function TransactionDisplay(props: {
               />
             ))}
           </Box>
-          {props.verify && (
-            <Button
-              size="xs"
-              as="a"
-              mt={2}
-              href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
-                props.safe.address
-              }&gas=${8000000}&gasPrice=0&value=${
-                props.safeTxn?.value
-              }&contractAddress=${
-                props.safe?.address
-              }&rawFunctionInput=${createSimulationData(
-                props.safeTxn
-              )}&network=${
-                props.safe.chainId
-              }&headerBlockNumber=&headerTimestamp=`}
-              colorScheme="purple"
-              rightIcon={<ExternalLinkIcon />}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Simulate on Tenderly
-            </Button>
-          )}
         </Box>
         {props.verify && hintData.type === 'deploy' && (
           <Box mb="6">
-            <Heading size="md">Verification</Heading>
+            <Heading size="md" mb="2">
+              Verify Queued Transactions
+            </Heading>
             {buildInfo.buildStatus && <Text>{buildInfo.buildStatus}</Text>}
             {buildInfo.buildError && (
               <Text color="red">
@@ -219,10 +197,28 @@ export function TransactionDisplay(props: {
               </Text>
             )}
             {buildInfo.buildResult && !unequalTransaction && (
-              <Text color="green">
-                <CheckIcon />
-                &nbsp;Proposed Transactions Match Diff
-              </Text>
+              <Box
+                display="inline-block"
+                borderRadius="lg"
+                bg="blackAlpha.300"
+                px={4}
+                py={3}
+              >
+                <Box
+                  backgroundColor="green"
+                  borderRadius="full"
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  boxSize={5}
+                  mr={2.5}
+                >
+                  <CheckIcon color="white" boxSize={2.5} />
+                </Box>
+                <Text fontWeight="bold" display="inline">
+                  The transactions queued to the Safe match the Git Target
+                </Text>
+              </Box>
             )}
             {buildInfo.buildResult && unequalTransaction && (
               <Text color="red" as="b">
@@ -241,14 +237,34 @@ export function TransactionDisplay(props: {
               )}
           </Box>
         )}
+        {props.verify && (
+          <Button
+            size="xs"
+            as="a"
+            mb={4}
+            href={`https://dashboard.tenderly.co/simulator/new?block=&blockIndex=0&from=${
+              props.safe.address
+            }&gas=${8000000}&gasPrice=0&value=${
+              props.safeTxn?.value
+            }&contractAddress=${
+              props.safe?.address
+            }&rawFunctionInput=${createSimulationData(props.safeTxn)}&network=${
+              props.safe.chainId
+            }&headerBlockNumber=&headerTimestamp=`}
+            colorScheme="purple"
+            rightIcon={<ExternalLinkIcon />}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Simulate on Tenderly
+          </Button>
+        )}
         {props.verify ? (
           <Box>
-            <Heading size="md" mb="1">
-              Signatures
+            <Heading size="md" mb="2">
+              Signatures ({stager.existingSigners.length}/
+              {Number(stager.requiredSigners)})
             </Heading>
-            <Text as="b">
-              {stager.existingSigners.length} / {Number(stager.requiredSigners)}
-            </Text>
             <OrderedList>
               {stager.existingSigners.map((s) => (
                 <ListItem>{s}</ListItem>

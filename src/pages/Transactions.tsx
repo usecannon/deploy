@@ -15,7 +15,7 @@ export function Transactions() {
   console.log('history', currentSafe, history)
 
   return (
-    <Container maxW="100%" w="container.sm">
+    <Container maxW="container.md">
       <Box mb="10">
         <FormLabel mb="3">Queued Transactions</FormLabel>
         {currentSafe &&
