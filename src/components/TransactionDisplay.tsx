@@ -1,25 +1,7 @@
 import _ from 'lodash'
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Heading,
-  IconButton,
-  Input,
-  Tag,
-  Text,
-} from '@chakra-ui/react'
-import {
-  ArrowForwardIcon,
-  CheckIcon,
-  ExternalLinkIcon,
-  WarningIcon,
-} from '@chakra-ui/icons'
+import { Alert, AlertIcon, Box, Button, Heading, Text } from '@chakra-ui/react'
+import { CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import { Diff, parseDiff } from 'react-diff-view'
-import { Link } from 'react-router-dom'
 import {
   TransactionRequestBase,
   hexToString,
@@ -169,21 +151,13 @@ export function TransactionDisplay(props: {
         }))
 
     return (
-      <Box maxW="100%" overflowX="scroll">
-        <FormControl mb="3">
-          <FormLabel mb="0.5">Git Target</FormLabel>
-          <Input
-            variant="unstyled"
-            isReadOnly
-            value={
-              hintData.gitRepoUrl
-                ? hintData.gitRepoUrl + '@' + hintData.gitRepoHash
-                : 'N/A'
-            }
-          />
-        </FormControl>
-
-        {patches.length > 0 && <FormLabel mb="2">Git Diff</FormLabel>}
+      <Box>
+        {hintData.gitRepoUrl && (
+          <Text mb="2" opacity={0.9}>
+            <strong>Git Target:</strong> {hintData.gitRepoUrl}@
+            {hintData.gitRepoHash}
+          </Text>
+        )}
 
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
@@ -214,9 +188,14 @@ export function TransactionDisplay(props: {
           <Heading size="md" mb="1">
             Transactions
           </Heading>
-          {hintData.txns.map((txn, i) => (
-            <DisplayedTransaction contracts={cannonInfo.contracts} txn={txn} />
-          ))}
+          <Box maxW="100%" overflowX="scroll">
+            {hintData.txns.map((txn, i) => (
+              <DisplayedTransaction
+                contracts={cannonInfo.contracts}
+                txn={txn}
+              />
+            ))}
+          </Box>
           <Button
             size="xs"
             as="a"

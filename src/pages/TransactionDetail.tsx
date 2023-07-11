@@ -12,6 +12,7 @@ import {
   Input,
   Tooltip,
   Tag,
+  Flex,
 } from '@chakra-ui/react'
 import { useContractWrite, useChainId, useAccount } from 'wagmi'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -103,40 +104,52 @@ export function TransactionDetail() {
 
   return (
     <Box p="12" pt="2" maxWidth="100%">
-      <Text>
-        <strong>Safe:</strong> {safeAddress} (Chain ID: {chainId})
-      </Text>
+      <Flex
+        direction="row"
+        alignItems="center"
+        borderBottom="1px solid"
+        borderColor="whiteAlpha.200"
+        pb="6"
+        mb="6"
+      >
+        <Box>
+          <Text mb="1.5" opacity={0.9}>
+            <strong>Safe:</strong> {safeAddress} (Chain ID: {chainId})
+          </Text>
+          <Heading size="lg">Transaction #{nonce}</Heading>
+        </Box>
+        <Flex ml="auto">
+          <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
+            <FormControl>
+              <FormLabel mb="1.5">Transaction Source</FormLabel>
 
-      <Heading size="lg" mb="3">
-        Transaction #{nonce}
-      </Heading>
+              {hintData.type === 'deploy' && (
+                <Tag textTransform="uppercase" size="md">
+                  <Text as="b">GitOps</Text>
+                </Tag>
+              )}
 
-      <FormControl mb="4">
-        <FormLabel mb="1">Transaction Source</FormLabel>
+              {hintData.type === 'invoke' && (
+                <Tag textTransform="uppercase" size="md">
+                  <Text as="b">Deployer</Text>
+                </Tag>
+              )}
 
-        {hintData.type === 'deploy' && (
-          <Tag textTransform="uppercase" size="md">
-            <Text as="b">GitOps</Text>
-          </Tag>
-        )}
-
-        {hintData.type === 'invoke' && (
-          <Tag textTransform="uppercase" size="md">
-            <Text as="b">Deployer</Text>
-          </Tag>
-        )}
-
-        {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
-          <Tag textTransform="uppercase" size="md">
-            <Text as="b">External</Text>
-          </Tag>
-        )}
-      </FormControl>
-
-      <FormControl mb="3">
-        <FormLabel mb="0.5">Base Cannon Package</FormLabel>
-        <Input variant="unstyled" isReadOnly value={hintData.cannonPackage} />
-      </FormControl>
+              {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
+                <Tag textTransform="uppercase" size="md">
+                  <Text as="b">External</Text>
+                </Tag>
+              )}
+            </FormControl>
+          </Box>
+          <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
+            <FormControl>
+              <FormLabel mb="1">Cannon&nbsp;Package</FormLabel>
+              {hintData.cannonPackage}
+            </FormControl>
+          </Box>
+        </Flex>
+      </Flex>
 
       <TransactionDisplay
         safe={safe}
