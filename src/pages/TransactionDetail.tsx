@@ -103,34 +103,34 @@ export function TransactionDetail() {
 
   return (
     <Box p="12" pt="2" maxWidth="100%">
+      <Text>
+        <strong>Safe:</strong> {safeAddress} (Chain ID: {chainId})
+      </Text>
+
       <Heading size="lg" mb="3">
         Transaction #{nonce}
       </Heading>
 
-      <FormControl mb="3">
-        <FormLabel mb="0.5">Safe</FormLabel>
-        <Input
-          variant="unstyled"
-          isReadOnly
-          value={`${safeAddress} (Chain ID: ${chainId})`}
-        />
-      </FormControl>
-
       <FormControl mb="4">
         <FormLabel mb="1">Transaction Source</FormLabel>
-        <Tag textTransform="uppercase" size="md">
-          <Text as="b">{hintData.type}</Text>
-        </Tag>
 
-        <Tag textTransform="uppercase" size="md">
-          <Text as="b">GitOps</Text>
-        </Tag>
-        <Tag textTransform="uppercase" size="md">
-          <Text as="b">Transaction</Text>
-        </Tag>
-        <Tag textTransform="uppercase" size="md">
-          <Text as="b">External</Text>
-        </Tag>
+        {hintData.type === 'deploy' && (
+          <Tag textTransform="uppercase" size="md">
+            <Text as="b">GitOps</Text>
+          </Tag>
+        )}
+
+        {hintData.type === 'invoke' && (
+          <Tag textTransform="uppercase" size="md">
+            <Text as="b">Deployer</Text>
+          </Tag>
+        )}
+
+        {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
+          <Tag textTransform="uppercase" size="md">
+            <Text as="b">External</Text>
+          </Tag>
+        )}
       </FormControl>
 
       <FormControl mb="3">
