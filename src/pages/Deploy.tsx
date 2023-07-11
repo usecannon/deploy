@@ -53,6 +53,7 @@ import { useNavigate } from 'react-router-dom'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { ChainBuilderContext } from '@usecannon/builder'
 import NoncePicker from '../components/NoncePicker'
+import { useGetPreviousGitInfoQuery } from '../hooks/safe'
 
 export function Deploy() {
   const { colorMode } = useColorMode()
@@ -173,6 +174,8 @@ export function Deploy() {
 
   const gitHash = refsInfo.refs?.find((r) => r.ref === gitBranch)?.oid
 
+  const prevInfoQuery = useGetPreviousGitInfoQuery(currentSafe, gitUrl)
+
   const multicallTxn: /*Partial<TransactionRequestBase>*/ any =
     buildInfo.buildResult && buildInfo.buildResult.steps.indexOf(null) === -1
       ? makeMultisend(
@@ -189,6 +192,8 @@ export function Deploy() {
                     prevDeployLocation || '',
                     `${gitUrl}:${gitFile}`,
                     gitHash,
+                    prevInfoQuery.data && prevInfoQuery.data[0].result?.length > 2
+                    ? (prevInfoQuery.data[0].result.slice(2) as any) : ''
                   ],
                 ]
               ),

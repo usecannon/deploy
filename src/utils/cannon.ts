@@ -313,6 +313,7 @@ export function parseHintedMulticall(data: Hex) {
   let cannonUpgradeFromPackage = ''
   let gitRepoUrl = ''
   let gitRepoHash = ''
+  let prevGitRepoHash = ''
   if (
     (decoded.functionName === 'aggregate3' ||
       decoded.functionName === 'aggregate3Value') &&
@@ -325,6 +326,7 @@ export function parseHintedMulticall(data: Hex) {
         cannonUpgradeFromPackage,
         gitRepoUrl,
         gitRepoHash,
+        prevGitRepoHash,
       ] = decodeAbiParameters(
         [{ type: 'string[]' }],
         decoded.args[0][0].callData

@@ -1,14 +1,16 @@
 import Web3 from 'web3'
 import SafeApiKit, { SafeInfoResponse } from '@safe-global/api-kit'
-import { Address, getAddress, isAddress } from 'viem'
+import { Address, getAddress, isAddress, keccak256, stringToBytes } from 'viem'
 import { Web3Adapter } from '@safe-global/protocol-kit'
-import { useAccount, useChainId, useNetwork, useQuery } from 'wagmi'
+import { useAccount, useChainId, useContractReads, useNetwork, useQuery } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
-import { ChainId, State, useStore } from '../store'
+import { ChainId, SafeDefinition, State, useStore } from '../store'
 import { SafeTransaction } from '../types'
 import { chains } from '../constants'
 import { supportedChains } from '../wallet'
+
+import * as onchainStore from '../utils/onchain-store'
 
 export type SafeString = `${ChainId}:${Address}`
 
@@ -232,4 +234,32 @@ export function useSafeAddress() {
   return useStore(
     (s) => s.safeAddresses.find((s) => s.chainId === chainId)?.address || null
   )
+}
+
+export function useGetPreviousGitInfoQuery(safe: SafeDefinition, gitRepoUrl: string) {
+  // get previous deploy info git information
+  return useContractReads({
+    contracts: [
+      {
+        abi: onchainStore.ABI as any,
+        address: onchainStore.deployAddress,
+        functionName: 'getWithAddress',
+        args: [
+          safe.address,
+          keccak256(stringToBytes((gitRepoUrl || '') + 'gitHash')),
+        ],
+      },
+      {
+        abi: onchainStore.ABI as any,
+        address: onchainStore.deployAddress,
+        functionName: 'getWithAddress',
+        args: [
+          safe.address,
+          keccak256(
+            stringToBytes((gitRepoUrl || '') + 'cannonPackage')
+          ),
+        ],
+      },
+    ],
+  })
 }
