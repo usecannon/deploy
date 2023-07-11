@@ -101,17 +101,23 @@ export default function PublishUtility(props: {
 
   // any difference means that this deployment is not technically published
   if (ipfsPkgQuery.isFetching || ipfsChkQuery.isFetching) {
-    return <Text>Loading...</Text>
+    return (
+      <Text opacity={0.8}>
+        <Spinner boxSize={3} mr={1} /> Loading
+      </Text>
+    )
   } else if (existingRegistryUrl !== props.deployUrl) {
     return (
       <FormControl mb="8">
         {!existingRegistryUrl ? (
-          <Text color={'red'} mb={3}>
-            Not Deployed to Registry
+          <Text mb={3}>
+            The package resulting from this deployment has not been published to
+            the registry.
           </Text>
         ) : (
-          <Text color={'yellow'} mb={3}>
-            Different Deployment Published to this version on the Registry
+          <Text mb={3}>
+            A different package has been published to the registry with a
+            matching name and version.
           </Text>
         )}
         <Button

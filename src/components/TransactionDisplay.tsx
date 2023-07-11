@@ -1,5 +1,14 @@
 import _ from 'lodash'
-import { Alert, AlertIcon, Box, Button, Heading, Text } from '@chakra-ui/react'
+import {
+  Alert,
+  AlertIcon,
+  Box,
+  Button,
+  Heading,
+  ListItem,
+  OrderedList,
+  Text,
+} from '@chakra-ui/react'
 import { CheckIcon, ExternalLinkIcon, WarningIcon } from '@chakra-ui/icons'
 import { Diff, parseDiff } from 'react-diff-view'
 import {
@@ -248,21 +257,21 @@ export function TransactionDisplay(props: {
         )}
         {props.verify ? (
           <Box>
-            <Heading size="md" mb="3">
+            <Heading size="md" mb="1">
               Signatures
             </Heading>
             <Text as="b">
               {stager.existingSigners.length} / {Number(stager.requiredSigners)}
             </Text>
-            <ul>
+            <OrderedList>
               {stager.existingSigners.map((s) => (
-                <li>{s}</li>
+                <ListItem>{s}</ListItem>
               ))}
-            </ul>
+            </OrderedList>
           </Box>
         ) : (
           <Box>
-            <Heading size="md" mb="3">
+            <Heading size="md" mb="1.5">
               Cannon Package
             </Heading>
             <PublishUtility
