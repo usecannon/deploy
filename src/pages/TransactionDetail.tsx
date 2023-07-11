@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { Address, isAddress, zeroAddress } from 'viem'
 import {
+  Box,
   Button,
   Container,
   HStack,
@@ -18,15 +19,19 @@ import { SafeTransaction } from '../types'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { useSafeTransactions, useTxnStager } from '../hooks/backend'
 import { getSafeTransactionHash } from '../utils/safe'
+import { useExecutedTransactions } from '../hooks/safe'
+import { SafeDefinition } from '../store'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
   const { chainId, nonce, sigHash } = useParams()
 
   let parsedChainId = 0;
+  let parsedNonce = 0;
 
   try {
     parsedChainId = parseInt(chainId)
+    parsedNonce = parseInt(nonce)
   } catch (e) {}
 
   const walletChainId = useChainId()
@@ -38,28 +43,41 @@ export function TransactionDetail() {
     safeAddress = zeroAddress
   }
 
+  const safe: SafeDefinition = {
+    chainId: parsedChainId,
+    address: safeAddress as Address,
+  };
+
   const {
     nonce: safeNonce,
     staged,
     stagedQuery,
-  } = useSafeTransactions({
-    chainId: parsedChainId,
-    address: safeAddress as Address,
-  })
+  } = useSafeTransactions(safe)
+
+  const history = useExecutedTransactions(safe)
 
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
-  if (parseInt(nonce) >= safeNonce && staged) {
+
+  if (parsedNonce < safeNonce) {
+    // TODO: the gnosis safe transaction history is quite long, but if its not on the first page, we have to call "next" to get more txns until
+    // we find the nonce we want. no way to just get the txn we want unfortunately
+    // also todo: code dup
+    safeTxn =
+      history.results.find(
+        (txn) =>
+          txn._nonce.toString() === nonce &&
+          (!sigHash ||
+            sigHash === getSafeTransactionHash(safe, txn))
+      ) || null
+  }
+  else if (staged) {
     safeTxn =
       staged.find(
         (s) =>
           s.txn._nonce.toString() === nonce &&
           (!sigHash ||
-            sigHash ===
-              getSafeTransactionHash(
-                { address: safeAddress as Address, chainId: chainId as any },
-                s.txn
-              ))
+            sigHash === getSafeTransactionHash(safe, s.txn))
       )?.txn || null
   }
 
@@ -80,7 +98,7 @@ export function TransactionDetail() {
         <Text>
           Transaction not found! Current safe nonce:{' '}
           {safeNonce ? safeNonce.toString() : 'none'}, Highest Staged Nonce:{' '}
-          {_.last(staged)?.txn._nonce || 'none'}
+          {_.last(staged)?.txn._nonce || safeNonce}
         </Text>
       </Container>
     )
@@ -102,32 +120,34 @@ export function TransactionDetail() {
       </FormControl>
 
       <TransactionDisplay
-        safe={{address: safeAddress as Address, chainId: parseInt(chainId)}}
+        safe={safe}
         safeTxn={safeTxn}
-        verify={true}
+        verify={parsedNonce >= safeNonce}
       />
-      {account.isConnected && walletChainId === parsedChainId ? <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
-        <Tooltip label={stager.signConditionFailed}>
-          <Button
-            size="lg"
-            w="100%"
-            isDisabled={safeTxn && !!stager.signConditionFailed}
-            onClick={() => stager.sign()}
-          >
-            Sign
-          </Button>
-        </Tooltip>
-        <Tooltip label={stager.execConditionFailed}>
-          <Button
-            size="lg"
-            w="100%"
-            isDisabled={safeTxn && !!stager.execConditionFailed}
-            onClick={() => execTxn.write()}
-          >
-            Execute
-          </Button>
-        </Tooltip>
-      </HStack> : <Text align={'center'}>Please connect a wallet and ensure its connected to the correct network to sign!</Text>}
+      {parsedNonce >= safeNonce && <Box>
+        {account.isConnected && walletChainId === parsedChainId ? <HStack gap="6" marginTop="20px" marginLeft={'auto'} marginRight={'auto'}>
+          <Tooltip label={stager.signConditionFailed}>
+            <Button
+              size="lg"
+              w="100%"
+              isDisabled={safeTxn && !!stager.signConditionFailed}
+              onClick={() => stager.sign()}
+            >
+              Sign
+            </Button>
+          </Tooltip>
+          <Tooltip label={stager.execConditionFailed}>
+            <Button
+              size="lg"
+              w="100%"
+              isDisabled={safeTxn && !!stager.execConditionFailed}
+              onClick={() => execTxn.write()}
+            >
+              Execute
+            </Button>
+          </Tooltip>
+        </HStack> : <Text align={'center'}>Please connect a wallet and ensure its connected to the correct network to sign!</Text>}
+      </Box>}
     </Container>
   )
 }

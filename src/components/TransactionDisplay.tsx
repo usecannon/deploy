@@ -259,7 +259,7 @@ export function TransactionDisplay(props: {
               )}
           </Box>
         )}
-        <Box>
+        {props.verify && <Box>
           <Heading size="md">Signing Status</Heading>
           <Text as="b">
             {stager.existingSigners.length} / {Number(stager.requiredSigners)}
@@ -269,7 +269,7 @@ export function TransactionDisplay(props: {
               <li>{s}</li>
             ))}
           </ul>
-        </Box>
+        </Box>}
       </Box>
     )
   } else {
