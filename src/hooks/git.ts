@@ -52,7 +52,11 @@ export function useGitRepo(url: string, ref: string, files: string[]) {
       await git.init(url, ref)
       const fileContents = []
       for (const file of files) {
-        fileContents.push(await git.readFile(url, ref, file))
+        try {
+          fileContents.push(await git.readFile(url, ref, file))
+        } catch (e) {
+          fileContents.push('')
+        }
       }
 
       return fileContents

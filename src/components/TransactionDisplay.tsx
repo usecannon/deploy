@@ -50,11 +50,6 @@ export function TransactionDisplay(props: {
   const gitUrl = hintData.gitRepoUrl?.slice(0, denom)
   const gitFile = hintData.gitRepoUrl?.slice(denom + 1)
 
-  console.log(
-    'hintData.gitRepoUrl',
-    hintData.gitRepoUrl,
-    keccak256(stringToBytes((hintData.gitRepoUrl || '') + 'gitHash'))
-  )
   // get previous deploy info git information
   const prevDeployHashQuery = useContractReads({
     contracts: [
@@ -85,14 +80,10 @@ export function TransactionDisplay(props: {
     prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
       ? (prevDeployHashQuery.data[0].result.slice(2) as any)
       : hintData.gitRepoHash
-  console.log('prevDeployGitHash', prevDeployGitHash)
-  console.log('prevDeployHashQuery', prevDeployHashQuery)
 
   const prevDeployPackageUrl = prevDeployHashQuery.data
     ? hexToString(prevDeployHashQuery.data[1].result || ('' as any))
     : ''
-
-  console.log('got prev cannon hint', hintData.cannonUpgradeFromPackage)
 
   const prevCannonDeployInfo = useCannonPackage(
     hintData.cannonUpgradeFromPackage || prevDeployPackageUrl
@@ -100,12 +91,6 @@ export function TransactionDisplay(props: {
           (hintData.cannonUpgradeFromPackage || prevDeployPackageUrl).split('/')
         )}`
       : null
-  )
-
-  console.log(
-    'got prev cannon deploy info',
-    prevDeployPackageUrl,
-    prevCannonDeployInfo
   )
 
   const cannonDefInfo = useLoadCannonDefinition(
@@ -165,6 +150,7 @@ export function TransactionDisplay(props: {
             {hintData.gitRepoHash}
           </Text>
         )}
+        THE PATCHES
         {patches}
         <Box mb="6" bg="gray.900" borderRadius="md">
           {patches.map((p) => {
