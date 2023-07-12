@@ -38,6 +38,12 @@ export const chains = [
     serviceUrl: 'https://safe-transaction-polygon.safe.global',
   },
   {
+    id: 420,
+    name: 'Optimism Goerli Testnet',
+    shortName: 'ogor',
+    serviceUrl: '',
+  },
+  {
     id: 42161,
     name: 'Arbitrum',
     shortName: 'arb1',
