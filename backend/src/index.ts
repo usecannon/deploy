@@ -1,7 +1,7 @@
-import _ from 'lodash'
-import express from 'express'
-import morgan from 'morgan'
 import { ethers } from 'ethers'
+import express from 'express'
+import _ from 'lodash'
+import morgan from 'morgan'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const SafeABI = require('./abi/Safe.json')
@@ -146,9 +146,12 @@ async function start() {
       txdb.set(
         getSafeKey(chainId, req.params.safeAddress),
         // briefly clean up any txns that are less than current nonce, and any transactions with dup hashes to this one
-        txs.filter((t) => 
-        t.txn._nonce >= currentNonce && 
-        (t === signedTransactionInfo || !_.isEqual(t.txn, signedTransactionInfo.txn)))
+        txs.filter(
+          (t) =>
+            t.txn._nonce >= currentNonce &&
+            (t === signedTransactionInfo ||
+              !_.isEqual(t.txn, signedTransactionInfo.txn))
+        )
       )
 
       res.send(txs)

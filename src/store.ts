@@ -1,12 +1,11 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { deepmerge } from 'deepmerge-ts'
-import { Address } from 'viem'
 import deepEqual from 'fast-deep-equal'
 import uniqWith from 'lodash/uniqWith'
-
-import { BuildState } from './hooks/cannon'
+import { Address } from 'viem'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { chains } from './constants'
+import { BuildState } from './hooks/cannon'
 import { includes } from './utils/array'
 
 export type ChainId = (typeof chains)[number]['id']

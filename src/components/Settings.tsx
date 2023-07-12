@@ -1,4 +1,3 @@
-import entries from 'just-entries'
 import {
   Alert,
   AlertIcon,
@@ -10,10 +9,10 @@ import {
   Heading,
   Input,
 } from '@chakra-ui/react'
-
+import entries from 'just-entries'
 import { Store, useStore } from '../store'
-import { isIpfsUploadEndpoint } from '../utils/ipfs'
 import { validatePreset } from '../utils/cannon'
+import { isIpfsUploadEndpoint } from '../utils/ipfs'
 
 type Setting = {
   title: string

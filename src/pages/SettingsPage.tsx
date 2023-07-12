@@ -1,5 +1,4 @@
 import { Container } from '@chakra-ui/react'
-
 import { Settings } from '../components/Settings'
 
 export function SettingsPage() {

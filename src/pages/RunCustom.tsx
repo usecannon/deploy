@@ -1,19 +1,4 @@
-import 'react-diff-view/style/index.css'
-
-import _ from 'lodash'
-import { AddIcon, ChevronDownIcon, MinusIcon } from '@chakra-ui/icons'
-import {
-  Abi,
-  Address,
-  Hex,
-  TransactionRequestBase,
-  decodeErrorResult,
-  encodeAbiParameters,
-  encodePacked,
-  getFunctionSelector,
-  isAddress,
-  zeroAddress,
-} from 'viem'
+import { AddIcon, MinusIcon } from '@chakra-ui/icons'
 import {
   Alert,
   AlertDescription,
@@ -22,36 +7,34 @@ import {
   Box,
   Button,
   Container,
-  EditableInput,
   FormControl,
   FormHelperText,
   FormLabel,
   HStack,
-  Heading,
   Input,
-  Text,
   Tooltip,
 } from '@chakra-ui/react'
-import { ethers } from 'ethers'
-import { formatAbiItem } from 'viem/dist/cjs/utils/abi/formatAbiItem'
-import { redirect, useNavigate } from 'react-router-dom'
+import _ from 'lodash'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  useContractWrite,
-  usePrepareSendTransaction,
-  useSendTransaction,
-} from 'wagmi'
-import { useEffect, useState } from 'react'
-
-import * as query from '../utils/query'
+  Abi,
+  decodeErrorResult,
+  encodeAbiParameters,
+  Hex,
+  isAddress,
+  TransactionRequestBase,
+  zeroAddress,
+} from 'viem'
+import { useContractWrite } from 'wagmi'
 import { DisplayedTransaction } from '../components/DisplayedTransaction'
-import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput'
-import { Transaction } from '../components/Transaction'
-import { makeMultisend } from '../utils/multisend'
-import { useCannonPackageContracts } from '../hooks/cannon'
-import { useStore } from '../store'
-import { useTxnStager } from '../hooks/backend'
 import NoncePicker from '../components/NoncePicker'
+import { useTxnStager } from '../hooks/backend'
+import { useCannonPackageContracts } from '../hooks/cannon'
 import { useSimulatedTxns } from '../hooks/fork'
+import { useStore } from '../store'
+import { makeMultisend } from '../utils/multisend'
+import 'react-diff-view/style/index.css'
 
 export function RunCustom() {
   const currentSafe = useStore((s) => s.currentSafe)
@@ -142,7 +125,9 @@ export function RunCustom() {
         return `failure in contract ${contract}: ${
           parsedError.errorName
         }(${parsedError.args.join(', ')})`
-      } catch (err) {}
+      } catch (err) {
+        // ignore
+      }
     }
 
     return 'unknown error'

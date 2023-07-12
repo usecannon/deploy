@@ -1,24 +1,19 @@
 import { ChakraProvider, useColorModeValue } from '@chakra-ui/react'
-import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { darkTheme, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-  RainbowKitProvider,
-  darkTheme,
-  lightTheme,
-} from '@rainbow-me/rainbowkit'
-import { WagmiConfig } from 'wagmi'
 import { useEffect } from 'react'
-import theme from './theme'
-
-import { Deploy } from './pages/Deploy'
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { WagmiConfig } from 'wagmi'
 import { Menu } from './components/Menu'
-import { RunCustom } from './pages/RunCustom'
 import { SafeAddressInput } from './components/SafeAddressInput'
+import { Deploy } from './pages/Deploy'
+import { RunCustom } from './pages/RunCustom'
 import { SettingsPage } from './pages/SettingsPage'
 import { TransactionDetail } from './pages/TransactionDetail'
 import { Transactions } from './pages/Transactions'
-import { chains, wagmiConfig } from './wallet'
 import { useStore } from './store'
+import theme from './theme'
+import { chains, wagmiConfig } from './wallet'
 
 const queryClient = new QueryClient({
   defaultOptions: {

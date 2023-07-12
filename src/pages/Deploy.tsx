@@ -1,45 +1,39 @@
-import _ from 'lodash'
-
-import 'react-diff-view/style/index.css'
-
 import {
   Alert,
-  Flex,
   AlertIcon,
   Box,
   Button,
   Container,
+  Flex,
   FormControl,
   FormHelperText,
   FormLabel,
   HStack,
-  Heading,
   Input,
   Select,
-  Text,
-  useColorMode,
-  Tooltip,
   Spinner,
+  Text,
+  Tooltip,
+  useColorMode,
 } from '@chakra-ui/react'
+import { ChainBuilderContext } from '@usecannon/builder'
+import _ from 'lodash'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  TransactionRequestBase,
   encodeAbiParameters,
   encodeFunctionData,
   keccak256,
   stringToHex,
   toBytes,
+  TransactionRequestBase,
   zeroAddress,
 } from 'viem'
-import {
-  useChainId,
-  useContractWrite,
-  usePrepareSendTransaction,
-  useSendTransaction,
-} from 'wagmi'
-import { useEffect, useState } from 'react'
-
-import * as onchainStore from '../utils/onchain-store'
+import { useChainId, useContractWrite, usePrepareSendTransaction, useSendTransaction } from 'wagmi'
 import { EditableAutocompleteInput } from '../components/EditableAutocompleteInput'
+import NoncePicker from '../components/NoncePicker'
+import { TransactionDisplay } from '../components/TransactionDisplay'
+import { useTxnStager } from '../hooks/backend'
 import {
   useCannonBuild,
   useCannonPackage,
@@ -47,14 +41,11 @@ import {
   useLoadCannonDefinition,
 } from '../hooks/cannon'
 import { useGitFilesList, useGitRefsList } from '../hooks/git'
-import { useStore } from '../store'
-import { useTxnStager } from '../hooks/backend'
-import { makeMultisend } from '../utils/multisend'
-import { useNavigate } from 'react-router-dom'
-import { TransactionDisplay } from '../components/TransactionDisplay'
-import { ChainBuilderContext } from '@usecannon/builder'
-import NoncePicker from '../components/NoncePicker'
 import { useGetPreviousGitInfoQuery } from '../hooks/safe'
+import { useStore } from '../store'
+import { makeMultisend } from '../utils/multisend'
+import * as onchainStore from '../utils/onchain-store'
+import 'react-diff-view/style/index.css'
 
 export function Deploy() {
   const { colorMode } = useColorMode()
@@ -173,7 +164,10 @@ export function Deploy() {
 
   const gitHash = refsInfo.refs?.find((r) => r.ref === gitBranch)?.oid
 
-  const prevInfoQuery = useGetPreviousGitInfoQuery(currentSafe, gitUrl + ':' + gitFile)
+  const prevInfoQuery = useGetPreviousGitInfoQuery(
+    currentSafe,
+    gitUrl + ':' + gitFile
+  )
 
   console.log(' the prev info query data is', prevInfoQuery.data)
 
@@ -360,12 +354,17 @@ export function Deploy() {
         </FormHelperText>
       </FormControl>
       {buildInfo.buildStatus == '' && (
-        <Button width="100%" mb={6} isDisabled={
-          cannonPkgVersionInfo.ipfsQuery.isFetching ||
-          cannonPkgLatestInfo.ipfsQuery.isFetching ||
-          cannonPkgVersionInfo.registryQuery.isFetching ||
-          cannonPkgLatestInfo.registryQuery.isFetching
-        } onClick={() => buildTransactions()}>
+        <Button
+          width="100%"
+          mb={6}
+          isDisabled={
+            cannonPkgVersionInfo.ipfsQuery.isFetching ||
+            cannonPkgLatestInfo.ipfsQuery.isFetching ||
+            cannonPkgVersionInfo.registryQuery.isFetching ||
+            cannonPkgLatestInfo.registryQuery.isFetching
+          }
+          onClick={() => buildTransactions()}
+        >
           Preview Transactions to Queue
         </Button>
       )}

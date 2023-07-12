@@ -1,13 +1,7 @@
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { QueryClient } from '@tanstack/react-query'
 import { configureChains, createConfig, sepolia } from 'wagmi'
-import {
-  goerli,
-  mainnet,
-  optimism,
-  optimismGoerli,
-  polygon,
-} from 'wagmi/chains'
+import { goerli, mainnet, optimism, optimismGoerli, polygon } from 'wagmi/chains'
 import { infuraProvider } from 'wagmi/providers/infura'
 
 export const supportedChains = [

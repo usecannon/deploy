@@ -1,10 +1,4 @@
-import {
-  encodeAbiParameters,
-  encodeFunctionData,
-  encodePacked,
-  keccak256,
-} from 'viem'
-
+import { encodeAbiParameters, encodeFunctionData, encodePacked, keccak256 } from 'viem'
 import SafeABI from '../../backend/src/abi/Safe.json'
 import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'

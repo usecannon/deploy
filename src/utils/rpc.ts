@@ -1,7 +1,7 @@
 import * as chains from '@wagmi/core/chains'
-import Ganache from 'ganache'
-import { ethers } from 'ethers'
 import { infuraProvider } from '@wagmi/core/dist/providers/infura'
+import { ethers } from 'ethers'
+import Ganache from 'ganache'
 
 function findChainUrl(chainId: number) {
   if (typeof chainId !== 'number') {

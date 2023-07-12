@@ -1,14 +1,5 @@
-import _ from 'lodash'
-import {
-  Address,
-  Hex,
-  TransactionRequestBase,
-  encodeFunctionData,
-  zeroAddress,
-} from 'viem'
-
+import { Address, encodeFunctionData, Hex, TransactionRequestBase, zeroAddress } from 'viem'
 import MulticallABI from '../../backend/src/abi/Multicall.json'
-import { SafeTransaction } from '../types'
 
 const MULTICALL_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11'
 

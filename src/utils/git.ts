@@ -1,8 +1,8 @@
 import LightningFS from '@isomorphic-git/lightning-fs'
-import http from 'isomorphic-git/http/web'
 import md5 from 'crypto-js/md5'
-import memoize from 'just-memoize'
 import { checkout, clone, fastForward, fetch, findRoot } from 'isomorphic-git'
+import http from 'isomorphic-git/http/web'
+import memoize from 'just-memoize'
 
 const getFs = memoize((name: string) => new LightningFS(name).promises)
 const getDir = memoize(

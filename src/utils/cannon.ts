@@ -326,11 +326,11 @@ export function parseHintedMulticall(data: Hex) {
         gitRepoHash,
         prevGitRepoHash,
       ] = decodeAbiParameters(
-        parseAbiParameters('string[] data'),
+        parseAbiParameters('string[]'),
         decoded.args[0][0].callData
       )[0]
     } catch (err) {
-      console.error('Could not parse decoded function', { decoded, err })
+      console.log('Could not parse decoded function', { decoded, err })
       return null
     }
   }
