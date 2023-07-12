@@ -16,6 +16,7 @@ import {
 } from 'viem'
 import { useAccount } from 'wagmi'
 import { useStore } from '../store'
+import { extractFunctionNames } from '../utils/tx-codec'
 import { EditableAutocompleteInput } from './EditableAutocompleteInput'
 
 export function DisplayedTransaction(props: {
@@ -107,11 +108,8 @@ export function DisplayedTransaction(props: {
     if (type.startsWith('bytes') && !val.startsWith('0x')) {
       return stringToHex(val || '', { size: 32 })
     }
-    if (type == 'bool') {
-      return val === 'true' ? true : false
-    } else {
-      return val
-    }
+
+    return type == 'bool' ? val === 'true' : val
   }
 
   function decodeArg(type: string, val: string) {
@@ -227,15 +225,6 @@ export function DisplayedTransaction(props: {
     }
 
     return []
-    //const input =
-  }
-
-  function extractFunctionNames(contractAbi: any[]) {
-    return contractAbi
-      .filter((a) => a.type === 'function' && a.stateMutability !== 'view')
-      .map((a) => {
-        return { label: a.name, secondary: getFunctionSelector(a) }
-      })
   }
 
   return (
@@ -273,11 +262,8 @@ export function DisplayedTransaction(props: {
           tabKeys=","
           placeholder={arg.name || arg.type || arg.internalType}
           items={generateArgOptions(i)}
-          onFilterChange={(v) => {
-            console.log('update filter change')
-            updateFuncArg(i, v)
-          }}
-          onChange={(v) => console.log('on change', updateFuncArg(i, v))}
+          onFilterChange={(v) => updateFuncArg(i, v)}
+          onChange={(v) => updateFuncArg(i, v)}
           editable={props.editable}
           unfilteredResults
         />,
