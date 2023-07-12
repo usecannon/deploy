@@ -113,8 +113,6 @@ function _createSafeApiKit(chainId: number) {
 
   if (!chain?.serviceUrl) return null
 
-  console.log(publicProvider()(mainnet).rpcUrls)
-
   const provider = new ethers.providers.Web3Provider(
     createWalletClient({
       chain: mainnet,

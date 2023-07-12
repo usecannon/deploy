@@ -147,7 +147,11 @@ export function SafeAddressInput() {
       )}
       {currentSafe && pendingServiceTransactions.count > 0 && (
         <Alert status="warning">
-          There are pending transactions on the{' '}
+          There
+          {pendingServiceTransactions.count === 1
+            ? ` is 1 pending transaction`
+            : ` are ${pendingServiceTransactions.count} pending transactions`}
+          {' on the '}
           <Link
             href={getSafeUrl(currentSafe, '/transactions/queue')}
             isExternal
