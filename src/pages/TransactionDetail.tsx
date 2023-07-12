@@ -1,30 +1,30 @@
-import _ from 'lodash'
-import { Address, isAddress, zeroAddress } from 'viem'
+import { ExternalLinkIcon } from '@chakra-ui/icons'
 import {
   Box,
   Button,
   Container,
-  HStack,
-  Text,
-  Heading,
+  Flex,
   FormControl,
   FormLabel,
-  Tooltip,
-  Tag,
-  Flex,
+  Heading,
+  HStack,
   Link,
+  Tag,
+  Text,
+  Tooltip,
 } from '@chakra-ui/react'
-import { useContractWrite, useChainId, useAccount } from 'wagmi'
+import _ from 'lodash'
 import { useNavigate, useParams } from 'react-router-dom'
-
-import { SafeTransaction } from '../types'
+import { Address, isAddress, zeroAddress } from 'viem'
+import { useAccount, useChainId, useContractWrite } from 'wagmi'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { useSafeTransactions, useTxnStager } from '../hooks/backend'
-import { getSafeTransactionHash } from '../utils/safe'
 import { useExecutedTransactions } from '../hooks/safe'
 import { SafeDefinition } from '../store'
+import { SafeTransaction } from '../types'
 import { parseHintedMulticall } from '../utils/cannon'
-import { ExternalLinkIcon } from '@chakra-ui/icons'
+import { parseIpfsHash } from '../utils/ipfs'
+import { getSafeTransactionHash } from '../utils/safe'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
@@ -116,17 +116,10 @@ export function TransactionDetail() {
   }
 
   const formatHash = (hash: string): string => {
-    if (hash.startsWith('ipfs://')) {
-      const parts = hash.split('/')
-      const id = parts[2]
-      if (id.length > 8) {
-        return `${parts[0]}//${parts[1]}/${id.substring(
-          0,
-          4
-        )}....${id.substring(id.length - 4)}`
-      }
-    }
-    return hash
+    const id = parseIpfsHash(hash)
+    return id
+      ? `ipfs://${id.substring(0, 4)}...${id.substring(id.length - 4)}`
+      : hash
   }
 
   // Function to create IPLD link

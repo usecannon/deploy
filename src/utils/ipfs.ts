@@ -1,4 +1,4 @@
-import { CannonRegistry, IPFSLoader } from '@usecannon/builder'
+import { IPFSLoader } from '@usecannon/builder'
 import { create as createUrl, parse as parseUrl } from 'simple-url'
 
 const FILE_URL_REGEX = /^(?:ipfs:\/\/|@ipfs:)?(?<cid>[a-zA-Z0-9]{46})$/

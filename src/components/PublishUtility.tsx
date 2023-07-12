@@ -1,7 +1,4 @@
-import _ from 'lodash'
-
 import { ethers } from 'ethers'
-
 import {
   Box,
   Button,
@@ -11,10 +8,7 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useCannonPackage } from '../hooks/cannon'
-
-import { useAccount, useChainId, useMutation, useWalletClient } from 'wagmi'
-import { useStore } from '../store'
-
+import { useAccount, useMutation, useWalletClient } from 'wagmi'
 import {
   CannonStorage,
   FallbackRegistry,
@@ -22,8 +16,9 @@ import {
   OnChainRegistry,
   copyPackage,
 } from '@usecannon/builder'
-import { IPFSBrowserLoader } from '../utils/ipfs'
 import { CheckIcon } from '@chakra-ui/icons'
+import { IPFSBrowserLoader } from '../utils/ipfs'
+import { useStore } from '../store'
 
 export default function PublishUtility(props: {
   deployUrl: string
