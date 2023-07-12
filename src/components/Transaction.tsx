@@ -1,38 +1,27 @@
+import { ChevronRightIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import {
   Box,
   Flex,
   Heading,
-  useDisclosure,
+  IconButton,
+  Link as ChakraLink,
   LinkBox,
   LinkOverlay,
 } from '@chakra-ui/react'
-import { ChevronRightIcon } from '@chakra-ui/icons'
-
-import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
-
+import { Link } from 'react-router-dom'
+import { getSafeUrl } from '../hooks/safe'
 import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
-import { getSafeTransactionHash } from '../utils/safe'
 import { parseHintedMulticall } from '../utils/cannon'
+import { getSafeTransactionHash } from '../utils/safe'
 
 interface Params {
   safe: SafeDefinition
   tx: SafeTransaction
-  modalDisplay?: boolean
-  canSign?: boolean
-  canExecute?: boolean
 }
 
-export function Transaction({
-  safe,
-  tx,
-  modalDisplay = false,
-  canSign = false,
-  canExecute = false,
-}: Params) {
-  const { isOpen, onOpen, onClose } = useDisclosure()
-
+export function Transaction({ safe, tx }: Params) {
   const hintData = parseHintedMulticall(tx.data)
 
   const sigHash = useMemo(
@@ -60,13 +49,27 @@ export function Transaction({
         <Heading size="md">Transaction #{tx._nonce}</Heading>
       </Box>
       <Box ml="auto" pl="2">
-        {isLink && (
+        {isLink ? (
           <LinkOverlay
             as={Link}
             to={`/txn/${safe.chainId}/${safe.address}/${tx._nonce}/${sigHash}`}
           >
             <ChevronRightIcon boxSize={6} />
           </LinkOverlay>
+        ) : (
+          <ChakraLink
+            href={`${getSafeUrl(safe, '/transactions/tx')}&id=${tx.safeTxHash}`}
+            isExternal
+          >
+            <IconButton
+              variant="link"
+              opacity={0.4}
+              transform="translateY(1px)"
+              _hover={{ opacity: 1 }}
+              aria-label={`View Transaction #${tx._nonce}`}
+              icon={<ExternalLinkIcon />}
+            />
+          </ChakraLink>
         )}
       </Box>
     </LinkBox>

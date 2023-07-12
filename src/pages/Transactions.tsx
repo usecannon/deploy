@@ -23,8 +23,6 @@ export function Transactions() {
               key={JSON.stringify(tx.txn)}
               safe={currentSafe}
               tx={tx.txn}
-              canSign
-              canExecute
             />
           ))}
         {currentSafe && staged.length === 0 && (

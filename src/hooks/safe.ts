@@ -20,7 +20,6 @@ import {
   useQuery,
 } from 'wagmi'
 import { infuraProvider } from 'wagmi/dist/providers/infura'
-import { publicProvider } from 'wagmi/dist/providers/public'
 import Web3 from 'web3'
 import { chains } from '../constants'
 import { ChainId, SafeDefinition, useStore } from '../store'
@@ -170,8 +169,9 @@ export function useSafeInfo(safeAddress: string) {
 
 export function useExecutedTransactions(safe?: SafeDefinition) {
   const txsQuery = useQuery(
-    ['safe-service', 'all-txns', safe.chainId, safe.address],
+    ['safe-service', 'all-txns', safe?.chainId, safe?.address],
     async () => {
+      if (!safe) return null
       const safeService = _createSafeApiKit(safe.chainId)
       const res = await safeService.getMultisigTransactions(safe.address)
       return {
@@ -257,6 +257,7 @@ export function useGetPreviousGitInfoQuery(
   return useContractReads({
     contracts: [
       {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         abi: onchainStore.ABI as any,
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
@@ -266,6 +267,7 @@ export function useGetPreviousGitInfoQuery(
         ],
       },
       {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         abi: onchainStore.ABI as any,
         address: onchainStore.deployAddress,
         functionName: 'getWithAddress',
