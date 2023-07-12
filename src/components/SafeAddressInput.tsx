@@ -1,4 +1,3 @@
-import deepEqual from 'fast-deep-equal'
 import { CloseIcon } from '@chakra-ui/icons'
 import {
   Container,
@@ -8,26 +7,26 @@ import {
   Spacer,
 } from '@chakra-ui/react'
 import {
+  chakraComponents,
   CreatableSelect,
   OptionProps,
-  chakraComponents,
 } from 'chakra-react-select'
+import deepEqual from 'fast-deep-equal'
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSwitchNetwork } from 'wagmi'
-
-import { Alert } from './Alert'
 import {
-  SafeString,
   getSafeFromString,
   isValidSafe,
   isValidSafeString,
   parseSafe,
+  SafeString,
   safeToString,
   useWalletPublicSafes,
 } from '../hooks/safe'
 import { State, useStore } from '../store'
 import { includes } from '../utils/array'
+import { Alert } from './Alert'
 
 type SafeOption = {
   value: SafeString

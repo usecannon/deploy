@@ -1,46 +1,44 @@
-import _ from 'lodash'
-import { Address, useChainId, useNetwork } from 'wagmi'
 import { BaseTransaction } from '@safe-global/safe-apps-sdk'
 import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+} from '@tanstack/react-query'
+import {
+  build as cannonBuild,
   CannonStorage,
   CannonWrapperGenericProvider,
   ChainArtifacts,
   ChainBuilderRuntime,
-  build as cannonBuild,
   ChainDefinition,
+  copyPackage,
+  createInitialContext,
   DeploymentInfo,
   Events,
   FallbackRegistry,
-  OnChainRegistry,
-  copyPackage,
-  createInitialContext,
   getOutputs,
-  registerAction,
   InMemoryRegistry,
+  OnChainRegistry,
+  registerAction,
 } from '@usecannon/builder'
-import { EthereumProvider } from 'ganache'
+// TODO: in the future register actions that are found in a cannon definition automatically with stubs
+import cannonPluginRouter from 'cannon-plugin-router'
 import { ethers } from 'ethers'
+import { EthereumProvider } from 'ganache'
+import _ from 'lodash'
 import { useEffect, useState } from 'react'
+import { Address, useChainId } from 'wagmi'
+import { SafeDefinition, useStore } from '../store'
 import {
-  UseMutationOptions,
-  useMutation,
-  useQuery,
-} from '@tanstack/react-query'
-
-import { IPFSBrowserLoader } from '../utils/ipfs'
-import {
-  StepExecutionError,
-  build,
   inMemoryLoader,
   inMemoryRegistry,
   loadCannonfile,
+  StepExecutionError,
 } from '../utils/cannon'
+import { IPFSBrowserLoader } from '../utils/ipfs'
 import { createFork } from '../utils/rpc'
 import { useGitRepo } from './git'
-import { SafeDefinition, useStore } from '../store'
 
-// TODO: in the future register actions that are found in a cannon definition automatically with stubs
-import cannonPluginRouter from 'cannon-plugin-router'
 registerAction({
   ...cannonPluginRouter,
   exec: () => {

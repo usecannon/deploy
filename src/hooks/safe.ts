@@ -1,27 +1,40 @@
-import Web3 from 'web3'
-import { ethers } from 'ethers'
 import SafeApiKit, { SafeInfoResponse } from '@safe-global/api-kit'
-import { Address, createWalletClient, getAddress, http, isAddress, keccak256, stringToBytes } from 'viem'
 import { EthersAdapter, Web3Adapter } from '@safe-global/protocol-kit'
-import { mainnet, useAccount, useChainId, useContractReads, useNetwork, useQuery } from 'wagmi'
+import { ethers } from 'ethers'
 import { useEffect, useMemo, useState } from 'react'
-
-import { ChainId, SafeDefinition, State, useStore } from '../store'
-import { SafeTransaction } from '../types'
-import { chains } from '../constants'
-import { supportedChains } from '../wallet'
-
-import * as onchainStore from '../utils/onchain-store'
-import { publicProvider } from 'wagmi/dist/providers/public'
+import {
+  Address,
+  createWalletClient,
+  getAddress,
+  http,
+  isAddress,
+  keccak256,
+  stringToBytes,
+} from 'viem'
+import {
+  mainnet,
+  useAccount,
+  useChainId,
+  useContractReads,
+  useNetwork,
+  useQuery,
+} from 'wagmi'
 import { infuraProvider } from 'wagmi/dist/providers/infura'
+import { publicProvider } from 'wagmi/dist/providers/public'
+import Web3 from 'web3'
+import { chains } from '../constants'
+import { ChainId, SafeDefinition, useStore } from '../store'
+import { SafeTransaction } from '../types'
+import * as onchainStore from '../utils/onchain-store'
+import { supportedChains } from '../wallet'
 
 export type SafeString = `${ChainId}:${Address}`
 
-export function safeToString(safe: State['currentSafe']): SafeString {
-  return `${safe.chainId}:${safe.address}`
+export function safeToString(safe: SafeDefinition): SafeString {
+  return `${safe.chainId as ChainId}:${safe.address}`
 }
 
-export function parseSafe(safeString: string): State['currentSafe'] {
+export function parseSafe(safeString: string): SafeDefinition {
   const [chainId, address] = safeString.split(':')
   return {
     chainId: Number.parseInt(chainId) as ChainId,
@@ -48,9 +61,7 @@ export function isValidSafeString(safeString: string): boolean {
   return chains.some((chain) => chain.id === chainId)
 }
 
-export function getSafeFromString(
-  safeString: string
-): State['currentSafe'] | null {
+export function getSafeFromString(safeString: string): SafeDefinition | null {
   if (!isValidSafeString(safeString)) return null
   const [chainId, address] = safeString.split(':')
   return {
@@ -59,7 +70,7 @@ export function getSafeFromString(
   }
 }
 
-export function isValidSafe(safe: State['currentSafe']): boolean {
+export function isValidSafe(safe: SafeDefinition): boolean {
   return (
     !!safe &&
     isAddress(safe.address) &&
@@ -104,34 +115,44 @@ export function useSafeWriteApi(): SafeApiKit | null {
   }, [chain, isDisconnected])
 }
 
-function _createSafeApiKit(chainId: number, address: string) {
+function _createSafeApiKit(chainId: number) {
+  if (!chainId) return null
+
   const chain = chains.find((chain) => chain.id === chainId)
 
   if (!chain?.serviceUrl) return null
 
   console.log(publicProvider()(mainnet).rpcUrls)
 
+  const provider = new ethers.providers.Web3Provider(
+    createWalletClient({
+      chain: mainnet,
+      transport: http(
+        infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' })(mainnet)
+          .rpcUrls.http[0]
+      ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any
+  )
+
   return new SafeApiKit({
     txServiceUrl: chain.serviceUrl,
     ethAdapter: new EthersAdapter({
       ethers,
-      signerOrProvider: new ethers.providers.Web3Provider(createWalletClient({ chain: mainnet, transport: http(infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' })(mainnet).rpcUrls.http[0]) }) as any)
-    })
+      signerOrProvider: provider,
+    }),
   })
 }
 
 export function useSafeReadApi(safeAddress: string): SafeApiKit | null {
-  const [chainId, walletAddress] = useMemo(() => {
+  const chainId = useMemo(() => {
     if (!safeAddress) return null
-    const [shortName, walletAddress] = safeAddress.split(':')
+    const [shortName] = safeAddress.split(':')
     const chain = chains.find((chain) => chain.shortName === shortName)
-    return chain ? [chain.id, walletAddress] : null
+    return chain ? chain.id : null
   }, [safeAddress])
 
-  return useMemo(
-    () => _createSafeApiKit(chainId, walletAddress),
-    [chainId, walletAddress]
-  )
+  return useMemo(() => _createSafeApiKit(chainId), [chainId])
 }
 
 export function useSafeInfo(safeAddress: string) {
@@ -158,11 +179,11 @@ export function useSafeInfo(safeAddress: string) {
   return safeInfo
 }
 
-export function useExecutedTransactions(safe?: State['currentSafe']) {
+export function useExecutedTransactions(safe?: SafeDefinition) {
   const txsQuery = useQuery(
     ['safe-service', 'all-txns', safe.chainId, safe.address],
     async () => {
-      const safeService = _createSafeApiKit(safe.chainId, safe.address)
+      const safeService = _createSafeApiKit(safe.chainId)
       const res = await safeService.getMultisigTransactions(safe.address)
       return {
         count:
@@ -190,45 +211,46 @@ export function useExecutedTransactions(safe?: State['currentSafe']) {
     }
   )
 
-  return txsQuery.data || { count: 0, next: null, previous: null, results: [] }
+  return txsQuery?.data || { count: 0, next: null, previous: null, results: [] }
+}
+
+export function usePendingTransactions(safe?: SafeDefinition) {
+  const txsQuery = useQuery(
+    ['safe-service', 'pending-txns', safe.chainId, safe.address],
+    async () => {
+      if (!safe) return null
+      const safeService = _createSafeApiKit(safe.chainId)
+      return await safeService.getPendingTransactions(safe.address)
+    }
+  )
+
+  return txsQuery?.data || { count: 0, next: null, previous: null, results: [] }
 }
 
 export function useWalletPublicSafes() {
   const { address } = useAccount()
-  const [walletSafes, setWalletSafes] = useState<State['safeAddresses']>([])
 
-  useEffect(() => {
-    const fetchSafes = async () => {
-      if (!address) return
-
-      const safesPromises = supportedChains.map(async (chain) => {
-        const safeService = _createSafeApiKit(chain.id, address)
-
-        if (safeService) {
-          const safes = await safeService.getSafesByOwner(address)
-          return { chainId: chain.id, safes: safes.safes }
-        }
-
-        return { chainId: chain.id, safes: [] }
-      })
-
-      const safes = await Promise.all(safesPromises)
-
-      const safeAddresses = safes.flatMap((entry) => {
-        const chainSafes = entry?.safes || []
-        return chainSafes.map((address) => ({
-          chainId: entry.chainId as ChainId,
-          address: address as `0x${string}`,
-        }))
-      })
-
-      setWalletSafes(safeAddresses)
+  const txsQuery = useQuery(
+    ['safe-service', 'wallet-safes', address],
+    async () => {
+      const results: SafeDefinition[] = []
+      if (!address) return results
+      await Promise.all(
+        supportedChains.map(async (chain) => {
+          const safeService = _createSafeApiKit(chain.id)
+          if (!safeService) return
+          const res = await safeService.getSafesByOwner(address)
+          if (!Array.isArray(res.safes)) return
+          for (const safe of res.safes) {
+            results.push({ chainId: chain.id, address: safe as Address })
+          }
+        })
+      )
+      return results
     }
+  )
 
-    fetchSafes()
-  }, [address])
-
-  return walletSafes
+  return txsQuery.data || ([] as SafeDefinition[])
 }
 
 export function useSafeAddress() {
@@ -238,7 +260,10 @@ export function useSafeAddress() {
   )
 }
 
-export function useGetPreviousGitInfoQuery(safe: SafeDefinition, gitRepoUrl: string) {
+export function useGetPreviousGitInfoQuery(
+  safe: SafeDefinition,
+  gitRepoUrl: string
+) {
   // get previous deploy info git information
   return useContractReads({
     contracts: [
@@ -257,9 +282,7 @@ export function useGetPreviousGitInfoQuery(safe: SafeDefinition, gitRepoUrl: str
         functionName: 'getWithAddress',
         args: [
           safe.address,
-          keccak256(
-            stringToBytes((gitRepoUrl || '') + 'cannonPackage')
-          ),
+          keccak256(stringToBytes((gitRepoUrl || '') + 'cannonPackage')),
         ],
       },
     ],
