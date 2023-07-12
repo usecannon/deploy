@@ -57,13 +57,6 @@ export function DisplayedTransaction(props: {
         : props.txn.data.slice(0, 10)
       : ''
   )
-  const [execFuncArgs, setExecFuncArgs] = useState(
-    props.txn
-      ? parsedFunction?.args?.map((v) => v.toString()) || [
-          props.txn.data.slice(10),
-        ]
-      : []
-  )
 
   const execContractInfo = execContract ? props.contracts[execContract] : null
   const execFuncFragment =
@@ -71,17 +64,11 @@ export function DisplayedTransaction(props: {
       ? execContractInfo.abi.find((f) => f.name === execFunc)
       : null
 
-  console.log({
-    name: props.name,
-    parsedContractNames,
-    parsedContract,
-    parsedFunction,
-    execContract,
-    execFunc,
-    execFuncArgs,
-    execContractInfo,
-    execFuncFragment,
-  })
+  const [execFuncArgs, setExecFuncArgs] = useState(
+    props.txn
+      ? parsedFunction?.args?.map((v) => v) || [props.txn.data.slice(10)]
+      : []
+  )
 
   function selectExecFunc(label: string) {
     if (execFunc !== label) {
@@ -104,17 +91,39 @@ export function DisplayedTransaction(props: {
   }
 
   function encodeArg(type: string, val: string) {
+    if (Array.isArray(val)) {
+      if (!type.endsWith('[]')) {
+        throw Error(`Invalid arg type "${type}" and val "${val}"`)
+      }
+      return JSON.parse(val)
+    }
+
     if (type.startsWith('bytes') && !val.startsWith('0x')) {
       return stringToHex(val || '', { size: 32 })
     }
-    if (type == 'bool') {
-      return val === 'true' ? true : false
-    } else {
-      return val
+
+    if (type == 'tuple') {
+      try {
+        return JSON.parse(val)
+      } catch (err) {
+        // ignore
+      }
+    } else if (type == 'bool') {
+      return val === 'true'
     }
+
+    return val
   }
 
   function decodeArg(type: string, val: string) {
+    if (Array.isArray(val)) {
+      if (!type.endsWith('[]')) {
+        throw Error(`Invalid arg type "${type}" and val "${val}"`)
+      }
+
+      return `[${val.map((v) => decodeArg(type.slice(0, -2), v)).join(', ')}]`
+    }
+
     if (type.startsWith('bytes') && val.startsWith('0x')) {
       try {
         const b = hexToBytes(val as Hex)
@@ -131,13 +140,18 @@ export function DisplayedTransaction(props: {
         return bytesToString(trim(b, { dir: 'right' }))
       } catch (err) {
         console.warn('could not decode hex', err)
-        return val
+        return val.toString()
       }
+    } else if (type == 'tuple') {
+      // TODO: use a lib?
+      return JSON.stringify(val, (_, v) =>
+        typeof v === 'bigint' ? v.toString() : v
+      )
     } else if (type == 'bool') {
       return val ? 'true' : 'false'
-    } else {
-      return val
     }
+
+    return val.toString()
   }
 
   function updateFuncArg(arg: number, val: string) {
@@ -187,12 +201,12 @@ export function DisplayedTransaction(props: {
           ]
 
           if (!num.includes('.')) {
-            res.unshift({ label: num, secondary: 'literal' })
+            res.unshift({ label: num.toString(), secondary: 'literal' })
           }
 
           return res
         } catch (e) {
-          return [{ label: num, secondary: 'literal' }]
+          return [{ label: num.toString(), secondary: 'literal' }]
         }
       }
 
@@ -269,7 +283,10 @@ export function DisplayedTransaction(props: {
       {(execFuncFragment?.inputs || []).map((arg, i) => [
         <EditableAutocompleteInput
           color="gray.200"
-          defaultValue={execFuncArgs[i]}
+          defaultValue={decodeArg(
+            execFuncFragment.inputs[i].type,
+            execFuncArgs[i]
+          )}
           tabKeys=","
           placeholder={arg.name || arg.type || arg.internalType}
           items={generateArgOptions(i)}
