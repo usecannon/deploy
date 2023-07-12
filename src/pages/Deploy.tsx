@@ -63,7 +63,7 @@ export function Deploy() {
   const prepareDeployOnchainStore = usePrepareSendTransaction(
     onchainStore.deployTxn
   )
-  const deplochainStore = useSendTransaction({
+  const deployOnChainStore = useSendTransaction({
     ...prepareDeployOnchainStore.config,
     onSuccess: () => {
       console.log('on success')
@@ -165,12 +165,6 @@ export function Deploy() {
     prevCannonDeployInfo.metaUrl
   )
 
-  console.log(
-    'WRITE IPFS RES',
-    uploadToPublishIpfs.writeToIpfsMutation.data ||
-      uploadToPublishIpfs.writeToIpfsMutation.error
-  )
-
   useEffect(() => {
     if (buildInfo.buildResult) {
       uploadToPublishIpfs.writeToIpfsMutation.mutate()
@@ -179,7 +173,9 @@ export function Deploy() {
 
   const gitHash = refsInfo.refs?.find((r) => r.ref === gitBranch)?.oid
 
-  const prevInfoQuery = useGetPreviousGitInfoQuery(currentSafe, gitUrl)
+  const prevInfoQuery = useGetPreviousGitInfoQuery(currentSafe, gitUrl + ':' + gitFile)
+
+  console.log(' the prev info query data is', prevInfoQuery.data)
 
   const multicallTxn: /*Partial<TransactionRequestBase>*/ any =
     buildInfo.buildResult && buildInfo.buildResult.steps.indexOf(null) === -1
@@ -284,7 +280,7 @@ export function Deploy() {
             This is a one time (per network) operation and will cost a small
             amount of gas.
           </Text>
-          <Button w="100%" onClick={() => deployOnchainStore.sendTransaction()}>
+          <Button w="100%" onClick={() => deployOnChainStore.sendTransaction()}>
             Deploy On-Chain Store Contract
           </Button>
         </Box>
@@ -364,7 +360,12 @@ export function Deploy() {
         </FormHelperText>
       </FormControl>
       {buildInfo.buildStatus == '' && (
-        <Button width="100%" mb={6} onClick={() => buildTransactions()}>
+        <Button width="100%" mb={6} isDisabled={
+          cannonPkgVersionInfo.ipfsQuery.isFetching ||
+          cannonPkgLatestInfo.ipfsQuery.isFetching ||
+          cannonPkgVersionInfo.registryQuery.isFetching ||
+          cannonPkgLatestInfo.registryQuery.isFetching
+        } onClick={() => buildTransactions()}>
           Preview Transactions to Queue
         </Button>
       )}
@@ -390,7 +391,7 @@ export function Deploy() {
           <HStack gap="6">
             <Tooltip label={stager.signConditionFailed}>
               <Button
-                isDisabled={stager.signConditionFailed}
+                isDisabled={!!stager.signConditionFailed}
                 size="lg"
                 w="100%"
                 onClick={() => stager.sign()}
@@ -400,7 +401,7 @@ export function Deploy() {
             </Tooltip>
             <Tooltip label={stager.execConditionFailed}>
               <Button
-                isDisabled={stager.signConditionFailed}
+                isDisabled={!!stager.execConditionFailed}
                 size="lg"
                 w="100%"
                 onClick={() => execTxn.write()}

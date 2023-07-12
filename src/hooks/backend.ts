@@ -247,8 +247,8 @@ export function useTxnStager(
   } else if (!isSigner) {
     execConditionFailed = `current wallet ${account.address} not signer of this safe`
   } else if (
-    existingSigsCount < requiredSigs ||
-    (!signConditionFailed && existingSigsCount + 1 < requiredSigs)
+    existingSigsCount < requiredSigs &&
+    (signConditionFailed || existingSigsCount + 1 < requiredSigs)
   ) {
     execConditionFailed = `insufficient signers to execute (required: ${requiredSigs})`
   }

@@ -320,7 +320,7 @@ export function parseHintedMulticall(data: Hex) {
     decoded.args[0][0].target === zeroAddress
   ) {
     try {
-      ;[
+      [
         type,
         cannonPackage,
         cannonUpgradeFromPackage,
@@ -353,5 +353,6 @@ export function parseHintedMulticall(data: Hex) {
     cannonUpgradeFromPackage,
     gitRepoHash,
     gitRepoUrl,
+    prevGitRepoHash
   }
 }

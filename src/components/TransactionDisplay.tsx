@@ -61,18 +61,19 @@ export function TransactionDisplay(props: {
     hintData.gitRepoUrl
   )
 
-  const prevDeployGitHash: string =
-    prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
+  let prevDeployGitHash: string;
+  if (props.allowPublishing) {
+    prevDeployGitHash = hintData?.prevGitRepoHash || hintData?.gitRepoHash
+  } else {
+    prevDeployGitHash =
+      prevDeployHashQuery.data && prevDeployHashQuery.data[0].result?.length > 2
       ? (prevDeployHashQuery.data[0].result.slice(2) as any)
       : hintData.gitRepoHash
-  console.log('prevDeployGitHash', prevDeployGitHash)
-  console.log('prevDeployHashQuery', prevDeployHashQuery)
+  }
 
   const prevDeployPackageUrl = prevDeployHashQuery.data
     ? hexToString(prevDeployHashQuery.data[1].result || ('' as any))
     : ''
-
-  console.log('got prev cannon hint', hintData.cannonUpgradeFromPackage)
 
   const prevCannonDeployInfo = useCannonPackage(
     hintData.cannonUpgradeFromPackage || prevDeployPackageUrl
@@ -80,12 +81,6 @@ export function TransactionDisplay(props: {
           (hintData.cannonUpgradeFromPackage || prevDeployPackageUrl).split('/')
         )}`
       : null
-  )
-
-  console.log(
-    'got prev cannon deploy info',
-    prevDeployPackageUrl,
-    prevCannonDeployInfo
   )
 
   const cannonDefInfo = useLoadCannonDefinition(
@@ -100,6 +95,8 @@ export function TransactionDisplay(props: {
     hintData.gitRepoHash,
     cannonDefInfo.filesList ? Array.from(cannonDefInfo.filesList) : []
   )
+
+  console.log('got back patches from the git differ', patches, prevDeployGitHash, hintData.gitRepoHash, 'and prev hash', hintData.prevGitRepoHash);
 
   const buildInfo = useCannonBuild(
     props.safe,
@@ -165,8 +162,6 @@ export function TransactionDisplay(props: {
             }
 
             try {
-              console.log('parse the patch', p)
-              console.log('got parsed diff', parseDiff(p))
               const { oldRevision, newRevision, type, hunks } = parseDiff(p)[0]
               return (
                 <Box
@@ -198,7 +193,7 @@ export function TransactionDisplay(props: {
                 </Box>
               )
             } catch (err) {
-              console.error('diff didnt work:', err)
+              console.debug('diff didnt work:', err)
 
               return []
             }
