@@ -1,8 +1,9 @@
 import Web3 from 'web3'
+import { ethers } from 'ethers'
 import SafeApiKit, { SafeInfoResponse } from '@safe-global/api-kit'
-import { Address, getAddress, isAddress, keccak256, stringToBytes } from 'viem'
-import { Web3Adapter } from '@safe-global/protocol-kit'
-import { useAccount, useChainId, useContractReads, useNetwork, useQuery } from 'wagmi'
+import { Address, createWalletClient, getAddress, http, isAddress, keccak256, stringToBytes } from 'viem'
+import { EthersAdapter, Web3Adapter } from '@safe-global/protocol-kit'
+import { mainnet, useAccount, useChainId, useContractReads, useNetwork, useQuery } from 'wagmi'
 import { useEffect, useMemo, useState } from 'react'
 
 import { ChainId, SafeDefinition, State, useStore } from '../store'
@@ -11,6 +12,8 @@ import { chains } from '../constants'
 import { supportedChains } from '../wallet'
 
 import * as onchainStore from '../utils/onchain-store'
+import { publicProvider } from 'wagmi/dist/providers/public'
+import { infuraProvider } from 'wagmi/dist/providers/infura'
 
 export type SafeString = `${ChainId}:${Address}`
 
@@ -106,15 +109,14 @@ function _createSafeApiKit(chainId: number, address: string) {
 
   if (!chain?.serviceUrl) return null
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const web3 = new Web3((window as any).ethereum) as any
+  console.log(publicProvider()(mainnet).rpcUrls)
 
   return new SafeApiKit({
     txServiceUrl: chain.serviceUrl,
-    ethAdapter: new Web3Adapter({
-      web3,
-      signerAddress: address,
-    }),
+    ethAdapter: new EthersAdapter({
+      ethers,
+      signerOrProvider: new ethers.providers.Web3Provider(createWalletClient({ chain: mainnet, transport: http(infuraProvider({ apiKey: '6b369abb43f44b83a7fb34f6eacb8683' })(mainnet).rpcUrls.http[0]) }) as any)
+    })
   })
 }
 

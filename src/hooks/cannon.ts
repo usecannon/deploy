@@ -324,7 +324,6 @@ export function useCannonWriteDeployToIpfs(
       })
 
       // load the new ipfs url
-      console.log('MEMORY REGISTRY RESULT', memoryRegistry, packageRef, variant)
       const mainUrl = await memoryRegistry.getUrl(packageRef, variant)
 
       return {

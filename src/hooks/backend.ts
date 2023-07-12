@@ -95,7 +95,6 @@ export function useTxnStager(
   }
 
   // try to match with an existing transaction
-  console.log('CHECKING ALREADY STAGED', options.safe || currentSafe)
   const alreadyStaged = staged.find((s) => _.isEqual(s.txn, safeTxn))
 
   const reads = useContractReads({
@@ -224,8 +223,6 @@ export function useTxnStager(
     reads.isSuccess && !reads.isFetching && !reads.isRefetching
       ? (reads.data[2].result as unknown as boolean)
       : false
-
-  console.log('ALREADY STAGED SIGS', alreadyStagedSigners, alreadyStaged)
 
   let signConditionFailed = ''
   if (!isSigner) {

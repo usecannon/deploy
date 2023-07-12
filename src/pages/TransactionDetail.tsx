@@ -56,6 +56,8 @@ export function TransactionDetail() {
 
   const history = useExecutedTransactions(safe)
 
+  console.log('historical txns', history, safe)
+
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
 
