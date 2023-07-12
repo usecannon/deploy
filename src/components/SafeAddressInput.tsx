@@ -1,10 +1,12 @@
-import { CloseIcon } from '@chakra-ui/icons'
+import { CloseIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import {
   Container,
   FormControl,
   FormLabel,
   IconButton,
+  Link,
   Spacer,
+  Text,
 } from '@chakra-ui/react'
 import {
   chakraComponents,
@@ -17,11 +19,13 @@ import { useSearchParams } from 'react-router-dom'
 import { useSwitchNetwork } from 'wagmi'
 import {
   getSafeFromString,
+  getSafeUrl,
   isValidSafe,
   isValidSafeString,
   parseSafe,
   SafeString,
   safeToString,
+  usePendingTransactions,
   useWalletPublicSafes,
 } from '../hooks/safe'
 import { State, useStore } from '../store'
@@ -42,6 +46,7 @@ export function SafeAddressInput() {
   const deleteSafe = useStore((s) => s.deleteSafe)
   const prependSafeAddress = useStore((s) => s.prependSafeAddress)
   const walletSafes = useWalletPublicSafes()
+  const pendingServiceTransactions = usePendingTransactions(currentSafe)
 
   const { switchNetwork } = useSwitchNetwork()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -139,6 +144,20 @@ export function SafeAddressInput() {
       </FormControl>
       {!currentSafe && (
         <Alert status="info">Select a Safe from the dropdown above.</Alert>
+      )}
+      {currentSafe && pendingServiceTransactions.count > 0 && (
+        <Alert status="warning">
+          There are pending transactions on the{' '}
+          <Link
+            href={getSafeUrl(currentSafe, '/transactions/queue')}
+            isExternal
+          >
+            <Text as="b">Safe App</Text>
+            <ExternalLinkIcon transform="translate(4px,-2px)" />
+          </Link>
+          &nbsp; Keep in mind that any transactions executed on this app will
+          override the ones on Safe.
+        </Alert>
       )}
     </Container>
   )

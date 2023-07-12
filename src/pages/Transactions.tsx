@@ -1,9 +1,8 @@
 import { Box, Container, FormLabel } from '@chakra-ui/react'
-
 import { Alert } from '../components/Alert'
 import { Transaction } from '../components/Transaction'
-import { useExecutedTransactions } from '../hooks/safe'
 import { useSafeTransactions } from '../hooks/backend'
+import { useExecutedTransactions } from '../hooks/safe'
 import { useStore } from '../store'
 
 export function Transactions() {

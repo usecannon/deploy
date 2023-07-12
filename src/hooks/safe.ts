@@ -42,16 +42,6 @@ export function parseSafe(safeString: string): SafeDefinition {
   }
 }
 
-export function isShortName(shortName: string): boolean {
-  if (typeof shortName !== 'string') return false
-  shortName = shortName.toLowerCase()
-  return chains.some((chain) => chain.shortName === shortName)
-}
-
-export function isSafeAddress(safeAddress: string): boolean {
-  return isAddress(safeAddress)
-}
-
 const addressStringRegex = /^[1-9][0-9]*:0x[a-fA-F0-9]{40}$/
 
 export function isValidSafeString(safeString: string): boolean {
@@ -79,16 +69,17 @@ export function isValidSafe(safe: SafeDefinition): boolean {
   )
 }
 
-export function getSafeShortNameAddress(safeAddress: string) {
-  if (!isSafeAddress(safeAddress)) return null
-  return `${getAddress(safeAddress)}`
+export function getShortName(safe: SafeDefinition) {
+  return chains.find((chain) => chain.id === safe.chainId)?.shortName
 }
 
-export function getSafeUrl(safeAddress: string) {
-  if (!isSafeAddress(safeAddress)) return null
-  return `https://app.safe.global/home?safe=${getSafeShortNameAddress(
-    safeAddress
-  )}`
+export function getSafeShortNameAddress(safe: SafeDefinition) {
+  return `${getShortName(safe)}:${getAddress(safe.address)}`
+}
+
+export function getSafeUrl(safe: SafeDefinition, pathname = '/home') {
+  const address = getSafeShortNameAddress(safe)
+  return `https://app.safe.global${pathname}?safe=${address}`
 }
 
 export function useSafeWriteApi(): SafeApiKit | null {
@@ -216,7 +207,7 @@ export function useExecutedTransactions(safe?: SafeDefinition) {
 
 export function usePendingTransactions(safe?: SafeDefinition) {
   const txsQuery = useQuery(
-    ['safe-service', 'pending-txns', safe.chainId, safe.address],
+    ['safe-service', 'pending-txns', safe?.chainId, safe?.address],
     async () => {
       if (!safe) return null
       const safeService = _createSafeApiKit(safe.chainId)
