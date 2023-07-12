@@ -1,15 +1,7 @@
-import _ from 'lodash'
-import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
-import path from '@isomorphic-git/lightning-fs/src/path'
 import toml from '@iarna/toml'
+import path from '@isomorphic-git/lightning-fs/src/path'
 import {
-  Address,
-  Hex,
-  decodeAbiParameters,
-  decodeFunctionData,
-  zeroAddress,
-} from 'viem'
-import {
+  build as cannonBuild,
   BuildOptions,
   CANNON_CHAIN_ID,
   CannonLoader,
@@ -19,20 +11,26 @@ import {
   ChainBuilderContext,
   ChainBuilderRuntime,
   ChainDefinition,
+  createInitialContext,
   DeploymentInfo,
   Events,
-  IPFSLoader,
   InMemoryRegistry,
   RawChainDefinition,
   TransactionMap,
-  build as cannonBuild,
-  createInitialContext,
-  registerAction,
 } from '@usecannon/builder'
+import CannonRegistryAbi from '@usecannon/builder/dist/abis/CannonRegistry'
 import { ethers } from 'ethers'
-
-import * as git from './git'
+import _ from 'lodash'
+import {
+  Address,
+  decodeAbiParameters,
+  decodeFunctionData,
+  Hex,
+  parseAbiParameters,
+  zeroAddress,
+} from 'viem'
 import MulticallABI from '../../backend/src/abi/Multicall.json'
+import * as git from './git'
 
 // cannon plugins supported by the web interface
 //import cannonRouterPlugin from 'cannon-plugin-router'
@@ -320,7 +318,7 @@ export function parseHintedMulticall(data: Hex) {
     decoded.args[0][0].target === zeroAddress
   ) {
     try {
-      [
+      ;[
         type,
         cannonPackage,
         cannonUpgradeFromPackage,
@@ -328,7 +326,7 @@ export function parseHintedMulticall(data: Hex) {
         gitRepoHash,
         prevGitRepoHash,
       ] = decodeAbiParameters(
-        [{ type: 'string[]' }],
+        parseAbiParameters('string[] data'),
         decoded.args[0][0].callData
       )[0]
     } catch (err) {
@@ -353,6 +351,6 @@ export function parseHintedMulticall(data: Hex) {
     cannonUpgradeFromPackage,
     gitRepoHash,
     gitRepoUrl,
-    prevGitRepoHash
+    prevGitRepoHash,
   }
 }
