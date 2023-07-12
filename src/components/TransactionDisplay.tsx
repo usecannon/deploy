@@ -1,5 +1,5 @@
 import { CheckIcon, ExternalLinkIcon, WarningIcon } from '@chakra-ui/icons'
-import { Box, Button, Flex, Heading, ListItem, OrderedList, Spinner, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, Heading, ListItem, OrderedList, Text } from '@chakra-ui/react'
 import _ from 'lodash'
 import { Diff, parseDiff } from 'react-diff-view'
 import { hexToString, TransactionRequestBase } from 'viem'
@@ -281,6 +281,7 @@ export function TransactionDisplay(props: {
           </OrderedList>
         </Box>
       ) : (
+        hintData.type === 'deploy' &&
         props.allowPublishing && (
           <Box>
             <Heading size="md" mb="1.5">
