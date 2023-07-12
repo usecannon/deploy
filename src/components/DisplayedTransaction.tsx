@@ -1,25 +1,25 @@
+import { HStack, Text } from '@chakra-ui/react'
 import _ from 'lodash'
+import { useState } from 'react'
 import {
   Address,
-  Hex,
-  TransactionRequestBase,
   bytesToString,
   decodeFunctionData,
   encodeFunctionData,
   getFunctionSelector,
+  Hex,
   hexToBytes,
   parseEther,
   stringToHex,
+  TransactionRequestBase,
   trim,
 } from 'viem'
-import { HStack, Text } from '@chakra-ui/react'
 import { useAccount } from 'wagmi'
-import { useState } from 'react'
-
-import { EditableAutocompleteInput } from './EditableAutocompleteInput'
 import { useStore } from '../store'
+import { EditableAutocompleteInput } from './EditableAutocompleteInput'
 
 export function DisplayedTransaction(props: {
+  name: string
   contracts: { [key: string]: { address: Address; abi: any[] } }
   txn?: Omit<TransactionRequestBase, 'from'>
   onTxn?: (txn: Omit<TransactionRequestBase, 'from'> | null) => void
@@ -70,6 +70,18 @@ export function DisplayedTransaction(props: {
     execContractInfo && execFunc
       ? execContractInfo.abi.find((f) => f.name === execFunc)
       : null
+
+  console.log({
+    name: props.name,
+    parsedContractNames,
+    parsedContract,
+    parsedFunction,
+    execContract,
+    execFunc,
+    execFuncArgs,
+    execContractInfo,
+    execFuncFragment,
+  })
 
   function selectExecFunc(label: string) {
     if (execFunc !== label) {

@@ -8,13 +8,11 @@ import {
   PopoverAnchor,
   PopoverBody,
   PopoverContent,
-  PopoverTrigger,
   Text,
   VStack,
 } from '@chakra-ui/react'
-import { useState } from 'react'
-
 import _ from 'lodash'
+import { useState } from 'react'
 
 export function EditableAutocompleteInput(props: {
   items: { label: string; secondary: string }[]
