@@ -49,7 +49,11 @@ export function RunCustom() {
 
   console.log('qd txns', queuedTxns)
 
-  const cannonInfo = useCannonPackageContracts(target)
+  const settings = useStore((s) => s.settings)
+  const cannonInfo = useCannonPackageContracts(
+    target,
+    `${currentSafe.chainId}-${settings.preset}`
+  )
 
   const multisendTxn =
     queuedTxns.indexOf(null) === -1

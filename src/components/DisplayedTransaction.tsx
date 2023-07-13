@@ -77,7 +77,7 @@ export function DisplayedTransaction(props: {
       const abiFragment = execContractInfo.abi.find((f) => f.name === label)
 
       if (props.onTxn) {
-        if (!abiFragment.inputs.length) {
+        if (!abiFragment?.inputs?.length) {
           // transaction is valid
           props.onTxn({
             to: execContractInfo.address,
@@ -151,7 +151,7 @@ export function DisplayedTransaction(props: {
       return val ? 'true' : 'false'
     }
 
-    return val.toString()
+    return val
   }
 
   function updateFuncArg(arg: number, val: string) {
@@ -285,7 +285,7 @@ export function DisplayedTransaction(props: {
           color="gray.200"
           defaultValue={decodeArg(
             execFuncFragment.inputs[i].type,
-            execFuncArgs[i]
+            execFuncArgs[i] || ''
           )}
           tabKeys=","
           placeholder={arg.name || arg.type || arg.internalType}

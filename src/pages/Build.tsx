@@ -1,5 +1,13 @@
 import { ArrowForwardIcon } from '@chakra-ui/icons'
-import { Box, Button, Code, Container, Text, Wrap, WrapItem } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  Code,
+  Container,
+  Text,
+  Wrap,
+  WrapItem,
+} from '@chakra-ui/react'
 import { useAccount, useNetwork } from 'wagmi'
 import { Alert } from '../components/Alert'
 import { Settings, useSettingsValidation } from '../components/Settings'
