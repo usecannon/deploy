@@ -151,7 +151,7 @@ export function DisplayedTransaction(props: {
       return val ? 'true' : 'false'
     }
 
-    return val
+    return val.toString()
   }
 
   function updateFuncArg(arg: number, val: string) {
