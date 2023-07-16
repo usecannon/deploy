@@ -27,6 +27,7 @@ import { createSimulationData } from '../utils/safe'
 import { Alert } from './Alert'
 import { DisplayedTransaction } from './DisplayedTransaction'
 import PublishUtility from './PublishUtility'
+import { useAccount } from 'wagmi'
 
 export function TransactionDisplay(props: {
   safeTxn: SafeTransaction
@@ -34,6 +35,8 @@ export function TransactionDisplay(props: {
   verify?: boolean
   allowPublishing?: boolean
 }) {
+  const account = useAccount()
+
   const settings = useStore((s) => s.settings)
   const hintData = parseHintedMulticall(props.safeTxn?.data)
 
@@ -131,6 +134,14 @@ export function TransactionDisplay(props: {
       fileNames.push(match[1])
     }
     return fileNames
+  }
+
+  function generateSignerLabel(s: string) {
+    if (s === account.address) {
+      return 'you'
+    }
+
+    return null
   }
 
   return (
@@ -284,7 +295,9 @@ export function TransactionDisplay(props: {
           </Heading>
           <OrderedList fontSize="lg">
             {stager.existingSigners.map((s) => (
-              <ListItem mb={1}>{s}</ListItem>
+              <ListItem mb={1}>
+                {generateSignerLabel(s) && `(${generateSignerLabel(s)})`} {s}
+              </ListItem>
             ))}
           </OrderedList>
         </Box>

@@ -1,4 +1,4 @@
-import { ExternalLinkIcon } from '@chakra-ui/icons'
+import { CheckIcon, ExternalLinkIcon, WarningIcon } from '@chakra-ui/icons'
 import {
   Box,
   Button,
@@ -25,6 +25,7 @@ import { SafeTransaction } from '../types'
 import { parseHintedMulticall } from '../utils/cannon'
 import { parseIpfsHash } from '../utils/ipfs'
 import { getSafeTransactionHash } from '../utils/safe'
+import { useCannonPackage } from '../hooks/cannon'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
@@ -55,8 +56,6 @@ export function TransactionDetail() {
   const { nonce: safeNonce, staged, stagedQuery } = useSafeTransactions(safe)
 
   const history = useExecutedTransactions(safe)
-
-  console.log('historical txns', history, safe)
 
   // get the txn we want, we can just pluck it out of staged transactions if its there
   let safeTxn: SafeTransaction | null = null
@@ -104,6 +103,14 @@ export function TransactionDetail() {
       </Container>
     )
   }
+
+  const cannonPackage = useCannonPackage(
+    `@ipfs:${_.last(hintData.cannonPackage.split('/'))}`
+  )
+
+  const reverseLookupCannonPackage = useCannonPackage(
+    `${cannonPackage.resolvedName}:${cannonPackage.resolvedVersion}`
+  )
 
   const executed = Number(safeNonce) > Number(nonce)
   const awaitingExecution = !safeTxn || !stager.execConditionFailed
@@ -190,10 +197,43 @@ export function TransactionDetail() {
             <Box borderRadius="lg" bg="blackAlpha.300" ml="6" py="4" px="6">
               <FormControl>
                 <FormLabel mb="1">Cannon&nbsp;Package</FormLabel>
-                <Link href={createIPLDLink(hintData.cannonPackage)} isExternal>
-                  {formatHash(hintData.cannonPackage)}
-                  <ExternalLinkIcon transform="translate(4px,-2px)" />
-                </Link>
+                {reverseLookupCannonPackage.pkgUrl ? (
+                  <Box>
+                    <Link
+                      href={
+                        'https://usecannon.com/packages/' +
+                        cannonPackage.resolvedName
+                      }
+                      isExternal
+                    >
+                      {reverseLookupCannonPackage.pkgUrl ===
+                      hintData.cannonPackage ? (
+                        <CheckIcon color={'green'} />
+                      ) : (
+                        <WarningIcon color="red" />
+                      )}
+                      &nbsp;{cannonPackage.resolvedName}:
+                      {cannonPackage.resolvedVersion}
+                    </Link>
+                    (
+                    <Link
+                      href={createIPLDLink(hintData.cannonPackage)}
+                      isExternal
+                    >
+                      {formatHash(hintData.cannonPackage)}
+                      <ExternalLinkIcon transform="translate(4px,-2px)" />
+                    </Link>
+                    )
+                  </Box>
+                ) : (
+                  <Link
+                    href={createIPLDLink(hintData.cannonPackage)}
+                    isExternal
+                  >
+                    {formatHash(hintData.cannonPackage)}
+                    <ExternalLinkIcon transform="translate(4px,-2px)" />
+                  </Link>
+                )}
               </FormControl>
             </Box>
           )}

@@ -291,7 +291,6 @@ export function DisplayedTransaction(props: {
           placeholder={arg.name || arg.type || arg.internalType}
           items={generateArgOptions(i)}
           onFilterChange={(v) => {
-            console.log('update filter change')
             updateFuncArg(i, v)
           }}
           onChange={(v) => console.log('on change', updateFuncArg(i, v))}
