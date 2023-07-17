@@ -105,9 +105,22 @@ export function App() {
 function WalletProvider({ children }: { children: React.ReactNode }) {
   const walletTheme = useColorModeValue(lightTheme(), darkTheme())
 
+  // NOTE: have to hack the style below becuase otherwise it overflows the page.
+  // hopefully the class name doesnt change from compile to compile lol
   return (
     <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider chains={chains} theme={walletTheme}>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+            div.ju367v1i {
+              max-height: 90vh;
+              overflow: auto;
+            }
+          `,
+          }}
+        />
+
         {children}
       </RainbowKitProvider>
     </WagmiConfig>
