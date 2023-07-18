@@ -90,15 +90,11 @@ export function DisplayedTransaction(props: {
     }
   }
 
-  function encodeArg(type: string, val: string) {
-    if (Array.isArray(val)) {
-      if (!type.endsWith('[]')) {
-        throw Error(`Invalid arg type "${type}" and val "${val}"`)
-      }
+  function decodeArg(type: string, val: string) {
+    console.log('decodearg', type, val)
+    if (type.endsWith('[]')) {
       return JSON.parse(val)
-    }
-
-    if (type.startsWith('bytes') && !val.startsWith('0x')) {
+    } else if (type.startsWith('bytes') && !val.startsWith('0x')) {
       return stringToHex(val || '', { size: 32 })
     }
 
@@ -115,13 +111,15 @@ export function DisplayedTransaction(props: {
     return val
   }
 
-  function decodeArg(type: string, val: string) {
+  function encodeArg(type: string, val: string) {
     if (Array.isArray(val)) {
       if (!type.endsWith('[]')) {
         throw Error(`Invalid arg type "${type}" and val "${val}"`)
       }
 
-      return `[${val.map((v) => decodeArg(type.slice(0, -2), v)).join(', ')}]`
+      return `["${val
+        .map((v) => encodeArg(type.slice(0, -2), v))
+        .join('", "')}"]`
     }
 
     if (type.startsWith('bytes') && val.startsWith('0x')) {
@@ -164,7 +162,7 @@ export function DisplayedTransaction(props: {
         execFuncArgs.pop()
       }
 
-      execFuncArgs[arg] = encodeArg(execFuncFragment.inputs[arg].type, val)
+      execFuncArgs[arg] = decodeArg(execFuncFragment.inputs[arg].type, val)
 
       setExecFuncArgs(_.clone(execFuncArgs))
 
@@ -210,6 +208,24 @@ export function DisplayedTransaction(props: {
         }
       }
 
+      if (execFuncFragment.inputs[arg].type.endsWith('[]')) {
+        try {
+          return [
+            { label: '[]', secondary: 'empty array' },
+            {
+              label:
+                encodeArg(
+                  execFuncFragment.inputs[arg].type,
+                  execFuncArgs[arg] || ''
+                ) || '',
+              secondary: '',
+            },
+          ]
+        } catch (e) {
+          return [{ label: '[]', secondary: 'empty array' }]
+        }
+      }
+
       switch (execFuncFragment.inputs[arg].type) {
         case 'bool':
           return [
@@ -230,7 +246,7 @@ export function DisplayedTransaction(props: {
           return [
             {
               label:
-                decodeArg(
+                encodeArg(
                   execFuncFragment.inputs[arg].type,
                   execFuncArgs[arg] || ''
                 ) || '',
@@ -283,7 +299,7 @@ export function DisplayedTransaction(props: {
       {(execFuncFragment?.inputs || []).map((arg, i) => [
         <EditableAutocompleteInput
           color="gray.200"
-          defaultValue={decodeArg(
+          defaultValue={encodeArg(
             execFuncFragment.inputs[i].type,
             execFuncArgs[i] || ''
           )}

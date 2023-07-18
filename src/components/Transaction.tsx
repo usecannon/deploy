@@ -24,6 +24,8 @@ interface Params {
 export function Transaction({ safe, tx }: Params) {
   const hintData = parseHintedMulticall(tx.data)
 
+  console.log(tx._nonce, hintData)
+
   const sigHash = useMemo(
     () => hintData && getSafeTransactionHash(safe, tx),
     [safe, tx]

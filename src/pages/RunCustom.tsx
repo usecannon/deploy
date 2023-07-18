@@ -47,8 +47,6 @@ export function RunCustom() {
 
   const [pickedNonce, setPickedNonce] = useState<number | null>(null)
 
-  console.log('qd txns', queuedTxns)
-
   const settings = useStore((s) => s.settings)
   const cannonInfo = useCannonPackageContracts(
     target,
@@ -72,6 +70,7 @@ export function RunCustom() {
 
   const txnInfo = useSimulatedTxns(currentSafe, queuedTxns)
 
+  console.log('txns', queuedTxns)
   console.log('txnresults', txnInfo.txnResults)
 
   // TODO: check types
@@ -175,6 +174,7 @@ export function RunCustom() {
               />
               {txnInfo.txnResults &&
                 txnInfo.txnResults.length === queuedTxns.length &&
+                txnInfo.txnResults[i] &&
                 txnInfo.txnResults[i].error && (
                   <Alert status="error" mt="6">
                     <AlertIcon />
@@ -256,7 +256,9 @@ export function RunCustom() {
               <Button
                 size="lg"
                 w="100%"
-                isDisabled={txnHasError || !!stager.signConditionFailed}
+                isDisabled={
+                  !multisendTxn || txnHasError || !!stager.signConditionFailed
+                }
                 onClick={() => stager.sign()}
               >
                 Queue &amp; Sign
@@ -266,7 +268,9 @@ export function RunCustom() {
               <Button
                 size="lg"
                 w="100%"
-                isDisabled={txnHasError || !!stager.execConditionFailed}
+                isDisabled={
+                  !multisendTxn || txnHasError || !!stager.execConditionFailed
+                }
                 onClick={() => execTxn.write()}
               >
                 Execute
