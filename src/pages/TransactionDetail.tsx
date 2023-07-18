@@ -104,6 +104,15 @@ export function TransactionDetail() {
     )
   }
 
+  if (!hintData) {
+    // TODO: display data for txn staged outside of this app
+    return (
+      <Container>
+        <Text>Not a Deployer staged transaction.</Text>
+      </Container>
+    )
+  }
+
   const cannonPackage = useCannonPackage(
     `@ipfs:${_.last(hintData.cannonPackage.split('/'))}`
   )
