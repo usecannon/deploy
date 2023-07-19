@@ -17,15 +17,16 @@ import _ from 'lodash'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Address, isAddress, zeroAddress } from 'viem'
 import { useAccount, useChainId, useContractWrite } from 'wagmi'
+import { Alert } from '../components/Alert'
 import { TransactionDisplay } from '../components/TransactionDisplay'
 import { useSafeTransactions, useTxnStager } from '../hooks/backend'
+import { useCannonPackage } from '../hooks/cannon'
 import { useExecutedTransactions } from '../hooks/safe'
 import { SafeDefinition } from '../store'
 import { SafeTransaction } from '../types'
 import { parseHintedMulticall } from '../utils/cannon'
 import { parseIpfsHash } from '../utils/ipfs'
 import { getSafeTransactionHash } from '../utils/safe'
-import { useCannonPackage } from '../hooks/cannon'
 
 export function TransactionDetail() {
   let { safeAddress } = useParams()
@@ -37,7 +38,9 @@ export function TransactionDetail() {
   try {
     parsedChainId = parseInt(chainId)
     parsedNonce = parseInt(nonce)
-  } catch (e) {}
+  } catch (e) {
+    // nothing
+  }
 
   const walletChainId = useChainId()
   const account = useAccount()
@@ -224,7 +227,7 @@ export function TransactionDetail() {
                       &nbsp;{cannonPackage.resolvedName}:
                       {cannonPackage.resolvedVersion}
                     </Link>
-                    (
+                    &nbsp;(
                     <Link
                       href={createIPLDLink(hintData.cannonPackage)}
                       isExternal
@@ -254,7 +257,10 @@ export function TransactionDetail() {
         verify={parsedNonce >= safeNonce}
         allowPublishing
       />
-      {parsedNonce >= safeNonce && (
+      {stager.alreadySigned && (
+        <Alert status="success">Transaction successfully signed!</Alert>
+      )}
+      {!stager.alreadySigned && parsedNonce >= safeNonce && (
         <Box>
           {account.isConnected && walletChainId === parsedChainId ? (
             <HStack

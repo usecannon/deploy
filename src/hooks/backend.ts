@@ -1,6 +1,8 @@
-import _ from 'lodash'
 import axios from 'axios'
-import { zeroAddress, type Abi } from 'viem'
+import { ethers } from 'ethers'
+import _ from 'lodash'
+import { useMemo, useState } from 'react'
+import { Abi, type, zeroAddress } from 'viem'
 import {
   Address,
   useAccount,
@@ -12,12 +14,9 @@ import {
   useQuery,
   useWalletClient,
 } from 'wagmi'
-import { ethers } from 'ethers'
-import { useMemo } from 'react'
-
 import SafeABIJSON from '../../backend/src/abi/Safe.json'
-import { SafeTransaction } from '../types'
 import { SafeDefinition, State, useStore } from '../store'
+import { SafeTransaction } from '../types'
 import { useSafeAddress } from './safe'
 
 const SafeABI = SafeABIJSON as Abi
@@ -67,6 +66,8 @@ export function useTxnStager(
   const account = useAccount()
   const walletClient = useWalletClient()
   const safeAddress = useSafeAddress()
+
+  const [alreadySigned, setAlreadySigned] = useState(false)
 
   const queryChainId = options.safe?.chainId || chainId.toString()
   const querySafeAddress = options.safe?.address || safeAddress
@@ -251,6 +252,7 @@ export function useTxnStager(
   }
 
   return {
+    alreadySigned,
     isSigner,
     signConditionFailed,
     execConditionFailed,
