@@ -10,9 +10,6 @@ export function Transactions() {
   const { staged } = useSafeTransactions(currentSafe)
   const history = useExecutedTransactions(currentSafe)
 
-  console.log('got staged', currentSafe, staged)
-  console.log('history', currentSafe, history)
-
   return (
     <Container maxW="container.md">
       <Box mb="10">

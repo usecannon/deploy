@@ -12,7 +12,7 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import _ from 'lodash'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function EditableAutocompleteInput(props: {
   items: { label: string; secondary: string }[]
@@ -30,14 +30,14 @@ export function EditableAutocompleteInput(props: {
   const [isEditing, setIsEditing] = useState(false)
   const [pendingItem, setPendingItem] = useState('')
 
-  const filteredItems = _.sortBy(
+  const filteredItems = _.sortBy(props.items, i => i.label)/*_.sortBy(
     props.items.filter(
       (i) =>
         props.unfilteredResults ||
         i.label.toLowerCase().includes(filterInput.toLowerCase())
     ),
     (i) => !i.label.toLowerCase().startsWith(filterInput.toLowerCase())
-  )
+  )*/
 
   const completedText = pendingItem
     .toLowerCase()
@@ -173,15 +173,18 @@ export function EditableAutocompleteInput(props: {
           {isEditing && <Text color="gray.500">{completedText}</Text>}
         </HStack>
       </PopoverAnchor>
-      <PopoverContent margin="-5px">
+      <PopoverContent margin="-5px" maxHeight={'50vh'} overflowY={'auto'} overflowX={'hidden'}>
         <PopoverBody padding="5px">
-          <VStack maxHeight="500px" alignItems="left" overflow={'hidden'}>
+          <VStack alignItems="left">
             {filteredItems.map((item) => {
               return (
                 <AutocompleteOption
                   item={item}
                   filterInput={filterInput}
                   selected={item.label === pendingItem}
+                  isVisible={isEditing && filteredItems.length > 0}
+                  onMouseOver={() => setPendingItem(item.label)}
+                  onClick={() => { setPendingItem(item.label); setFilterInput(item.label); finishEdit() }}
                 />
               )
             })}
@@ -196,14 +199,26 @@ function AutocompleteOption(props: {
   item: { label: string; secondary: string }
   filterInput: string
   selected?: boolean
+  onMouseOver: () => void
+  onClick: () => void
+  isVisible: boolean
 }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (props.selected) {
+      console.log('SCROLL TO VIEW', props.item)
+      ref.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [props.isVisible])
+
   const regEscape = (v) => v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
   const matched = props.filterInput
     ? props.item.label.split(new RegExp(regEscape(props.filterInput), 'i'))
     : [props.item.label]
 
   return (
-    <Box background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
+    <Box onMouseOver={props.onMouseOver} onClick={props.onClick} background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
       <HStack gap={0}>
         {matched.map((p, i) => [
           <Text>{p}</Text>,
