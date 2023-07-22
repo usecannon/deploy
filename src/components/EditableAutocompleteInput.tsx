@@ -12,7 +12,7 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import _ from 'lodash'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 export function EditableAutocompleteInput(props: {
   items: { label: string; secondary: string }[]
@@ -30,14 +30,14 @@ export function EditableAutocompleteInput(props: {
   const [isEditing, setIsEditing] = useState(false)
   const [pendingItem, setPendingItem] = useState('')
 
-  const filteredItems = _.sortBy(props.items, i => i.label)/*_.sortBy(
+  const filteredItems = _.sortBy(
     props.items.filter(
       (i) =>
         props.unfilteredResults ||
         i.label.toLowerCase().includes(filterInput.toLowerCase())
     ),
     (i) => !i.label.toLowerCase().startsWith(filterInput.toLowerCase())
-  )*/
+  )
 
   const completedText = pendingItem
     .toLowerCase()
@@ -77,41 +77,7 @@ export function EditableAutocompleteInput(props: {
         // perform "tab"
         event.preventDefault()
 
-        const tabElements = Array.from(
-          document
-            // Get all elements that can be focusable
-            // removed [tabindex] from query selector
-            .querySelectorAll(
-              'a, button, input, textarea, select, details, [tabindex]'
-            )
-        )
-
-          // remove any that have a tabIndex of -1
-          .filter((element) => (element as any).tabIndex > -1)
-
-          // split elements into two arrays, explicit tabIndexs and implicit ones
-          .reduce(
-            (prev, next) => {
-              return (next as any).tabIndex > 0
-                ? [
-                    [...prev[0], next].sort((a, b) =>
-                      a.tabIndex > b.tabIndex ? -1 : 1
-                    ),
-                    prev[1],
-                  ]
-                : [prev[0], [...prev[1], next]]
-            },
-            [[], []]
-          )
-
-          // flatten the two-dimensional array
-          .flatMap((element) => element)
-
-        const currentIndex = tabElements.findIndex(
-          (e) => e === document.activeElement
-        )
-        const nextIndex = (currentIndex + 1) % tabElements.length
-        tabElements[nextIndex].focus()
+        tabToNext()
       }
 
       if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
@@ -138,6 +104,52 @@ export function EditableAutocompleteInput(props: {
 
   const inputValue = filterInput || (isEditing ? '' : props.placeholder)
 
+  const editableInputRef = useRef();
+
+  function tabToNext() {
+    console.log('tabdata trigger tabtonext');
+    const tabElements = Array.from(
+      document
+        // Get all elements that can be focusable
+        // removed [tabindex] from query selector
+        .querySelectorAll(
+          'a, button, input, textarea, select, details, [tabindex]'
+        )
+    )
+
+      // remove any that have a tabIndex of -1
+      .filter((element) => (element as any).tabIndex > -1)
+
+      // split elements into two arrays, explicit tabIndexs and implicit ones
+      .reduce(
+        (prev, next) => {
+          return (next as any).tabIndex > 0
+            ? [
+                [...prev[0], next].sort((a, b) =>
+                  a.tabIndex > b.tabIndex ? -1 : 1
+                ),
+                prev[1],
+              ]
+            : [prev[0], [...prev[1], next]]
+        },
+        [[], []]
+      )
+
+      // flatten the two-dimensional array
+      .flatMap((element) => element)
+
+    const currentIndex = tabElements.findIndex(
+      (e) => e === editableInputRef.current
+    )
+
+    //console.log('tabdata current index', currentIndex);
+    //console.log('tabdata', editableInputRef)
+    //console.log('tabdata', tabElements);
+
+    const nextIndex = (currentIndex + 1) % tabElements.length
+    tabElements[nextIndex].focus()
+  }
+
   return (
     <Popover
       autoFocus={false}
@@ -151,7 +163,7 @@ export function EditableAutocompleteInput(props: {
           <Editable
             isDisabled={!props.editable}
             onEdit={() => setIsEditing(true)}
-            onBlur={finishEdit}
+            onBlur={() => { finishEdit(); tabToNext() }}
             onKeyDown={handleKey}
             onChange={(value) => {
               setFilterInput(value)
@@ -166,6 +178,8 @@ export function EditableAutocompleteInput(props: {
             <EditableInput
               boxShadow={'none !important'}
               outline={'none !important'}
+              ref={editableInputRef}
+              onFocus={() => setFilterInput('')}
               cursor=""
               width={inputValue.length ? `${inputValue.length}ch` : '1px'}
             />
@@ -184,7 +198,7 @@ export function EditableAutocompleteInput(props: {
                   selected={item.label === pendingItem}
                   isVisible={isEditing && filteredItems.length > 0}
                   onMouseOver={() => setPendingItem(item.label)}
-                  onClick={() => { setPendingItem(item.label); setFilterInput(item.label); finishEdit() }}
+                  onClick={() => { console.log('tabdata click'); setPendingItem(item.label); setFilterInput(item.label); tabToNext(); console.log('tabdata end') }}
                 />
               )
             })}
@@ -203,23 +217,14 @@ function AutocompleteOption(props: {
   onClick: () => void
   isVisible: boolean
 }) {
-  const ref = useRef(null)
-
-  useEffect(() => {
-    if (props.selected) {
-      console.log('SCROLL TO VIEW', props.item)
-      ref.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [props.isVisible])
-
   const regEscape = (v) => v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
   const matched = props.filterInput
     ? props.item.label.split(new RegExp(regEscape(props.filterInput), 'i'))
     : [props.item.label]
 
   return (
-    <Box onMouseOver={props.onMouseOver} onClick={props.onClick} background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
-      <HStack gap={0}>
+    <Box onMouseOver={props.onMouseOver} onClick={(evt) => { evt.preventDefault(); props.onClick() }} background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
+      <HStack onClick={(evt) => { evt.preventDefault(); props.onClick() }}  gap={0}>
         {matched.map((p, i) => [
           <Text>{p}</Text>,
           i < matched.length - 1 ? <Text as="b">{props.filterInput}</Text> : [],
