@@ -91,8 +91,14 @@ export function App() {
     if (typeof window !== 'undefined') localStorage.setItem('debug', 'cannon*')
   }, [])
 
+  const csm = {
+    get: () => null,
+    set: () => {},
+    type: 'localStorage'
+  } as const
+
   return (
-    <ChakraProvider theme={theme}>
+    <ChakraProvider theme={theme} colorModeManager={csm}>
       <WalletProvider>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
