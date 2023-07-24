@@ -12,7 +12,7 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import _ from 'lodash'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function EditableAutocompleteInput(props: {
   items: { label: string; secondary: string }[]
@@ -77,41 +77,7 @@ export function EditableAutocompleteInput(props: {
         // perform "tab"
         event.preventDefault()
 
-        const tabElements = Array.from(
-          document
-            // Get all elements that can be focusable
-            // removed [tabindex] from query selector
-            .querySelectorAll(
-              'a, button, input, textarea, select, details, [tabindex]'
-            )
-        )
-
-          // remove any that have a tabIndex of -1
-          .filter((element) => (element as any).tabIndex > -1)
-
-          // split elements into two arrays, explicit tabIndexs and implicit ones
-          .reduce(
-            (prev, next) => {
-              return (next as any).tabIndex > 0
-                ? [
-                    [...prev[0], next].sort((a, b) =>
-                      a.tabIndex > b.tabIndex ? -1 : 1
-                    ),
-                    prev[1],
-                  ]
-                : [prev[0], [...prev[1], next]]
-            },
-            [[], []]
-          )
-
-          // flatten the two-dimensional array
-          .flatMap((element) => element)
-
-        const currentIndex = tabElements.findIndex(
-          (e) => e === document.activeElement
-        )
-        const nextIndex = (currentIndex + 1) % tabElements.length
-        tabElements[nextIndex].focus()
+        tabToNext()
       }
 
       if (event.key == 'ArrowDown' || event.key == 'ArrowUp') {
@@ -138,6 +104,75 @@ export function EditableAutocompleteInput(props: {
 
   const inputValue = filterInput || (isEditing ? '' : props.placeholder)
 
+  const editableInputRef = useRef();
+
+  function tabToNext() {
+    console.log('tabdata trigger tabtonext');
+    const tabElements = Array.from(
+      document
+        // Get all elements that can be focusable
+        // removed [tabindex] from query selector
+        .querySelectorAll(
+          'a, button, input, textarea, select, details, [tabindex]'
+        )
+    )
+
+      // remove any that have a tabIndex of -1
+      .filter((element) => (element as any).tabIndex > -1)
+
+      // split elements into two arrays, explicit tabIndexs and implicit ones
+      .reduce(
+        (prev, next) => {
+          return (next as any).tabIndex > 0
+            ? [
+                [...prev[0], next].sort((a, b) =>
+                  a.tabIndex > b.tabIndex ? -1 : 1
+                ),
+                prev[1],
+              ]
+            : [prev[0], [...prev[1], next]]
+        },
+        [[], []]
+      )
+
+      // flatten the two-dimensional array
+      .flatMap((element) => element)
+
+    const currentIndex = tabElements.findIndex(
+      (e) => e === editableInputRef.current
+    )
+
+    //console.log('tabdata current index', currentIndex);
+    //console.log('tabdata', editableInputRef)
+    //console.log('tabdata', tabElements);
+
+    const nextIndex = (currentIndex + 1) % tabElements.length
+    tabElements[nextIndex].focus()
+  }
+
+  const selectedRef = useRef<HTMLDivElement>();
+  const scrollRef = useRef<HTMLElement>();
+
+  function scrollToSelected() {
+    if (scrollRef.current && selectedRef.current) {
+      scrollRef.current.scrollTop = 
+        Math.max(
+          selectedRef.current.offsetTop - scrollRef.current.clientHeight + (selectedRef.current as Element).clientHeight,
+          scrollRef.current.scrollTop
+        );
+
+      scrollRef.current.scrollTop = 
+        Math.min(
+          selectedRef.current.offsetTop,
+          scrollRef.current.scrollTop
+        );
+    }
+  }
+
+  useEffect(() => {
+    scrollToSelected();
+  }, [pendingItem, selectedRef.current])
+
   return (
     <Popover
       autoFocus={false}
@@ -151,7 +186,7 @@ export function EditableAutocompleteInput(props: {
           <Editable
             isDisabled={!props.editable}
             onEdit={() => setIsEditing(true)}
-            onBlur={finishEdit}
+            onBlur={() => { finishEdit(); tabToNext() }}
             onKeyDown={handleKey}
             onChange={(value) => {
               setFilterInput(value)
@@ -166,6 +201,8 @@ export function EditableAutocompleteInput(props: {
             <EditableInput
               boxShadow={'none !important'}
               outline={'none !important'}
+              ref={editableInputRef}
+              onFocus={() => setFilterInput('')}
               cursor=""
               width={inputValue.length ? `${inputValue.length}ch` : '1px'}
             />
@@ -173,15 +210,19 @@ export function EditableAutocompleteInput(props: {
           {isEditing && <Text color="gray.500">{completedText}</Text>}
         </HStack>
       </PopoverAnchor>
-      <PopoverContent margin="-5px">
+      <PopoverContent margin="-5px" maxHeight={'45vh'} overflowY={'auto'} overflowX={'hidden'} ref={scrollRef}>
         <PopoverBody padding="5px">
-          <VStack maxHeight="500px" alignItems="left" overflow={'hidden'}>
+          <VStack alignItems="left">
             {filteredItems.map((item) => {
               return (
                 <AutocompleteOption
                   item={item}
                   filterInput={filterInput}
                   selected={item.label === pendingItem}
+                  isVisible={isEditing && filteredItems.length > 0}
+                  onMouseOver={() => setPendingItem(item.label)}
+                  onClick={() => { console.log('tabdata click'); setPendingItem(item.label); setFilterInput(item.label); tabToNext(); console.log('tabdata end') }}
+                  internalRef={item.label === pendingItem ? selectedRef : undefined}
                 />
               )
             })}
@@ -196,15 +237,20 @@ function AutocompleteOption(props: {
   item: { label: string; secondary: string }
   filterInput: string
   selected?: boolean
+  onMouseOver: () => void
+  onClick: () => void
+  isVisible: boolean
+  internalRef: React.MutableRefObject<HTMLDivElement>|undefined
 }) {
+
   const regEscape = (v) => v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
   const matched = props.filterInput
     ? props.item.label.split(new RegExp(regEscape(props.filterInput), 'i'))
     : [props.item.label]
 
   return (
-    <Box background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
-      <HStack gap={0}>
+    <Box ref={props.internalRef} onMouseOver={props.onMouseOver} onClick={(evt) => { evt.preventDefault(); props.onClick() }} background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
+      <HStack onClick={(evt) => { evt.preventDefault(); props.onClick() }}  gap={0}>
         {matched.map((p, i) => [
           <Text>{p}</Text>,
           i < matched.length - 1 ? <Text as="b">{props.filterInput}</Text> : [],

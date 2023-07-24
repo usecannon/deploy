@@ -92,7 +92,6 @@ export function useSimulatedTxns(
   }, [safe])
 
   useEffect(() => {
-    console.log('has an effect')
     if (cleanStateSnapshot && JSON.stringify(txns) !== computedTxns) {
       setCleanStateSnapshot(null)
       node.send('evm_revert', [cleanStateSnapshot]).then(async () => {
