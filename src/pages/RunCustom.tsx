@@ -136,6 +136,9 @@ export function RunCustom() {
     return 'unknown error'
   }
 
+  const disableExecute =
+    !multisendTxn || txnHasError || !!stager.execConditionFailed
+
   return (
     <Container maxWidth="container.md" pb="12">
       <FormControl mb="8">
@@ -149,7 +152,6 @@ export function RunCustom() {
           connected wallet.
         </FormHelperText>
       </FormControl>
-
       {cannonInfo.pkgUrl && !cannonInfo.contracts && (
         <Alert status="info">
           <AlertIcon />
@@ -161,12 +163,11 @@ export function RunCustom() {
           </Box>
         </Alert>
       )}
-
       {cannonInfo.contracts && (
         <FormControl mb="8">
           <FormLabel>Transactions</FormLabel>
           {queuedTxns.map((txn, i) => (
-            <Box>
+            <Box mb={3}>
               <DisplayedTransaction
                 editable
                 contracts={cannonInfo.contracts}
@@ -210,7 +211,6 @@ export function RunCustom() {
           </HStack>
         </FormControl>
       )}
-
       {(isAddress(target) || funcIsPayable) && (
         <FormControl mb="4">
           <FormLabel>Value</FormLabel>
@@ -228,7 +228,6 @@ export function RunCustom() {
           </FormHelperText>
         </FormControl>
       )}
-
       {isAddress(target) && (
         <FormControl mb="4">
           <FormLabel>Transaction Data</FormLabel>
@@ -252,25 +251,25 @@ export function RunCustom() {
         <Box mb="6">
           <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
-            <Tooltip label={stager.signConditionFailed}>
-              <Button
-                size="lg"
-                w="100%"
-                isDisabled={
-                  !multisendTxn || txnHasError || !!stager.signConditionFailed
-                }
-                onClick={() => stager.sign()}
-              >
-                Queue &amp; Sign
-              </Button>
-            </Tooltip>
+            {disableExecute ? null : (
+              <Tooltip label={stager.signConditionFailed}>
+                <Button
+                  size="lg"
+                  w="100%"
+                  isDisabled={
+                    !multisendTxn || txnHasError || !!stager.signConditionFailed
+                  }
+                  onClick={() => stager.sign()}
+                >
+                  Queue &amp; Sign
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip label={stager.execConditionFailed}>
               <Button
                 size="lg"
                 w="100%"
-                isDisabled={
-                  !multisendTxn || txnHasError || !!stager.execConditionFailed
-                }
+                isDisabled={disableExecute}
                 onClick={() => execTxn.write()}
               >
                 Execute

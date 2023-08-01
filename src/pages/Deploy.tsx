@@ -298,25 +298,22 @@ export function Deploy() {
             value={gitUrl}
             onChange={(evt) => setGitUrl(evt.target.value)}
           />
-          <Flex
-            border="1px solid"
-            borderColor="whiteAlpha.300"
-            borderRadius="md"
-            minWidth="220px"
-            px="2"
-            height="40px"
-          >
-            <EditableAutocompleteInput
-              editable
-              color={colorMode === 'dark' ? 'white' : 'black'}
-              placeholder="cannonfile.toml"
-              items={(gitDirList.contents || []).map((d) => ({
-                label: gitDir + d,
-                secondary: '',
-              }))}
-              onFilterChange={(v) => setGitFile(v)}
-              onChange={(v) => setGitFile(v)}
-            />
+          <Flex height="40px">
+            {gitDirList.readdirQuery.isLoading ? (
+              <Spinner my="auto" ml="2" />
+            ) : (
+              <EditableAutocompleteInput
+                editable
+                color={colorMode === 'dark' ? 'white' : 'black'}
+                placeholder="cannonfile.toml"
+                items={(gitDirList.contents || []).map((d) => ({
+                  label: gitDir + d,
+                  secondary: '',
+                }))}
+                onFilterChange={(v) => setGitFile(v)}
+                onChange={(v) => setGitFile(v)}
+              />
+            )}
           </Flex>
         </HStack>
         <FormHelperText>
@@ -393,16 +390,20 @@ export function Deploy() {
         <Box my="6">
           <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
-            <Tooltip label={stager.signConditionFailed}>
-              <Button
-                isDisabled={!!stager.signConditionFailed}
-                size="lg"
-                w="100%"
-                onClick={() => stager.sign()}
-              >
-                Queue &amp; Sign
-              </Button>
-            </Tooltip>
+            {!!stager.execConditionFailed ? (
+              <></>
+            ) : (
+              <Tooltip label={stager.signConditionFailed}>
+                <Button
+                  isDisabled={!!stager.signConditionFailed}
+                  size="lg"
+                  w="100%"
+                  onClick={() => stager.sign()}
+                >
+                  Queue &amp; Sign
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip label={stager.execConditionFailed}>
               <Button
                 isDisabled={!!stager.execConditionFailed}
