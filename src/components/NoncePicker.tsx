@@ -58,7 +58,7 @@ export default function NoncePicker(props: {
             setUseCustomNonce(e.target.checked)
           }}
         >
-          Override Previously Staged Txn
+          Override Previously Staged Transaction
         </Checkbox>
         {isCustomNonce && (
           <NumberInput

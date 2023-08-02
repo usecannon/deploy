@@ -174,21 +174,27 @@ export function TransactionDetail() {
                 <FormLabel mb="1.5">Transaction&nbsp;Source</FormLabel>
 
                 {hintData.type === 'deploy' && (
-                  <Tag textTransform="uppercase" size="md">
-                    <Text as="b">GitOps</Text>
-                  </Tag>
+                  <Tooltip label="Added using 'Queue From GitOps'">
+                    <Tag textTransform="uppercase" size="md">
+                      <Text as="b">GitOps</Text>
+                    </Tag>
+                  </Tooltip>
                 )}
 
                 {hintData.type === 'invoke' && (
-                  <Tag textTransform="uppercase" size="md">
-                    <Text as="b">Deployer</Text>
-                  </Tag>
+                  <Tooltip label="Added using 'Queue Transactions'">
+                    <Tag textTransform="uppercase" size="md">
+                      <Text as="b">Deployer</Text>
+                    </Tag>
+                  </Tooltip>
                 )}
 
                 {hintData.type !== 'deploy' && hintData.type !== 'invoke' && (
-                  <Tag textTransform="uppercase" size="md">
-                    <Text as="b">External</Text>
-                  </Tag>
+                  <Tooltip label="Added using the Safe{Wallet} UI">
+                    <Tag textTransform="uppercase" size="md">
+                      <Text as="b">External</Text>
+                    </Tag>
+                  </Tooltip>
                 )}
               </FormControl>
             </Box>

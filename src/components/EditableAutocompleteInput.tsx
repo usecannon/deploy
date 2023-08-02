@@ -104,10 +104,10 @@ export function EditableAutocompleteInput(props: {
 
   const inputValue = filterInput || (isEditing ? '' : props.placeholder)
 
-  const editableInputRef = useRef();
+  const editableInputRef = useRef()
 
   function tabToNext() {
-    console.log('tabdata trigger tabtonext');
+    console.log('tabdata trigger tabtonext')
     const tabElements = Array.from(
       document
         // Get all elements that can be focusable
@@ -150,27 +150,27 @@ export function EditableAutocompleteInput(props: {
     tabElements[nextIndex].focus()
   }
 
-  const selectedRef = useRef<HTMLDivElement>();
-  const scrollRef = useRef<HTMLElement>();
+  const selectedRef = useRef<HTMLDivElement>()
+  const scrollRef = useRef<HTMLElement>()
 
   function scrollToSelected() {
     if (scrollRef.current && selectedRef.current) {
-      scrollRef.current.scrollTop = 
-        Math.max(
-          selectedRef.current.offsetTop - scrollRef.current.clientHeight + (selectedRef.current as Element).clientHeight,
-          scrollRef.current.scrollTop
-        );
+      scrollRef.current.scrollTop = Math.max(
+        selectedRef.current.offsetTop -
+          scrollRef.current.clientHeight +
+          (selectedRef.current as Element).clientHeight,
+        scrollRef.current.scrollTop
+      )
 
-      scrollRef.current.scrollTop = 
-        Math.min(
-          selectedRef.current.offsetTop,
-          scrollRef.current.scrollTop
-        );
+      scrollRef.current.scrollTop = Math.min(
+        selectedRef.current.offsetTop,
+        scrollRef.current.scrollTop
+      )
     }
   }
 
   useEffect(() => {
-    scrollToSelected();
+    scrollToSelected()
   }, [pendingItem, selectedRef.current])
 
   return (
@@ -182,11 +182,24 @@ export function EditableAutocompleteInput(props: {
       isLazy
     >
       <PopoverAnchor>
-        <HStack color={props.color} gap={0}>
+        <HStack
+          color={props.color}
+          gap={0}
+          border="1px solid"
+          borderColor="whiteAlpha.300"
+          px={2}
+          borderRadius="md"
+          _hover={{
+            borderColor: 'whiteAlpha.400',
+          }}
+        >
           <Editable
             isDisabled={!props.editable}
             onEdit={() => setIsEditing(true)}
-            onBlur={() => { finishEdit(); tabToNext() }}
+            onBlur={() => {
+              finishEdit()
+              tabToNext()
+            }}
             onKeyDown={handleKey}
             onChange={(value) => {
               setFilterInput(value)
@@ -210,7 +223,13 @@ export function EditableAutocompleteInput(props: {
           {isEditing && <Text color="gray.500">{completedText}</Text>}
         </HStack>
       </PopoverAnchor>
-      <PopoverContent margin="-5px" maxHeight={'45vh'} overflowY={'auto'} overflowX={'hidden'} ref={scrollRef}>
+      <PopoverContent
+        margin="-5px"
+        maxHeight={'45vh'}
+        overflowY={'auto'}
+        overflowX={'hidden'}
+        ref={scrollRef}
+      >
         <PopoverBody padding="5px">
           <VStack alignItems="left">
             {filteredItems.map((item) => {
@@ -221,8 +240,16 @@ export function EditableAutocompleteInput(props: {
                   selected={item.label === pendingItem}
                   isVisible={isEditing && filteredItems.length > 0}
                   onMouseOver={() => setPendingItem(item.label)}
-                  onClick={() => { console.log('tabdata click'); setPendingItem(item.label); setFilterInput(item.label); tabToNext(); console.log('tabdata end') }}
-                  internalRef={item.label === pendingItem ? selectedRef : undefined}
+                  onClick={() => {
+                    console.log('tabdata click')
+                    setPendingItem(item.label)
+                    setFilterInput(item.label)
+                    tabToNext()
+                    console.log('tabdata end')
+                  }}
+                  internalRef={
+                    item.label === pendingItem ? selectedRef : undefined
+                  }
                 />
               )
             })}
@@ -240,17 +267,32 @@ function AutocompleteOption(props: {
   onMouseOver: () => void
   onClick: () => void
   isVisible: boolean
-  internalRef: React.MutableRefObject<HTMLDivElement>|undefined
+  internalRef: React.MutableRefObject<HTMLDivElement> | undefined
 }) {
-
   const regEscape = (v) => v.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
   const matched = props.filterInput
     ? props.item.label.split(new RegExp(regEscape(props.filterInput), 'i'))
     : [props.item.label]
 
   return (
-    <Box ref={props.internalRef} onMouseOver={props.onMouseOver} onClick={(evt) => { evt.preventDefault(); props.onClick() }} background={props.selected ? 'gray.800' : 'transparent'} px="2" pb="1">
-      <HStack onClick={(evt) => { evt.preventDefault(); props.onClick() }}  gap={0}>
+    <Box
+      ref={props.internalRef}
+      onMouseOver={props.onMouseOver}
+      onClick={(evt) => {
+        evt.preventDefault()
+        props.onClick()
+      }}
+      background={props.selected ? 'gray.800' : 'transparent'}
+      px="2"
+      pb="1"
+    >
+      <HStack
+        onClick={(evt) => {
+          evt.preventDefault()
+          props.onClick()
+        }}
+        gap={0}
+      >
         {matched.map((p, i) => [
           <Text>{p}</Text>,
           i < matched.length - 1 ? <Text as="b">{props.filterInput}</Text> : [],

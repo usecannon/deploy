@@ -19,9 +19,10 @@ import { getSafeTransactionHash } from '../utils/safe'
 interface Params {
   safe: SafeDefinition
   tx: SafeTransaction
+  hideExternal: boolean
 }
 
-export function Transaction({ safe, tx }: Params) {
+export function Transaction({ safe, tx, hideExternal }: Params) {
   const hintData = parseHintedMulticall(tx.data)
 
   console.log(tx._nonce, hintData)
@@ -36,6 +37,7 @@ export function Transaction({ safe, tx }: Params) {
   return (
     <LinkBox
       as={Flex}
+      display={hideExternal && !isLink ? 'none' : 'flex'}
       mb="4"
       p="5"
       border="1px solid"
