@@ -391,8 +391,6 @@ export function Deploy() {
           <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
             {!!stager.execConditionFailed ? (
-              <></>
-            ) : (
               <Tooltip label={stager.signConditionFailed}>
                 <Button
                   isDisabled={!!stager.signConditionFailed}
@@ -403,7 +401,7 @@ export function Deploy() {
                   Queue &amp; Sign
                 </Button>
               </Tooltip>
-            )}
+            ) : null}
             <Tooltip label={stager.execConditionFailed}>
               <Button
                 isDisabled={!!stager.execConditionFailed}
