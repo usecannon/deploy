@@ -186,11 +186,11 @@ export function EditableAutocompleteInput(props: {
           color={props.color}
           gap={0}
           border="1px solid"
-          borderColor="whiteAlpha.300"
-          px={2}
+          borderColor={props.editable ? 'whiteAlpha.300' : 'transparent'}
+          px={props.editable ? 2 : 0}
           borderRadius="md"
           _hover={{
-            borderColor: 'whiteAlpha.400',
+            borderColor: props.editable ? 'whiteAlpha.400' : 'transparent',
           }}
         >
           <Editable
