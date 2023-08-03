@@ -251,7 +251,7 @@ export function RunCustom() {
         <Box mb="6">
           <NoncePicker safe={currentSafe} onPickedNonce={setPickedNonce} />
           <HStack gap="6">
-            {disableExecute ? null : (
+            {disableExecute ? (
               <Tooltip label={stager.signConditionFailed}>
                 <Button
                   size="lg"
@@ -264,7 +264,7 @@ export function RunCustom() {
                   Queue &amp; Sign
                 </Button>
               </Tooltip>
-            )}
+            ) : null}
             <Tooltip label={stager.execConditionFailed}>
               <Button
                 size="lg"
